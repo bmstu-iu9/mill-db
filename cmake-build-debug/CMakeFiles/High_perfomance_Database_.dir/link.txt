@@ -1,1 +1,0 @@
-/usr/bin/c++   -g   CMakeFiles/High_perfomance_Database_.dir/main.cpp.o  -o High_perfomance_Database_ 
