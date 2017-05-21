@@ -10,15 +10,17 @@ int main(int argc, char *argv[]) {
     FILE *in;
     ++argv, --argc;
 
-    if (argc > 0) {
+    if (argc == 1) {
         in = fopen(argv[0], "r");
-        if (in) {
-            yyin = in;
-            yyparse();
-            fclose(in);
+        if (!in) {
+            cerr << argv[0] << ": can not open file" << endl;
         } else {
-            cout << argv[0] << ": can not open file" << endl;
+            yyin = in;
+            if (!yyparse()) cout << "OK" << endl;
+            fclose(in);
         }
+    } else {
+        cout << "incorrect number of arguments" << endl;
     }
     return 0;
 }
