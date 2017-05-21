@@ -1,6 +1,6 @@
 %{
 #include <iostream>
-#include "main.tab.h"
+#include "grammar.tab.h"
 %}
 
 LPAREN      "("

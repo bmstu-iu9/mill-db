@@ -62,10 +62,10 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 1 "main.y" /* yacc.c:339  */
+#line 1 "grammar.y" /* yacc.c:339  */
 
 #include <stdio.h>
-#include "main.lex.c"
+#include "grammar.lex.c"
 #include <iostream>
 
 extern "C" {
@@ -73,7 +73,7 @@ extern "C" {
     int yywrap(void){return 1;}
 }
 
-#line 77 "gen/main.tab.c" /* yacc.c:339  */
+#line 77 "gen/grammar.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -92,9 +92,9 @@ extern "C" {
 #endif
 
 /* In a future release of Bison, this section will be replaced
-   by #include "main.tab.h".  */
-#ifndef YY_YY_GEN_MAIN_TAB_H_INCLUDED
-# define YY_YY_GEN_MAIN_TAB_H_INCLUDED
+   by #include "grammar.tab.h".  */
+#ifndef YY_YY_GEN_GRAMMAR_TAB_H_INCLUDED
+# define YY_YY_GEN_GRAMMAR_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -133,11 +133,11 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_GEN_MAIN_TAB_H_INCLUDED  */
+#endif /* !YY_YY_GEN_GRAMMAR_TAB_H_INCLUDED  */
 
 /* Copy the second part of user declarations.  */
 
-#line 141 "gen/main.tab.c" /* yacc.c:358  */
+#line 141 "gen/grammar.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -1219,13 +1219,13 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 20 "main.y" /* yacc.c:1646  */
+#line 20 "grammar.y" /* yacc.c:1646  */
     { std::cout << "**CORRECT**" << std::endl; }
-#line 1225 "gen/main.tab.c" /* yacc.c:1646  */
+#line 1225 "gen/grammar.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1229 "gen/main.tab.c" /* yacc.c:1646  */
+#line 1229 "gen/grammar.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1453,7 +1453,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 53 "main.y" /* yacc.c:1906  */
+#line 53 "grammar.y" /* yacc.c:1906  */
 
 
 main()

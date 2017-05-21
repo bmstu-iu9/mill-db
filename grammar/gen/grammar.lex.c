@@ -1,6 +1,6 @@
-#line 2 "gen/main.lex.c"
+#line 2 "gen/grammar.lex.c"
 
-#line 4 "gen/main.lex.c"
+#line 4 "gen/grammar.lex.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -504,11 +504,11 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "main.lex"
-#line 2 "main.lex"
+#line 1 "grammar.lex"
+#line 2 "grammar.lex"
 #include <iostream>
-#include "main.tab.h"
-#line 512 "gen/main.lex.c"
+#include "grammar.tab.h"
+#line 512 "gen/grammar.lex.c"
 
 #define INITIAL 0
 
@@ -726,10 +726,10 @@ YY_DECL
 		}
 
 	{
-#line 22 "main.lex"
+#line 22 "grammar.lex"
 
 
-#line 733 "gen/main.lex.c"
+#line 733 "gen/grammar.lex.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -788,66 +788,66 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 24 "main.lex"
+#line 24 "grammar.lex"
 { return CREATE_KEYWORD; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 25 "main.lex"
+#line 25 "grammar.lex"
 { return WRITEPROC_KEYWORD; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 26 "main.lex"
+#line 26 "grammar.lex"
 { return READPROC_KEYWORD; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 27 "main.lex"
+#line 27 "grammar.lex"
 { return TABLE_KEYWORD; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 29 "main.lex"
+#line 29 "grammar.lex"
 { return LPAREN; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 30 "main.lex"
+#line 30 "grammar.lex"
 { return RPAREN; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 31 "main.lex"
+#line 31 "grammar.lex"
 { return SEMICOLON; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 32 "main.lex"
+#line 32 "grammar.lex"
 { return COMMA; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 34 "main.lex"
+#line 34 "grammar.lex"
 { return IDENTIFIER; }
 	YY_BREAK
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 36 "main.lex"
+#line 36 "grammar.lex"
 /* eat up whitespace */
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 37 "main.lex"
+#line 37 "grammar.lex"
 { std::cout << "Unrecognized character: " << yytext << std::endl; return BAD_CHARACTER; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 39 "main.lex"
+#line 39 "grammar.lex"
 ECHO;
 	YY_BREAK
-#line 851 "gen/main.lex.c"
+#line 851 "gen/grammar.lex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1848,7 +1848,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 39 "main.lex"
+#line 39 "grammar.lex"
 
 
 
