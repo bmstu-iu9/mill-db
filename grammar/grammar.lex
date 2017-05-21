@@ -3,6 +3,8 @@
 #include "grammar.tab.h"
 %}
 
+%option yylineno
+
 LPAREN      "("
 RPAREN      ")"
 SEMICOLON   ";"
@@ -34,6 +36,6 @@ WHITESPACE          [ \t\n]+
 {IDENTIFIER}       { return IDENTIFIER; }
 
 {WHITESPACE}        /* eat up whitespace */
-.                   { std::cout << "Unrecognized character: " << yytext << std::endl; return BAD_CHARACTER; }
+.                   { return BAD_CHARACTER; }
 
 %%

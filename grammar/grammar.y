@@ -4,8 +4,13 @@
 #include <iostream>
 
 extern "C" {
-    void yyerror(char *s){}
-    int yywrap(void){return 1;}
+    void yyerror(char *s) {
+        std::cerr << "line " << yylineno << ": " << s << std::endl;
+    }
+
+    int yywrap(void) {
+        return 1;
+    }
 }
 %}
 
@@ -17,13 +22,14 @@ extern "C" {
 %token BAD_CHARACTER
 %%
 
-program: program_element_list { std::cout << "**CORRECT**" << std::endl; }
+program: program_element_list
     ;
 
 program_element_list: program_element
     | program_element_list program_element
 
-program_element: table_definition;
+program_element: table_definition
+    ;
 
 table_definition: CREATE_KEYWORD TABLE_KEYWORD table_name table_contents_source SEMICOLON
     ;
@@ -49,10 +55,4 @@ column_name: IDENTIFIER
 
 data_type: IDENTIFIER
     ;
-
 %%
-
-main()
-{
-        yyparse();
-}

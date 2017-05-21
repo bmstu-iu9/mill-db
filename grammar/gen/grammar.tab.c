@@ -69,11 +69,16 @@
 #include <iostream>
 
 extern "C" {
-    void yyerror(char *s){}
-    int yywrap(void){return 1;}
+    void yyerror(char *s) {
+        std::cerr << "line " << yylineno << ": " << s << std::endl;
+    }
+
+    int yywrap(void) {
+        return 1;
+    }
 }
 
-#line 77 "gen/grammar.tab.c" /* yacc.c:339  */
+#line 82 "gen/grammar.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -137,7 +142,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 141 "gen/grammar.tab.c" /* yacc.c:358  */
+#line 146 "gen/grammar.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -435,8 +440,8 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    20,    20,    23,    24,    26,    28,    31,    34,    35,
-      38,    41,    44,    47,    50
+       0,    25,    25,    28,    29,    31,    34,    37,    40,    41,
+      44,    47,    50,    53,    56
 };
 #endif
 
@@ -1218,14 +1223,8 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 2:
-#line 20 "grammar.y" /* yacc.c:1646  */
-    { std::cout << "**CORRECT**" << std::endl; }
-#line 1225 "gen/grammar.tab.c" /* yacc.c:1646  */
-    break;
-
-
-#line 1229 "gen/grammar.tab.c" /* yacc.c:1646  */
+      
+#line 1228 "gen/grammar.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1453,10 +1452,4 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 53 "grammar.y" /* yacc.c:1906  */
-
-
-main()
-{
-        yyparse();
-}
+#line 58 "grammar.y" /* yacc.c:1906  */
