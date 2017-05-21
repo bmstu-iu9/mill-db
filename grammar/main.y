@@ -4,8 +4,6 @@
 #include <iostream>
 
 extern "C" {
-    /* int yyparse();
-    //int yylex(void); */
     void yyerror(char *s){}
     int yywrap(void){return 1;}
 }

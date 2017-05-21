@@ -1,0 +1,274 @@
+Terminals unused in grammar
+
+   WRITEPROC_KEYWORD
+   READPROC_KEYWORD
+   BAD_CHARACTER
+
+
+Grammar
+
+    0 $accept: program $end
+
+    1 program: program_element_list
+
+    2 program_element_list: program_element
+    3                     | program_element_list program_element
+
+    4 program_element: table_definition
+
+    5 table_definition: CREATE_KEYWORD TABLE_KEYWORD table_name table_contents_source SEMICOLON
+
+    6 table_contents_source: LPAREN table_element_list RPAREN
+
+    7 table_element_list: table_element
+    8                   | table_element_list COMMA table_element
+
+    9 table_element: column_definition
+
+   10 column_definition: column_name data_type
+
+   11 table_name: IDENTIFIER
+
+   12 column_name: IDENTIFIER
+
+   13 data_type: IDENTIFIER
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256)
+CREATE_KEYWORD (258) 5
+WRITEPROC_KEYWORD (259)
+READPROC_KEYWORD (260)
+TABLE_KEYWORD (261) 5
+RPAREN (262) 6
+LPAREN (263) 6
+SEMICOLON (264) 5
+COMMA (265) 8
+IDENTIFIER (266) 11 12 13
+BAD_CHARACTER (267)
+
+
+Nonterminals, with rules where they appear
+
+$accept (13)
+    on left: 0
+program (14)
+    on left: 1, on right: 0
+program_element_list (15)
+    on left: 2 3, on right: 1 3
+program_element (16)
+    on left: 4, on right: 2 3
+table_definition (17)
+    on left: 5, on right: 4
+table_contents_source (18)
+    on left: 6, on right: 5
+table_element_list (19)
+    on left: 7 8, on right: 6 8
+table_element (20)
+    on left: 9, on right: 7 8
+column_definition (21)
+    on left: 10, on right: 9
+table_name (22)
+    on left: 11, on right: 5
+column_name (23)
+    on left: 12, on right: 10
+data_type (24)
+    on left: 13, on right: 10
+
+
+State 0
+
+    0 $accept: . program $end
+
+    CREATE_KEYWORD  shift, and go to state 1
+
+    program               go to state 2
+    program_element_list  go to state 3
+    program_element       go to state 4
+    table_definition      go to state 5
+
+
+State 1
+
+    5 table_definition: CREATE_KEYWORD . TABLE_KEYWORD table_name table_contents_source SEMICOLON
+
+    TABLE_KEYWORD  shift, and go to state 6
+
+
+State 2
+
+    0 $accept: program . $end
+
+    $end  shift, and go to state 7
+
+
+State 3
+
+    1 program: program_element_list .
+    3 program_element_list: program_element_list . program_element
+
+    CREATE_KEYWORD  shift, and go to state 1
+
+    $default  reduce using rule 1 (program)
+
+    program_element   go to state 8
+    table_definition  go to state 5
+
+
+State 4
+
+    2 program_element_list: program_element .
+
+    $default  reduce using rule 2 (program_element_list)
+
+
+State 5
+
+    4 program_element: table_definition .
+
+    $default  reduce using rule 4 (program_element)
+
+
+State 6
+
+    5 table_definition: CREATE_KEYWORD TABLE_KEYWORD . table_name table_contents_source SEMICOLON
+
+    IDENTIFIER  shift, and go to state 9
+
+    table_name  go to state 10
+
+
+State 7
+
+    0 $accept: program $end .
+
+    $default  accept
+
+
+State 8
+
+    3 program_element_list: program_element_list program_element .
+
+    $default  reduce using rule 3 (program_element_list)
+
+
+State 9
+
+   11 table_name: IDENTIFIER .
+
+    $default  reduce using rule 11 (table_name)
+
+
+State 10
+
+    5 table_definition: CREATE_KEYWORD TABLE_KEYWORD table_name . table_contents_source SEMICOLON
+
+    LPAREN  shift, and go to state 11
+
+    table_contents_source  go to state 12
+
+
+State 11
+
+    6 table_contents_source: LPAREN . table_element_list RPAREN
+
+    IDENTIFIER  shift, and go to state 13
+
+    table_element_list  go to state 14
+    table_element       go to state 15
+    column_definition   go to state 16
+    column_name         go to state 17
+
+
+State 12
+
+    5 table_definition: CREATE_KEYWORD TABLE_KEYWORD table_name table_contents_source . SEMICOLON
+
+    SEMICOLON  shift, and go to state 18
+
+
+State 13
+
+   12 column_name: IDENTIFIER .
+
+    $default  reduce using rule 12 (column_name)
+
+
+State 14
+
+    6 table_contents_source: LPAREN table_element_list . RPAREN
+    8 table_element_list: table_element_list . COMMA table_element
+
+    RPAREN  shift, and go to state 19
+    COMMA   shift, and go to state 20
+
+
+State 15
+
+    7 table_element_list: table_element .
+
+    $default  reduce using rule 7 (table_element_list)
+
+
+State 16
+
+    9 table_element: column_definition .
+
+    $default  reduce using rule 9 (table_element)
+
+
+State 17
+
+   10 column_definition: column_name . data_type
+
+    IDENTIFIER  shift, and go to state 21
+
+    data_type  go to state 22
+
+
+State 18
+
+    5 table_definition: CREATE_KEYWORD TABLE_KEYWORD table_name table_contents_source SEMICOLON .
+
+    $default  reduce using rule 5 (table_definition)
+
+
+State 19
+
+    6 table_contents_source: LPAREN table_element_list RPAREN .
+
+    $default  reduce using rule 6 (table_contents_source)
+
+
+State 20
+
+    8 table_element_list: table_element_list COMMA . table_element
+
+    IDENTIFIER  shift, and go to state 13
+
+    table_element      go to state 23
+    column_definition  go to state 16
+    column_name        go to state 17
+
+
+State 21
+
+   13 data_type: IDENTIFIER .
+
+    $default  reduce using rule 13 (data_type)
+
+
+State 22
+
+   10 column_definition: column_name data_type .
+
+    $default  reduce using rule 10 (column_definition)
+
+
+State 23
+
+    8 table_element_list: table_element_list COMMA table_element .
+
+    $default  reduce using rule 8 (table_element_list)
