@@ -46,15 +46,20 @@ extern int yydebug;
   enum yytokentype
   {
     CREATE_KEYWORD = 258,
-    WRITEPROC_KEYWORD = 259,
-    READPROC_KEYWORD = 260,
-    TABLE_KEYWORD = 261,
-    RPAREN = 262,
-    LPAREN = 263,
-    SEMICOLON = 264,
-    COMMA = 265,
-    IDENTIFIER = 266,
-    BAD_CHARACTER = 267
+    INSERT_KEYWORD = 259,
+    WRITEPROC_KEYWORD = 260,
+    READPROC_KEYWORD = 261,
+    TABLE_KEYWORD = 262,
+    PK_KEYWORD = 263,
+    BEGIN_KEYWORD = 264,
+    END_KEYWORD = 265,
+    RPAREN = 266,
+    LPAREN = 267,
+    SEMICOLON = 268,
+    COMMA = 269,
+    IDENTIFIER = 270,
+    VALUE = 271,
+    BAD_CHARACTER = 272
   };
 #endif
 
