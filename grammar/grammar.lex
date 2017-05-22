@@ -53,10 +53,10 @@ WHITESPACE          [ \t\n]+
 {SEMICOLON}     { print_token("SEMICOLON"); return SEMICOLON; }
 {COMMA}         { print_token("COMMA"); return COMMA; }
 
-{IDENTIFIER}        { print_token("IDENTIFIER"); return IDENTIFIER; }
-{VALUE}             {  print_token("VALUE"); return VALUE; }
+{IDENTIFIER}    { print_token("IDENTIFIER"); return IDENTIFIER; }
+{VALUE}         {  print_token("VALUE"); return VALUE; }
 
-{WHITESPACE}        /* eat up whitespace */
-.                   { return BAD_CHARACTER; }
+{WHITESPACE}    /* eat up whitespace */
+.               { return BAD_CHARACTER; }
 
 %%
