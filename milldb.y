@@ -17,7 +17,8 @@ extern "C" {
 %start program
 
 %token CREATE_KEYWORD INSERT_KEYWORD WRITEPROC_KEYWORD READPROC_KEYWORD TABLE_KEYWORD
-%token PK_KEYWORD BEGIN_KEYWORD END_KEYWORD
+%token PK_KEYWORD BEGIN_KEYWORD END_KEYWORD INDEX_KEYWORD ON_KEYWORD
+%token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD STR_KEYWORD
 %token RPAREN LPAREN SEMICOLON COMMA
 %token IDENTIFIER VALUE
 %token BAD_CHARACTER
@@ -30,20 +31,17 @@ program_element_list: program_element
     | program_element_list program_element
 
 program_element: table_declaration
-    | procedure_write_statement
+	| index_declaration
     ;
 
 table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name table_contents_source SEMICOLON
     ;
 
-procedure_write_statement: WRITEPROC_KEYWORD procedure_name LPAREN parameter_declaration_list RPAREN
-        BEGIN_KEYWORD procedure_write_body END_KEYWORD SEMICOLON
-    ;
+index_declaration: CREATE_KEYWORD INDEX_KEYWORD index_name ON_KEYWORD
+		table_name LPAREN simple_parameter_list RPAREN SEMICOLON
 
-procedure_write_body: insert_statement
-    ;
-
-insert_statement: INSERT_KEYWORD table_name LPAREN parameter_list RPAREN SEMICOLON
+simple_parameter_list: column_name
+	| simple_parameter_list COMMA column_name
     ;
 
 table_contents_source: LPAREN table_element_list RPAREN
@@ -56,49 +54,21 @@ table_element_list: table_element
 table_element: column_definition
     ;
 
-parameter_declaration_list: parameter_declaration
-    | parameter_declaration_list COMMA parameter_declaration
-    ;
-
-parameter_declaration: parameter_name data_type
-    ;
-
-parameter_list: parameter
-    | parameter_list COMMA parameter
-    ;
-
-parameter: parameter_value
-    ;
-
-column_definition: column_name data_type column_constraint
-    ;
-
-column_constraint: /* null */
-    | unique_specification
-    ;
-
-unique_specification: PK_KEYWORD
+column_definition: column_name data_type
     ;
 
 table_name: IDENTIFIER
     ;
 
-procedure_name: IDENTIFIER
+index_name: IDENTIFIER
     ;
 
 column_name: IDENTIFIER
     ;
 
-parameter_name: IDENTIFIER
-    ;
-
-parameter_value: value
-    ;
-
-data_type: IDENTIFIER
-    ;
-
-value: VALUE
-    | IDENTIFIER
+data_type: INT_KEYWORD
+	| FLOAT_KEYWORD
+	| DOUBLE_KEYWORD
+	| STR_KEYWORD
     ;
 %%

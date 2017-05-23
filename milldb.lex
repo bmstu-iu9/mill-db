@@ -27,10 +27,17 @@ TABLE_KEYWORD       ?i:"table"
 PK_KEYWORD          ?i:"pk"
 BEGIN_KEYWORD       ?i:"begin"
 END_KEYWORD         ?i:"end"
+INDEX_KEYWORD       ?i:"index"
+ON_KEYWORD          ?i:"on"
+
+INT_KEYWORD         ?i:"int"
+FLOAT_KEYWORD       ?i:"float"
+DOUBLE_KEYWORD      ?i:"double"
+STR_KEYWORD         ?i:"str"
 
 IDENTIFIER          {IDENTIFIER_START}{IDENTIFIER_PART}*
 IDENTIFIER_START    [[:alpha:]]
-IDENTIFIER_PART     [[:alnum:]]
+IDENTIFIER_PART     [[:alnum:]_]
 
 VALUE               {VALUE_PART}+
 VALUE_PART          [[:alnum:]]
@@ -47,6 +54,13 @@ WHITESPACE          [ \t\n]+
 {PK_KEYWORD}            { print_token("PK_KEYWORD"); return PK_KEYWORD; }
 {BEGIN_KEYWORD}         { print_token("BEGIN_KEYWORD"); return BEGIN_KEYWORD; }
 {END_KEYWORD}           { print_token("END_KEYWORD"); return END_KEYWORD; }
+{INDEX_KEYWORD}         { print_token("END_KEYWORD"); return INDEX_KEYWORD; }
+{ON_KEYWORD}            { print_token("END_KEYWORD"); return ON_KEYWORD; }
+
+{INT_KEYWORD}            { print_token("END_KEYWORD"); return INT_KEYWORD; }
+{FLOAT_KEYWORD}          { print_token("END_KEYWORD"); return FLOAT_KEYWORD; }
+{DOUBLE_KEYWORD}         { print_token("END_KEYWORD"); return DOUBLE_KEYWORD; }
+{STR_KEYWORD}            { print_token("END_KEYWORD"); return STR_KEYWORD; }
 
 {LPAREN}        { print_token("LPAREN"); return LPAREN; }
 {RPAREN}        { print_token("RPAREN"); return RPAREN; }
