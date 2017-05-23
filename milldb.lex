@@ -1,6 +1,6 @@
 %{
 #include <iostream>
-#include "grammar.tab.h"
+#include "milldb.tab.h"
 
 // #define PRINT_DEBUG
 

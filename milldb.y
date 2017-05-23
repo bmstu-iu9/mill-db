@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include "grammar.lex.c"
+#include "milldb.lex.c"
 #include <iostream>
 
 extern "C" {

@@ -1,10 +1,11 @@
-#include "grammar/gen/grammar.tab.c"
+#include "gen/milldb.tab.c"
 #include <iostream>
 #include <fstream>
 
 
 using namespace std;
 
+// TODO Use this library https://github.com/jarro2783/cxxopts to parse command line arguments
 
 int main(int argc, char *argv[]) {
     FILE *in;
