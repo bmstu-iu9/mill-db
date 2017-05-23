@@ -1,4 +1,0 @@
-CREATE table gr
-(
-    id int 2
-);
