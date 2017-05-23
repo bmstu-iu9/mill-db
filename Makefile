@@ -19,4 +19,4 @@ parser: lexer $(BISON_SOURCE)
 	bison -o ${GEN_DIR}${BISON_OUTPUT} -vd ${BISON_SOURCE}
 
 exec: folders lexer parser
-	g++ -o ${OUTPUT} main.cpp -lfl -Wno-write-strings
+	g++ -o ${OUTPUT} main.cpp -std=c++11 -lfl -Wno-write-strings
