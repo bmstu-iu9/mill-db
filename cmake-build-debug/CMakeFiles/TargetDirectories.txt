@@ -1,0 +1,3 @@
+/home/vladimir/CLionProjects/High-perfomance Database /cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/vladimir/CLionProjects/High-perfomance Database /cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/vladimir/CLionProjects/High-perfomance Database /cmake-build-debug/CMakeFiles/High_perfomance_Database_.dir

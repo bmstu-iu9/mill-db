@@ -1,0 +1,4 @@
+git add .
+git status
+git commit -m "Blah blah blah"
+git push -u
