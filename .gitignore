@@ -1,12 +1,14 @@
-# Ignore .gitignore
+# .gitignore
 .gitignore
 
-# Ignore system folders
+# System folders
 cmake-build-debug/
 .idea/
 
-# Do not need .txt and .sh
+# Text
 *.txt
+
+# Shell scripts
 *.sh
 
 # Compiled Object files
