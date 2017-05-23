@@ -68,7 +68,7 @@ WHITESPACE          [ \t\n]+
 {COMMA}         { print_token("COMMA"); return COMMA; }
 
 {IDENTIFIER}    { print_token("IDENTIFIER"); return IDENTIFIER; }
-{VALUE}         {  print_token("VALUE"); return VALUE; }
+{VALUE}         { print_token("VALUE"); return VALUE; }
 
 {WHITESPACE}    /* eat up whitespace */
 .               { return BAD_CHARACTER; }
