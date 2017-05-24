@@ -1,18 +1,21 @@
 %{
-#include <stdio.h>
-#include "milldb.lex.c"
 #include <iostream>
+#include "milldb.lex.h"
+#include "Environment.h"
+#include "Table.h"
+#include "Column.h"
+
 
 extern "C" {
-    void yyerror(char *s) {
-        std::cerr << "line " << yylineno << ": " << s << std::endl;
-    }
-
-    int yywrap(void) {
-        return 1;
-    }
+    void yyerror(char *s);
+    int yywrap(void);
 }
+
 %}
+
+%union {
+  std::string*	str_val;
+}
 
 %start program
 
@@ -21,6 +24,8 @@ extern "C" {
 %token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD STR_KEYWORD
 %token RPAREN LPAREN SEMICOLON COMMA
 %token IDENTIFIER VALUE
+%type <str_val> IDENTIFIER
+%type <str_val> table_name
 %token BAD_CHARACTER
 %%
 
@@ -35,6 +40,7 @@ program_element: table_declaration
     ;
 
 table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name table_contents_source SEMICOLON
+		{ std::cout << $3->c_str() << std::endl; }
     ;
 
 index_declaration: CREATE_KEYWORD INDEX_KEYWORD index_name ON_KEYWORD
@@ -72,3 +78,10 @@ data_type: INT_KEYWORD
 	| STR_KEYWORD
     ;
 %%
+void yyerror(char *s) {
+    std::cerr << "line " << yylineno << ": " << s << std::endl;
+}
+
+int yywrap(void) {
+    return 1;
+}

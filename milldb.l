@@ -33,7 +33,7 @@ ON_KEYWORD          ?i:"on"
 INT_KEYWORD         ?i:"int"
 FLOAT_KEYWORD       ?i:"float"
 DOUBLE_KEYWORD      ?i:"double"
-STR_KEYWORD         ?i:"str"
+
 
 IDENTIFIER          {IDENTIFIER_START}{IDENTIFIER_PART}*
 IDENTIFIER_START    [[:alpha:]]
@@ -60,14 +60,13 @@ WHITESPACE          [ \t\n]+
 {INT_KEYWORD}            { print_token("END_KEYWORD"); return INT_KEYWORD; }
 {FLOAT_KEYWORD}          { print_token("END_KEYWORD"); return FLOAT_KEYWORD; }
 {DOUBLE_KEYWORD}         { print_token("END_KEYWORD"); return DOUBLE_KEYWORD; }
-{STR_KEYWORD}            { print_token("END_KEYWORD"); return STR_KEYWORD; }
 
 {LPAREN}        { print_token("LPAREN"); return LPAREN; }
 {RPAREN}        { print_token("RPAREN"); return RPAREN; }
 {SEMICOLON}     { print_token("SEMICOLON"); return SEMICOLON; }
 {COMMA}         { print_token("COMMA"); return COMMA; }
 
-{IDENTIFIER}    { print_token("IDENTIFIER"); return IDENTIFIER; }
+{IDENTIFIER}    { yylval.str_val = new std::string(yytext); print_token("IDENTIFIER"); return IDENTIFIER; }
 {VALUE}         { print_token("VALUE"); return VALUE; }
 
 {WHITESPACE}    /* eat up whitespace */

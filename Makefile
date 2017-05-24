@@ -1,22 +1,13 @@
-GEN_DIR=gen/
-SOURCE_NAME=milldb
-FLEX_SOURCE=$(SOURCE_NAME).lex
-FLEX_OUTPUT=$(SOURCE_NAME).lex.c
-BISON_SOURCE=$(SOURCE_NAME).y
-BISON_OUTPUT=$(SOURCE_NAME).tab.c
-OUTPUT=milldb
+PROJECT_NAME=milldb
 
-all: folders lexer parser exec
+all: lexer parser exec
 
-
-folders:
-	mkdir -p $(GEN_DIR)
 
 lexer: $(FLEX_SOURCE)
-	flex -o $(GEN_DIR)$(FLEX_OUTPUT) $(FLEX_SOURCE)
+	flex --header-file=$(PROJECT_NAME).lex.h -o $(PROJECT_NAME).lex.c $(PROJECT_NAME).l
 
-parser: lexer $(BISON_SOURCE)
-	bison -o ${GEN_DIR}${BISON_OUTPUT} -vd ${BISON_SOURCE}
+parser: $(BISON_SOURCE)
+	bison -d -o $(PROJECT_NAME).tab.c $(PROJECT_NAME).y
 
-exec: folders lexer parser
-	g++ -o ${OUTPUT} main.cpp -std=c++11 -lfl -Wno-write-strings
+exec: lexer parser
+	g++ -o ${PROJECT_NAME} main.cpp $(PROJECT_NAME).lex.c $(PROJECT_NAME).tab.c Environment.cpp Table.cpp Column.cpp -std=c++11 -lfl -Wno-write-strings

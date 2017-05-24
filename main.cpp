@@ -1,7 +1,10 @@
-#include "gen/milldb.tab.c"
+#include <iostream>
 #include <fstream>
+#include "milldb.tab.h"
+#include "milldb.lex.h"
+#include "Environment.h"
 
-void process_file(char* filename) {
+void parse_file(char* filename) {
 	FILE* in = fopen(filename, "r");
 	if (!in) {
 		std::cerr << filename << ": can not open file" << std::endl;
@@ -21,8 +24,7 @@ int parse_arguments(int argc, char *argv[]) {
 		std::cout << "help" << std::endl;
 	} else if (argc == 1) {
 		char* filename = argv[0];
-		char* output_foldername = argv[1];
-		process_file(filename);
+		parse_file(filename);
 	} else {
 		std::cout << "milldb: invalid options\n" << "Try 'milldb --help' for more information." << std::endl;
 	}
@@ -32,5 +34,7 @@ int parse_arguments(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
 	parse_arguments(argc, argv);
+
+
 	return 0;
 }
