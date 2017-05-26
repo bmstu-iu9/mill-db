@@ -1,5 +1,5 @@
 #include <string>
-#include <set>
+#include <map>
 #include "Column.h"
 
 #ifndef PROJECT_TABLE_H
@@ -7,13 +7,15 @@
 
 class Table {
 public:
-	void set_name(std::string name);
 	std::string get_name();
+	Table(std::string name);
 	void add_column(Column* col);
+	int columns_size();
 
 private:
+	void set_name(std::string name);
 	std::string name;
-	std::set<Column*> cols;
+	std::map<std::string, Column*> cols;
 };
 
 

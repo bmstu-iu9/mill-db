@@ -57,9 +57,9 @@ WHITESPACE          [ \t\n]+
 {INDEX_KEYWORD}         { print_token("END_KEYWORD"); return INDEX_KEYWORD; }
 {ON_KEYWORD}            { print_token("END_KEYWORD"); return ON_KEYWORD; }
 
-{INT_KEYWORD}            { print_token("END_KEYWORD"); return INT_KEYWORD; }
-{FLOAT_KEYWORD}          { print_token("END_KEYWORD"); return FLOAT_KEYWORD; }
-{DOUBLE_KEYWORD}         { print_token("END_KEYWORD"); return DOUBLE_KEYWORD; }
+{INT_KEYWORD}            { yylval.str_val = new std::string(yytext); print_token("END_KEYWORD"); return INT_KEYWORD; }
+{FLOAT_KEYWORD}          { yylval.str_val = new std::string(yytext); print_token("END_KEYWORD"); return FLOAT_KEYWORD; }
+{DOUBLE_KEYWORD}         { yylval.str_val = new std::string(yytext); print_token("END_KEYWORD"); return DOUBLE_KEYWORD; }
 
 {LPAREN}        { print_token("LPAREN"); return LPAREN; }
 {RPAREN}        { print_token("RPAREN"); return RPAREN; }

@@ -14,7 +14,7 @@ extern "C" {
 %}
 
 %union {
-  std::string*	str_val;
+  std::string*  str_val;
 }
 
 %start program
@@ -26,44 +26,68 @@ extern "C" {
 %token IDENTIFIER VALUE
 %type <str_val> IDENTIFIER
 %type <str_val> table_name
+%type <str_val> column_name
+%type <str_val> data_type
+%type <str_val> INT_KEYWORD
+%type <str_val> FLOAT_KEYWORD
+%type <str_val> DOUBLE_KEYWORD
+%type <str_val> STR_KEYWORD
 %token BAD_CHARACTER
 %%
 
+/* Entire program */
 program: program_element_list
     ;
 
+/* List of program_elements */
 program_element_list: program_element
     | program_element_list program_element
 
+/* Program element (expression) */
 program_element: table_declaration
 	| index_declaration
     ;
 
-table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name table_contents_source SEMICOLON
-		{ std::cout << $3->c_str() << std::endl; }
+/* Simple table */
+table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name LPAREN table_column_definition_list RPAREN SEMICOLON
     ;
 
+/* Simple index */
 index_declaration: CREATE_KEYWORD INDEX_KEYWORD index_name ON_KEYWORD
 		table_name LPAREN simple_parameter_list RPAREN SEMICOLON
 
+/* Simple parameter list, just column names, is used in index_declaration */
 simple_parameter_list: column_name
 	| simple_parameter_list COMMA column_name
     ;
 
-table_contents_source: LPAREN table_element_list RPAREN
+/* List of column definitions, is used in table_declaration */
+table_column_definition_list: table_column_definition
+    | table_column_definition_list COMMA table_column_definition
     ;
 
-table_element_list: table_element
-    | table_element_list COMMA table_element
-    ;
-
-table_element: column_definition
-    ;
-
-column_definition: column_name data_type
+/* One column in table */
+table_column_definition: column_name data_type
+		{
+			Environment* e = Environment::get_instance();
+			std::string column_name = $1->c_str();
+			std::string data_type = $2->c_str();
+			Table* table = e->get_last_table();
+			Column* column = new Column(column_name, data_type);
+			if (column)
+				table->add_column(column);
+			else
+				return 1;
+		}
     ;
 
 table_name: IDENTIFIER
+		{
+			Environment* e = Environment::get_instance();
+			std::string table_name = $1->c_str();
+			Table* table = new Table(table_name);
+			e->add_table(table);
+		}
     ;
 
 index_name: IDENTIFIER

@@ -1,14 +1,33 @@
 #include "Environment.h"
 
-Environment* Environment::m_pInstance = nullptr;
+Environment* Environment::instance = nullptr;
 
-Environment* Environment::instance() {
-	if (!m_pInstance)
-		m_pInstance = new Environment;
+Environment* Environment::get_instance() {
+	if (!instance)
+		instance = new Environment;
 
-	return m_pInstance;
+	return instance;
 }
 
 void Environment::add_table(Table* table) {
 	this->tables.insert({table->get_name(), table});
+}
+
+Table* Environment::get_last_table() {
+	if (this->tables.rbegin() == this->tables.rend()) {
+		return nullptr;
+	}
+	return this->tables.rbegin()->second;
+}
+
+int Environment::tables_size() {
+	return this->tables.size();
+}
+
+void Environment::set_name(std::string name) {
+	this->name = name;
+}
+
+std::string Environment::get_name() {
+	return this->name;
 }

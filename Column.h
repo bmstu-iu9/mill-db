@@ -1,13 +1,20 @@
+#include <string>
+#include <iostream>
+
 #ifndef PROJECT_COLUMN_H
 #define PROJECT_COLUMN_H
-
 
 class Column {
 public:
 	enum Type {INT, FLOAT, DOUBLE};
+
+	Column(std::string name, std::string type);
 	void set_type(enum Type type);
 	enum Type get_type();
+	void set_name(std::string name);
+	std::string get_name();
 private:
+	std::string name;
 	enum Type type;
 };
 
