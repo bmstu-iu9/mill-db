@@ -1,22 +1,41 @@
 #include <iostream>
 #include <fstream>
 #include <ios>
+#include <boost/filesystem.hpp>
 #include "milldb.tab.h"
 #include "milldb.lex.h"
 #include "Environment.h"
+namespace fs = boost::filesystem;
 
-void generate() {
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::string;
+
+void generate(fs::path path) {
 	Environment* e = Environment::get_instance();
-	std::string out_filename_prefix = e->get_name();
+	std::string filename = e->get_name();
 
-	std::ofstream library;
-	library.open("out\\" + out_filename_prefix + ".h", std::ofstream::out | std::ofstream::trunc);
+	fs::path source = path / (filename + ".c");
+	fs::ofstream ofs(source);
 
-	std::ofstream source;
-	source.open("out\\" + out_filename_prefix + ".c", std::ofstream::out | std::ofstream::trunc);
+	fs::path library = path / (filename + ".h");
+	fs::ofstream ofl(library);
 
-	library.close();
-	source.close();
+	ofl << endl;
+
+	for (std::map<std::string, Table*>::iterator it = e->begin_iter_tables(); it != e->end_iter_tables(); ++it) {
+		Table* t = it->second;
+		ofs << "struct " << t->get_name() << " {" << endl;
+
+		for (std::map<std::string, Column*>::iterator jt = t->begin_iter_cols(); jt != t->end_iter_cols(); ++jt) {
+			Column* col = jt->second;
+			ofs << "\t" << Column::convert_type_to_string(col->get_type()) << " " << col->get_name() << ";" << endl;
+		}
+
+		ofs << "};" << endl;
+		ofs << endl;
+	}
 }
 
 void parse_file(std::string filename) {
@@ -25,43 +44,37 @@ void parse_file(std::string filename) {
 		in = fopen(filename.c_str(), "r");
 
 		if (!in) {
-			std::cerr << filename << ": can not open file" << std::endl;
+			cerr << filename << ": can not open file" << endl;
 			throw;
 		}
 
 		yyin = in;
 		int step_status_fail = yyparse();
-		if (!step_status_fail)
-			std::cout << "OK" << std::endl;
+		if (step_status_fail)
+			return;
+		else
+			cout << "OK" << endl;
 	} catch (const std::exception&) {
 		fclose(in);
 		return;
 	}
 	fclose(in);
-	generate();
 }
 
-int parse_arguments(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 	++argv, --argc;
 
 	if ( (argc == 0) || (argc == 1 && (strcmp(argv[0], "-h") == 0 || strcmp(argv[0], "--help") == 0)) ) {
 		// TODO Write here a help message
-		std::cout << "help" << std::endl;
+		cout << "help" << endl;
 	} else if (argc == 1) {
-		std::string filename(argv[0]);
-		std::string prefix = filename.substr(0, filename.find("."));
-		Environment::get_instance()->set_name(prefix);
-		parse_file(filename);
+		fs::path p(argv[0]);
+		Environment::get_instance()->set_name(p.stem().string());
+
+		parse_file(p.string());
+		generate(p.parent_path());
 	} else {
 		std::cout << "milldb: invalid options\n" << "Try 'milldb --help' for more information." << std::endl;
 	}
-
-	return 0;
-}
-
-int main(int argc, char *argv[]) {
-	parse_arguments(argc, argv);
-
-
 	return 0;
 }

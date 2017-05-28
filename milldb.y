@@ -49,25 +49,25 @@ program_element: table_declaration
     ;
 
 /* Simple table */
-table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name LPAREN table_column_definition_list RPAREN SEMICOLON
+table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_declaration_name LPAREN table_column_declaration_list RPAREN SEMICOLON
     ;
 
 /* Simple index */
 index_declaration: CREATE_KEYWORD INDEX_KEYWORD index_name ON_KEYWORD
-		table_name LPAREN simple_parameter_list RPAREN SEMICOLON
+		index_declaration_table_name LPAREN simple_parameter_list RPAREN SEMICOLON
 
 /* Simple parameter list, just column names, is used in index_declaration */
 simple_parameter_list: column_name
 	| simple_parameter_list COMMA column_name
     ;
 
-/* List of column definitions, is used in table_declaration */
-table_column_definition_list: table_column_definition
-    | table_column_definition_list COMMA table_column_definition
+/* List of column declarations, is used in table_declaration */
+table_column_declaration_list: table_column_declaration
+    | table_column_declaration_list COMMA table_column_declaration
     ;
 
 /* One column in table */
-table_column_definition: column_name data_type
+table_column_declaration: column_name data_type
 		{
 			Environment* e = Environment::get_instance();
 			std::string column_name = $1->c_str();
@@ -81,13 +81,19 @@ table_column_definition: column_name data_type
 		}
     ;
 
-table_name: IDENTIFIER
+table_declaration_name: table_name
 		{
 			Environment* e = Environment::get_instance();
 			std::string table_name = $1->c_str();
 			Table* table = new Table(table_name);
 			e->add_table(table);
 		}
+    ;
+
+index_declaration_table_name: table_name
+	;
+
+table_name: IDENTIFIER
     ;
 
 index_name: IDENTIFIER

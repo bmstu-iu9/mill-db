@@ -13,6 +13,8 @@ public:
 	enum Type get_type();
 	void set_name(std::string name);
 	std::string get_name();
+
+	static std::string convert_type_to_string(enum Type type);
 private:
 	std::string name;
 	enum Type type;

@@ -20,6 +20,19 @@ Column::Column(std::string name, std::string type) {
 	}
 }
 
+std::string Column::convert_type_to_string(enum Column::Type type) {
+	if (type == Column::INT)
+		return "int";
+	else if (type == Column::FLOAT)
+		return "float";
+	else if (type == Column::DOUBLE)
+		return "double";
+	else {
+		// Do not have to be here ever
+		throw;
+	}
+}
+
 void Column::set_type(enum Column::Type type) {
 	this->type = type;
 }

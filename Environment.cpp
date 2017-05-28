@@ -31,3 +31,11 @@ void Environment::set_name(std::string name) {
 std::string Environment::get_name() {
 	return this->name;
 }
+
+std::map<std::string, Table*>::iterator Environment::begin_iter_tables() {
+	return this->tables.begin();
+}
+
+std::map<std::string, Table*>::iterator Environment::end_iter_tables() {
+	return this->tables.end();
+}

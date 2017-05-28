@@ -15,6 +15,9 @@ public:
 	void set_name(std::string name);
 	std::string get_name();
 
+	std::map<std::string, Table*>::iterator begin_iter_tables();
+	std::map<std::string, Table*>::iterator end_iter_tables();
+
 private:
 	Environment() { }
 

@@ -12,6 +12,9 @@ public:
 	void add_column(Column* col);
 	int columns_size();
 
+	std::map<std::string, Column*>::iterator begin_iter_cols();
+	std::map<std::string, Column*>::iterator end_iter_cols();
+
 private:
 	void set_name(std::string name);
 	std::string name;
