@@ -33,10 +33,10 @@
 %token BAD_CHARACTER
 %%
 program: program_element_list
-    ;
+	;
 
 program_element_list: program_element
-    | program_element_list program_element
+	| program_element_list program_element
 
 program_element: table_declaration
 	| index_declaration
@@ -64,13 +64,13 @@ index_parameter_elem: column_name {
 	;
 
 table_column_declaration_list: table_column_declaration
-    | table_column_declaration_list COMMA table_column_declaration
-    ;
+	| table_column_declaration_list COMMA table_column_declaration
+	;
 
 table_column_declaration: column_name data_type {
 			table_column_declaration($1->c_str(), $2->c_str());
 		}
-    ;
+	;
 
 table_declaration_name: table_name {
 			table_declaration_name($1->c_str());
@@ -88,19 +88,19 @@ index_declaration_table_name: table_name {
 	;
 
 table_name: IDENTIFIER
-    ;
+	;
 
 index_name: IDENTIFIER
-    ;
+	;
 
 column_name: IDENTIFIER
-    ;
+	;
 
 data_type: INT_KEYWORD
 	| FLOAT_KEYWORD
 	| DOUBLE_KEYWORD
 	| STR_KEYWORD
-    ;
+	;
 %%
 void yyerror(char *s) {
     std::cerr << "line " << yylineno << ": " << s << std::endl;
