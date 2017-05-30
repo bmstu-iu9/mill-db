@@ -13,17 +13,6 @@ void Environment::add_table(Table* table) {
 	this->tables.insert({table->get_name(), table});
 }
 
-Table* Environment::get_last_table() {
-	if (this->tables.rbegin() == this->tables.rend()) {
-		return nullptr;
-	}
-	return this->tables.rbegin()->second;
-}
-
-int Environment::tables_size() {
-	return this->tables.size();
-}
-
 void Environment::set_name(std::string name) {
 	this->name = name;
 }
@@ -38,4 +27,11 @@ std::map<std::string, Table*>::iterator Environment::begin_iter_tables() {
 
 std::map<std::string, Table*>::iterator Environment::end_iter_tables() {
 	return this->tables.end();
+}
+
+Table* Environment::find_table(std::string search_name) {
+	std::map<std::string, Table*>::iterator it = this->tables.find(search_name);
+	if (it == end_iter_tables())
+		return nullptr;
+	return this->tables.find(search_name)->second;
 }

@@ -4,7 +4,7 @@
 #include <boost/filesystem.hpp>
 #include "milldb.tab.h"
 #include "milldb.lex.h"
-#include "Environment.h"
+#include "env/Environment.h"
 namespace fs = boost::filesystem;
 
 using std::cout;

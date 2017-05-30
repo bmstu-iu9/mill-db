@@ -9,11 +9,11 @@ class Environment {
 public:
 	static Environment* get_instance();
 	void add_table(Table* table);
-	Table* get_last_table();
-	int tables_size();
 
 	void set_name(std::string name);
 	std::string get_name();
+
+	Table* find_table(std::string search_name);
 
 	std::map<std::string, Table*>::iterator begin_iter_tables();
 	std::map<std::string, Table*>::iterator end_iter_tables();
