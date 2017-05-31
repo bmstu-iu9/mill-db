@@ -38,7 +38,7 @@ void generate(fs::path path) {
 	}
 }
 
-void parse_file(std::string filename) {
+int parse_file(std::string filename) {
 	FILE* in;
 	try {
 		in = fopen(filename.c_str(), "r");
@@ -49,16 +49,16 @@ void parse_file(std::string filename) {
 		}
 
 		yyin = in;
-		int step_status_fail = yyparse();
-		if (step_status_fail)
-			return;
-		else
-			cout << "OK" << endl;
-	} catch (const std::exception&) {
+		if (yyparse())
+			return 1;
+	} catch (const std::exception& e) {
+		cout << e.what() << endl;
 		fclose(in);
-		return;
+		return 1;
 	}
+	cout << "OK" << endl;
 	fclose(in);
+	return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -70,8 +70,8 @@ int main(int argc, char *argv[]) {
 	} else if (argc == 1) {
 		fs::path p(argv[0]);
 		Environment::get_instance()->set_name(p.stem().string());
-
-		parse_file(p.string());
+		if (parse_file(p.string()))
+			return 1;
 		generate(p.parent_path());
 	} else {
 		std::cout << "milldb: invalid options\n" << "Try 'milldb --help' for more information." << std::endl;

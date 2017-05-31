@@ -1,8 +1,8 @@
-#include <string>
-#include <iostream>
-
 #ifndef PROJECT_COLUMN_H
 #define PROJECT_COLUMN_H
+
+#include <string>
+#include <iostream>
 
 class Column {
 public:

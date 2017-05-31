@@ -1,9 +1,9 @@
+#ifndef PROJECT_ENVIRONMENT_H
+#define PROJECT_ENVIRONMENT_H
+
 #include <map>
 #include <string>
 #include "Table.h"
-
-#ifndef PROJECT_ENVIRONMENT_H
-#define PROJECT_ENVIRONMENT_H
 
 class Environment {
 public:

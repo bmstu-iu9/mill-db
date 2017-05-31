@@ -3,10 +3,10 @@ PROJECT_NAME=milldb
 all: lexer parser exec
 
 
-lexer: $(FLEX_SOURCE)
+lexer: $(PROJECT_NAME).l
 	flex --header-file=$(PROJECT_NAME).lex.h -o $(PROJECT_NAME).lex.c $(PROJECT_NAME).l
 
-parser: $(BISON_SOURCE)
+parser: $(PROJECT_NAME).y
 	bison -d -o $(PROJECT_NAME).tab.c $(PROJECT_NAME).y
 
 CLASS_SOURCES=env/*.cpp

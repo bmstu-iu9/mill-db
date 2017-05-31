@@ -1,9 +1,9 @@
+#ifndef PROJECT_INDEX_H
+#define PROJECT_INDEX_H
+
 #include <string>
 #include <map>
 #include "Column.h"
-
-#ifndef PROJECT_INDEX_H
-#define PROJECT_INDEX_H
 
 class Index {
 public:
