@@ -1,11 +1,11 @@
 #include "Index.h"
 
 Index::Index(std::string name) {
-	this->set_name(name);
+	this->name = name;
 }
 
-void Index::set_name(std::string name) {
-	this->name = name;
+Index::~Index() {
+	this->cols.clear();
 }
 
 std::string Index::get_name() {

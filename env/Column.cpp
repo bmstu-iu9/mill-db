@@ -1,50 +1,47 @@
 #include <algorithm>
 #include "Column.h"
 
+map<string, Column::Type> Column::str_to_type = {
+		{"int", Column::INT},
+		{"float", Column::FLOAT},
+		{"double", Column::DOUBLE},
+};
 
-Column::Column(std::string name, std::string type) {
+
+map<Column::Type, string> reverse_map(map<string, Column::Type> str_to_type) {
+	map<Column::Type, string> reversed;
+	for (map<string, Column::Type>::iterator it = str_to_type.begin(); it != str_to_type.end(); ++it)
+		reversed[it->second] = it->first;
+	return reversed;
+};
+
+map<Column::Type, string> Column::type_to_str = reverse_map(Column::str_to_type);
+
+
+Column::Column(string name, Column::Type type) {
 	this->name = name;
-
-	std::string i_type = type;
-	transform(i_type.begin(), i_type.end(), i_type.begin(),::tolower);
-	if (i_type == "int")
-		this->type = Column::INT;
-	else if (i_type == "float")
-		this->type = Column::FLOAT;
-	else if (i_type == "double")
-		this->type = Column::DOUBLE;
-	else {
-		// Do not have to be here ever
-		std::cerr << name << ": invalid data type"<< std::endl;
-		throw;
-	}
-}
-
-std::string Column::convert_type_to_string(enum Column::Type type) {
-	if (type == Column::INT)
-		return "int";
-	else if (type == Column::FLOAT)
-		return "float";
-	else if (type == Column::DOUBLE)
-		return "double";
-	else {
-		// Do not have to be here ever
-		throw;
-	}
-}
-
-void Column::set_type(enum Column::Type type) {
 	this->type = type;
+}
+
+string Column::convert_type_to_str(Column::Type type) {
+	map<Column::Type, string>::iterator it = Column::type_to_str.find(type);
+	if (it == Column::type_to_str.end())
+		return nullptr;
+	return it->second;
+}
+
+Column::Type Column::convert_str_to_type(string str) {
+	map<string, Column::Type>::iterator it = Column::str_to_type.find(str);
+	if (it == Column::str_to_type.end()) {
+		return (Column::Type) (-1);
+	}
+	return it->second;
 }
 
 enum Column::Type Column::get_type() {
 	return this->type;
 }
 
-void Column::set_name(std::string name) {
-	this->name = name;
-}
-
-std::string Column::get_name() {
+string Column::get_name() {
 	return this->name;
 }

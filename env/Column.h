@@ -3,20 +3,25 @@
 
 #include <string>
 #include <iostream>
+#include <map>
+
+using namespace std;
+
 
 class Column {
 public:
 	enum Type {INT, FLOAT, DOUBLE};
 
-	Column(std::string name, std::string type);
-	void set_type(enum Type type);
+	Column(string name, Column::Type type);
 	enum Type get_type();
-	void set_name(std::string name);
-	std::string get_name();
+	string get_name();
 
-	static std::string convert_type_to_string(enum Type type);
+	static string convert_type_to_str(Type type);
+	static Type convert_str_to_type(string str);
 private:
-	std::string name;
+	static map<string, Type> str_to_type;
+	static map<Type, string> type_to_str;
+	string name;
 	enum Type type;
 };
 

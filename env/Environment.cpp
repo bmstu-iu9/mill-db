@@ -9,6 +9,10 @@ Environment* Environment::get_instance() {
 	return instance;
 }
 
+Environment::~Environment() {
+	this->tables.clear();
+}
+
 void Environment::add_table(Table* table) {
 	this->tables.insert({table->get_name(), table});
 }

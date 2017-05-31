@@ -132,7 +132,13 @@ table_column_declaration_list: table_column_declaration {
 	;
 
 table_column_declaration: column_name data_type {
-            $$ = new Column($1->c_str(), $2->c_str());
+			Column::Type type = Column::convert_str_to_type($2->c_str());
+			if ((int)type < 0) {
+				string msg("wrong type ");
+				msg += $2->c_str();
+				throw logic_error(error_msg(msg));
+			}
+            $$ = new Column($1->c_str(), type);
 		}
 	;
 

@@ -7,13 +7,12 @@
 
 class Index {
 public:
-	std::string get_name();
-	void set_name(std::string name);
-
 	Index(std::string name);
+	~Index();
+
+	std::string get_name();
+
 	void add_column(Column* col);
-
-
 private:
 	std::string name;
 	std::map<std::string, Column*> cols;

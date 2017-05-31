@@ -7,6 +7,8 @@
 
 class Environment {
 public:
+	~Environment();
+
 	static Environment* get_instance();
 	void add_table(Table* table);
 

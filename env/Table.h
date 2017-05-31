@@ -12,9 +12,9 @@ using namespace std;
 class Table {
 public:
     Table(string name);
+	~Table();
 
     string get_name();
-    void set_name(string name);
 
     void add_column(Column* col);
 	void add_columns(vector<Column*>* cols);

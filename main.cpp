@@ -30,7 +30,7 @@ void generate(fs::path path) {
 
 		for (std::map<std::string, Column*>::iterator jt = t->begin_iter_cols(); jt != t->end_iter_cols(); ++jt) {
 			Column* col = jt->second;
-			ofs << "\t" << Column::convert_type_to_string(col->get_type()) << " " << col->get_name() << ";" << endl;
+			ofs << "\t" << Column::convert_type_to_str(col->get_type()) << " " << col->get_name() << ";" << endl;
 		}
 
 		ofs << "};" << endl;

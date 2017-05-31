@@ -1,11 +1,12 @@
 #include "Table.h"
 
 Table::Table(string name) {
-	this->set_name(name);
+	this->name = name;
 }
 
-void Table::set_name(string name) {
-	this->name = name;
+Table::~Table() {
+	this->cols.clear();
+	this->indexes.clear();
 }
 
 string Table::get_name() {
