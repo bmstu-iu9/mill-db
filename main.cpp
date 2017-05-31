@@ -40,14 +40,14 @@ void generate(fs::path path) {
 
 int parse_file(std::string filename) {
 	FILE* in;
+
+	in = fopen(filename.c_str(), "r");
+	if (!in) {
+		cerr << filename << ": can not open file" << endl;
+		return 1;
+	}
+
 	try {
-		in = fopen(filename.c_str(), "r");
-
-		if (!in) {
-			cerr << filename << ": can not open file" << endl;
-			throw;
-		}
-
 		yyin = in;
 		if (yyparse())
 			return 1;
@@ -56,6 +56,7 @@ int parse_file(std::string filename) {
 		fclose(in);
 		return 1;
 	}
+
 	cout << "OK" << endl;
 	fclose(in);
 	return 0;
