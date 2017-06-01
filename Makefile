@@ -10,7 +10,10 @@ parser: $(PROJECT_NAME).y
 	bison -d -o $(PROJECT_NAME).tab.c $(PROJECT_NAME).y
 
 CLASS_SOURCES=env/*.cpp
-FLAGS=-lboost_system -lboost_filesystem -std=c++11 -lfl -Wno-write-strings
+FLAGS=-lboost_system -lboost_filesystem -std=c++11 -Wno-write-strings
 
 exec: lexer parser
 	g++ -o ${PROJECT_NAME} main.cpp $(PROJECT_NAME).lex.c $(PROJECT_NAME).tab.c $(CLASS_SOURCES) $(FLAGS)
+
+clear clean:
+	rm -f *.tab.? *.lex.? milldb milldb.exe

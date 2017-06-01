@@ -12,15 +12,17 @@ using std::cerr;
 using std::endl;
 using std::string;
 
+int yyparse(void);
+
 void generate(fs::path path) {
 	Environment* e = Environment::get_instance();
 	std::string filename = e->get_name();
 
 	fs::path source = path / (filename + ".c");
-	fs::ofstream ofs(source);
+	std::ofstream ofs(source.string());
 
 	fs::path library = path / (filename + ".h");
-	fs::ofstream ofl(library);
+	std::ofstream ofl(library.string());
 
 	ofl << endl;
 
