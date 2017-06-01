@@ -1,0 +1,17 @@
+CREATE TABLE Data (
+	id int,
+	value float,
+	weight double
+);
+
+CREATE INDEX Data_PK on Data (id);
+
+CREATE PROCEDURE writeproc_Data (arg1 int in, arg2 float in, arg3 double in)
+BEGIN
+	INSERT TABLE Data VALUES ($arg1, $arg2, $arg3);
+END;
+
+CREATE PROCEDURE readproc_Data (arg1 int in, arg2 int out)
+BEGIN
+	SELECT value SET $arg2, weight FROM Data WHERE id = $arg1;
+END;
