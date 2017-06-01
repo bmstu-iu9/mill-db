@@ -10,6 +10,9 @@ Environment* Environment::get_instance() {
 }
 
 Environment::~Environment() {
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		delete &it;
+	}
 	this->tables.clear();
 }
 
@@ -25,17 +28,9 @@ std::string Environment::get_name() {
 	return this->name;
 }
 
-std::map<std::string, Table*>::iterator Environment::begin_iter_tables() {
-	return this->tables.begin();
-}
-
-std::map<std::string, Table*>::iterator Environment::end_iter_tables() {
-	return this->tables.end();
-}
-
 Table* Environment::find_table(std::string search_name) {
 	std::map<std::string, Table*>::iterator it = this->tables.find(search_name);
-	if (it == end_iter_tables())
+	if (it == this->tables.end())
 		return nullptr;
 	return this->tables.find(search_name)->second;
 }

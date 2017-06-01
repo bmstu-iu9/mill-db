@@ -10,7 +10,7 @@ map<string, Column::Type> Column::str_to_type = {
 
 map<Column::Type, string> reverse_map(map<string, Column::Type> str_to_type) {
 	map<Column::Type, string> reversed;
-	for (map<string, Column::Type>::iterator it = str_to_type.begin(); it != str_to_type.end(); ++it)
+	for (auto it = str_to_type.begin(); it != str_to_type.end(); ++it)
 		reversed[it->second] = it->first;
 	return reversed;
 };
@@ -24,14 +24,14 @@ Column::Column(string name, Column::Type type) {
 }
 
 string Column::convert_type_to_str(Column::Type type) {
-	map<Column::Type, string>::iterator it = Column::type_to_str.find(type);
+	auto it = Column::type_to_str.find(type);
 	if (it == Column::type_to_str.end())
 		return nullptr;
 	return it->second;
 }
 
 Column::Type Column::convert_str_to_type(string str) {
-	map<string, Column::Type>::iterator it = Column::str_to_type.find(str);
+	auto it = Column::str_to_type.find(str);
 	if (it == Column::str_to_type.end()) {
 		return (Column::Type) (-1);
 	}

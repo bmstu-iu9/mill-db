@@ -21,9 +21,6 @@ public:
     void add_index(Index* index);
 
     Column* find_column(string search_name);
-
-    map<std::string, Column*>::iterator begin_iter_cols();
-    map<std::string, Column*>::iterator end_iter_cols();
 private:
     string name;
     map<std::string, Column*> cols;
