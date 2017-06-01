@@ -30,13 +30,19 @@ extern "C" {
 	Index*            idx;
 	vector<Index*>*   idx_vec;
 }
+
 %start program
 
-%token CREATE_KEYWORD INSERT_KEYWORD WRITEPROC_KEYWORD READPROC_KEYWORD TABLE_KEYWORD
-%token PK_KEYWORD BEGIN_KEYWORD END_KEYWORD INDEX_KEYWORD ON_KEYWORD
-%token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD STR_KEYWORD
-%token RPAREN LPAREN SEMICOLON COMMA
-%token IDENTIFIER VALUE
+%token LPAREN RPAREN SEMICOLON COMMA EQ
+%token TABLE_KEYWORD
+%token CREATE_KEYWORD
+%token SELECT_KEYWORD FROM_KEYWORD WHERE_KEYWORD
+%token INSERT_KEYWORD VALUES_KEYWORD
+%token PROCEDURE_KEYWORD BEGIN_KEYWORD END_KEYWORD IN_KEYWORD OUT_KEYWORD SET_KEYWORD
+%token INDEX_KEYWORD ON_KEYWORD
+%token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD
+%token IDENTIFIER PARAMETER
+%token BAD_CHARACTER
 
 %type <str> IDENTIFIER
 
@@ -48,22 +54,15 @@ extern "C" {
 %type <str> INT_KEYWORD
 %type <str> FLOAT_KEYWORD
 %type <str> DOUBLE_KEYWORD
-%type <str> STR_KEYWORD
 
-%type <str> table_declaration_name
-%type <str> index_declaration_name
-%type <str> index_declaration_table_name
-%type <str> index_parameter
-%type <str_vec> index_parameter_list
+%type <str_vec> column_name_list
 %type <table> table_declaration
-%type <col> table_column_declaration
-%type <col_vec> table_column_declaration_list
+%type <col> column_declaration
+%type <col_vec> column_declaration_list
 %type <idx> index_declaration
 
-%token BAD_CHARACTER
-
-%destructor { delete $$; } IDENTIFIER INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD
-%destructor { delete $$; } table_column_declaration_list index_parameter_list
+%destructor { delete &$$; } IDENTIFIER INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD PARAMETER
+%destructor { delete $$; } column_declaration_list column_name_list
 %%
 program: program_element_list
 	;
@@ -73,17 +72,18 @@ program_element_list: program_element
 
 program_element: table_declaration { Environment::get_instance()->add_table($1); }
 	| index_declaration
+	| procedure_declaration
     ;
 
-table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_declaration_name
-		LPAREN table_column_declaration_list RPAREN SEMICOLON {
+table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name
+		LPAREN column_declaration_list RPAREN SEMICOLON {
 			$$ = new Table($3->c_str());
 			$$->add_columns($5);
 		}
     ;
 
-index_declaration: CREATE_KEYWORD INDEX_KEYWORD index_declaration_name ON_KEYWORD
-		index_declaration_table_name LPAREN index_parameter_list RPAREN SEMICOLON {
+index_declaration: CREATE_KEYWORD INDEX_KEYWORD index_name ON_KEYWORD
+		table_name LPAREN column_name_list RPAREN SEMICOLON {
 			$$ = new Index($3->c_str());
 
 			Table* table = Environment::get_instance()->find_table($5->c_str());
@@ -108,30 +108,62 @@ index_declaration: CREATE_KEYWORD INDEX_KEYWORD index_declaration_name ON_KEYWOR
 		}
 	;
 
-index_parameter_list: index_parameter {
+procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN parameter_declaration_list RPAREN
+		BEGIN_KEYWORD statement_list END_KEYWORD SEMICOLON
+	;
+
+statement_list: statement
+	| statement_list statement
+	;
+
+statement: insert_statement
+	| select_statement
+	;
+
+insert_statement: INSERT_KEYWORD TABLE_KEYWORD table_name VALUES_KEYWORD LPAREN value_list RPAREN SEMICOLON
+
+select_statement: SELECT_KEYWORD selection_list FROM_KEYWORD table_name WHERE_KEYWORD condition_list SEMICOLON
+
+parameter_declaration_list: parameter_declaration
+	| parameter_declaration_list COMMA parameter_declaration
+	;
+
+parameter_declaration: parameter_name data_type parameter_mode
+	;
+
+selection_list: selection
+	| selection_list COMMA selection
+	;
+
+selection: column_name SET_KEYWORD parameter_name
+
+condition_list: condition
+	;
+
+condition: column_name EQ parameter_name
+	;
+
+column_name_list: column_name {
 			$$ = new vector<string>;
 			$$->push_back(*$1);
 		}
-	| index_parameter_list COMMA index_parameter {
+	| column_name_list COMMA column_name {
 			$$ = $1;
 			$$->push_back(*$3);
 		}
     ;
 
-index_parameter: column_name
-	;
-
-table_column_declaration_list: table_column_declaration {
+column_declaration_list: column_declaration {
 			$$ = new vector<Column*>;
 			$$->push_back($1);
 		}
-	| table_column_declaration_list COMMA table_column_declaration {
+	| column_declaration_list COMMA column_declaration {
 			$$ = $1;
 			$$->push_back($3);
 		}
 	;
 
-table_column_declaration: column_name data_type {
+column_declaration: column_name data_type {
 			Column::Type type = Column::convert_str_to_type($2->c_str());
 			if ((int)type < 0) {
 				string msg("wrong type ");
@@ -142,13 +174,11 @@ table_column_declaration: column_name data_type {
 		}
 	;
 
-table_declaration_name: table_name
-    ;
-
-index_declaration_name: index_name
+value_list: value
+	| value_list COMMA value
 	;
 
-index_declaration_table_name: table_name
+value: parameter_name
 	;
 
 table_name: IDENTIFIER
@@ -160,11 +190,20 @@ index_name: IDENTIFIER
 column_name: IDENTIFIER
 	;
 
-data_type: INT_KEYWORD
-	| FLOAT_KEYWORD
-	| DOUBLE_KEYWORD
-	| STR_KEYWORD
+procedure_name: IDENTIFIER
 	;
+
+parameter_name: PARAMETER
+	;
+
+data_type:    INT_KEYWORD
+			| FLOAT_KEYWORD
+			| DOUBLE_KEYWORD
+			;
+
+parameter_mode:   IN_KEYWORD
+				| OUT_KEYWORD
+				;
 %%
 void yyerror(char* s) {
     std::cerr << "line " << yylineno << ": " << s << std::endl;

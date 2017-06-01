@@ -57,8 +57,8 @@ int parse_file(std::string filename) {
 		return 1;
 	}
 
-	cout << "OK" << endl;
 	fclose(in);
+	cout << "OK" << endl;
 	return 0;
 }
 

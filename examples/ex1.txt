@@ -6,12 +6,12 @@ CREATE TABLE Data (
 
 CREATE INDEX Data_PK on Data (id);
 
-CREATE PROCEDURE writeproc_Data (arg1 int in, arg2 float in, arg3 double in)
+CREATE PROCEDURE writeproc_Data (@param1 int in, @param2 float in, @param3 double in)
 BEGIN
-	INSERT TABLE Data VALUES ($arg1, $arg2, $arg3);
+	INSERT TABLE Data VALUES (@param1, @param2, @param3);
 END;
 
-CREATE PROCEDURE readproc_Data (arg1 int in, arg2 int out)
+CREATE PROCEDURE readproc_Data (@param1 int in, @param2 int out)
 BEGIN
-	SELECT value SET $arg2, weight FROM Data WHERE id = $arg1;
+	SELECT value SET @param2 FROM Data WHERE id = @param1;
 END;
