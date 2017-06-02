@@ -22,8 +22,8 @@ extern "C" {
 #define SELECT_STATEMENT 2
 
 struct statement {
-	int                 type;
-	Table*              table;
+	int				 type;
+	Table*			  table;
 	vector<pair<string, Argument::Type> >*  arg_str_vec;
 };
 %}
@@ -37,17 +37,17 @@ struct statement {
 }
 
 %union {
-	string*           str;
+	string*		   str;
 	vector<string>*   str_vec;
-	Table*            table;
-	Column*           col;
+	Table*			table;
+	Column*		   col;
 	vector<Column*>*  col_vec;
-	Index*            idx;
+	Index*			idx;
 	vector<Index*>*   idx_vec;
-	Argument*         arg;
-	Procedure*        proc;
-	Parameter*        param;
-	DataType::Type    dtype;
+	Argument*		 arg;
+	Procedure*		proc;
+	Parameter*		param;
+	DataType::Type	dtype;
 	Parameter::Mode   pmode;
 
 	vector<Parameter*>* param_vec;
@@ -55,7 +55,7 @@ struct statement {
 	pair<string, Argument::Type>* arg_str;
 	vector<pair<string, Argument::Type> >* arg_str_vec;
 
-	struct statement*           stmt;
+	struct statement*		   stmt;
 	vector<struct statement*>*  stmt_vec;
 }
 
@@ -105,14 +105,14 @@ program_element_list: program_element
 program_element: table_declaration { Environment::get_instance()->add_table($1); }
 	| index_declaration
 	| procedure_declaration
-    ;
+	;
 
 table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name
 		LPAREN column_declaration_list RPAREN SEMICOLON {
 			$$ = new Table($3->c_str());
 			$$->add_columns(*$5);
 		}
-    ;
+	;
 
 index_declaration: CREATE_KEYWORD INDEX_KEYWORD index_name ON_KEYWORD
 		table_name LPAREN column_name_list RPAREN SEMICOLON {
@@ -121,17 +121,17 @@ index_declaration: CREATE_KEYWORD INDEX_KEYWORD index_name ON_KEYWORD
 			Table* table = find_table($5->c_str());
 
 			for (vector<string>::iterator it = $7->begin(); it != $7->end(); ++it) {
-                string column_name = *it;
-                Column* col = table->find_column(column_name);
-                if (col == nullptr) {
-                    string msg("wrong column name ");
-                    msg += column_name;
-                    throw logic_error(error_msg(msg));
-                }
-                $$->add_column(col);
-            }
+				string column_name = *it;
+				Column* col = table->find_column(column_name);
+				if (col == nullptr) {
+					string msg("wrong column name ");
+					msg += column_name;
+					throw logic_error(error_msg(msg));
+				}
+				$$->add_column(col);
+			}
 
-            table->add_index($$);
+			table->add_index($$);
 		}
 	;
 
@@ -139,14 +139,14 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 		BEGIN_KEYWORD statement_list END_KEYWORD SEMICOLON {
 			string procedure_name = $3->c_str();
 			Procedure* procedure = Environment::get_instance()->find_procedure(procedure_name);
-            if (procedure != nullptr) {
-                string msg;
-                msg += procedure_name;
-                msg += " already declared";
-                throw logic_error(error_msg(msg));
+			if (procedure != nullptr) {
+				string msg;
+				msg += procedure_name;
+				msg += " already declared";
+				throw logic_error(error_msg(msg));
 			}
 
-            $$ = new Procedure(procedure_name, *$5);
+			$$ = new Procedure(procedure_name, *$5);
 		}
 	;
 
@@ -184,7 +184,7 @@ parameter_declaration_list: parameter_declaration {
 		}
 	| parameter_declaration_list COMMA parameter_declaration {
 			$$ = $1;
-            $$->push_back($3);
+			$$->push_back($3);
 		}
 	;
 
@@ -213,7 +213,7 @@ column_name_list: column_name {
 			$$ = $1;
 			$$->push_back(*$3);
 		}
-    ;
+	;
 
 column_declaration_list: column_declaration {
 			print_term("column_declaration_list 1 BEGIN");
@@ -229,7 +229,7 @@ column_declaration_list: column_declaration {
 
 column_declaration: column_name data_type {
 			print_term("column_declaration BEGIN");
-            $$ = new Column($1->c_str(), $2);
+			$$ = new Column($1->c_str(), $2);
 			print_term("column_declaration END");
 		}
 	;
@@ -241,9 +241,9 @@ argument_list: argument {
 			print_term("argument_list 1 END");
 		}
 	| argument_list COMMA argument {
-            $$ = $1;
-            $$->push_back(*$3);
-        }
+			$$ = $1;
+			$$->push_back(*$3);
+		}
 	;
 
 argument: parameter_name {
@@ -274,7 +274,7 @@ parameter_name: PARAMETER {
 		}
 	;
 
-data_type:    INT_KEYWORD { print_term("data_type 1 BEGIN"); $$ = DataType::INT; print_term("data_type 1 END");}
+data_type:	INT_KEYWORD { print_term("data_type 1 BEGIN"); $$ = DataType::INT; print_term("data_type 1 END");}
 			| FLOAT_KEYWORD { $$ = DataType::FLOAT; }
 			| DOUBLE_KEYWORD { $$ = DataType::DOUBLE; }
 			;
@@ -284,11 +284,11 @@ parameter_mode:   IN_KEYWORD { print_term("parameter_mode 1 BEGIN"); $$ = Parame
 				;
 %%
 void yyerror(char* s) {
-    std::cerr << "line " << yylineno << ": " << s << std::endl;
+	std::cerr << "line " << yylineno << ": " << s << std::endl;
 }
 
 int yywrap(void) {
-    return 1;
+	return 1;
 }
 
 string error_msg(string s) {
@@ -299,17 +299,17 @@ string error_msg(string s) {
 
 Table* find_table(string table_name) {
 	Table* table = Environment::get_instance()->find_table(table_name);
-    if (table == nullptr) {
-        string msg("wrong table name ");
-        msg += table_name;
-        throw logic_error(error_msg(msg));
-    }
-    return table;
+	if (table == nullptr) {
+		string msg("wrong table name ");
+		msg += table_name;
+		throw logic_error(error_msg(msg));
+	}
+	return table;
 }
 
 
 void print_term(char* term_name) {
 #ifdef PRINT_DEBUG
-    std::cout << term_name << std::endl;
+	std::cout << term_name << std::endl;
 #endif
 }

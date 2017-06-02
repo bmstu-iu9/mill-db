@@ -9,16 +9,16 @@
 
 class Table {
 public:
-    Table(std::string name);
+	Table(std::string name);
 	~Table();
 
 	std::string get_name();
 
-    void add_column(Column* col);
+	void add_column(Column* col);
 	void add_columns(std::vector<Column*> cols);
-    void add_index(Index* index);
+	void add_index(Index* index);
 
-    Column* find_column(std::string search_name);
+	Column* find_column(std::string search_name);
 private:
 	std::string name;
 	std::map<std::string, Column*> cols;
