@@ -7,24 +7,22 @@
 #include "Column.h"
 #include "Index.h"
 
-using namespace std;
-
 class Table {
 public:
-    Table(string name);
+    Table(std::string name);
 	~Table();
 
-    string get_name();
+	std::string get_name();
 
     void add_column(Column* col);
-	void add_columns(vector<Column*>* cols);
+	void add_columns(std::vector<Column*> cols);
     void add_index(Index* index);
 
-    Column* find_column(string search_name);
+    Column* find_column(std::string search_name);
 private:
-    string name;
-    map<std::string, Column*> cols;
-    map<std::string, Index*> indexes;
+	std::string name;
+	std::map<std::string, Column*> cols;
+	std::map<std::string, Index*> indexes;
 };
 
 

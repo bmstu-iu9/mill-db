@@ -1,5 +1,13 @@
-//
-// Created by vladimir on 6/1/17.
-//
-
 #include "Parameter.h"
+
+using namespace std;
+
+Parameter::Parameter(std::string name, DataType::Type type, Parameter::Mode mode) {
+	this->name = name;
+	this->type = type;
+	this->mode = mode;
+}
+
+string Parameter::get_name() {
+	return this->name;
+}

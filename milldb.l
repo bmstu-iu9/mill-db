@@ -2,7 +2,7 @@
 #include <iostream>
 #include "milldb.tab.h"
 
-// #define PRINT_DEBUG
+//#define PRINT_DEBUG
 
 void print_token(char* token_name) {
 #ifdef PRINT_DEBUG
@@ -91,9 +91,9 @@ WHITESPACE          [ \t\n]+
 <INITIAL>{INDEX_KEYWORD}        { print_token("INDEX_KEYWORD"); return INDEX_KEYWORD; }
 <INITIAL>{ON_KEYWORD}           { print_token("ON_KEYWORD"); return ON_KEYWORD; }
 
-<INITIAL>{INT_KEYWORD}      { yylval.str = new std::string(yytext); print_token("INT_KEYWORD"); return INT_KEYWORD; }
-<INITIAL>{FLOAT_KEYWORD}    { yylval.str = new std::string(yytext); print_token("FLOAT_KEYWORD"); return FLOAT_KEYWORD; }
-<INITIAL>{DOUBLE_KEYWORD}   { yylval.str = new std::string(yytext); print_token("DOUBLE_KEYWORD"); return DOUBLE_KEYWORD; }
+<INITIAL>{INT_KEYWORD}      { print_token("INT_KEYWORD"); return INT_KEYWORD; }
+<INITIAL>{FLOAT_KEYWORD}    { print_token("FLOAT_KEYWORD"); return FLOAT_KEYWORD; }
+<INITIAL>{DOUBLE_KEYWORD}   { print_token("DOUBLE_KEYWORD"); return DOUBLE_KEYWORD; }
 
 <INITIAL>{IDENTIFIER}   { yylval.str = new std::string(yytext); print_token("IDENTIFIER"); return IDENTIFIER; }
 <INITIAL>{PARAMETER}    { yylval.str = new std::string(yytext); print_token("PARAMETER"); return PARAMETER; }

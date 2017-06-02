@@ -1,16 +1,19 @@
-//
-// Created by vladimir on 6/1/17.
-//
+#ifndef PROJECT_INSERT_STATEMENT_H
+#define PROJECT_INSERT_STATEMENT_H
 
-#ifndef PROJECT_INSERTSTATEMENT_H
-#define PROJECT_INSERTSTATEMENT_H
+#include <string>
+#include "Table.h"
+#include "Statement.h"
+#include "Argument.h"
 
+class InsertStatement: public Statement {
+public:
+	InsertStatement(Table* table, std::vector<Argument*> args);
 
-
-class InsertStatement {
-
+private:
+	Table* table;
+	std::vector<Argument*> args;
 };
 
 
-
-#endif //PROJECT_INSERTSTATEMENT_H
+#endif //PROJECT_INSERT_STATEMENT_H

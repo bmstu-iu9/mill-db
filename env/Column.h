@@ -4,25 +4,17 @@
 #include <string>
 #include <iostream>
 #include <map>
-
-using namespace std;
-
+#include "DataType.h"
 
 class Column {
 public:
-	enum Type {INT, FLOAT, DOUBLE};
+	Column(std::string name, DataType::Type type);
+	std::string get_name();
+	DataType::Type get_type();
 
-	Column(string name, Column::Type type);
-	enum Type get_type();
-	string get_name();
-
-	static string convert_type_to_str(Type type);
-	static Type convert_str_to_type(string str);
 private:
-	static map<string, Type> str_to_type;
-	static map<Type, string> type_to_str;
-	string name;
-	enum Type type;
+	std::string name;
+	DataType::Type type;
 };
 
 

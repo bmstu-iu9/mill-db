@@ -1,17 +1,19 @@
 #include "Table.h"
 
+using namespace std;
+
 Table::Table(string name) {
 	this->name = name;
 }
 
 Table::~Table() {
 	for (auto it = this->cols.begin(); it != this->cols.end(); it++) {
-		delete &it;
+		delete it->second;
 	}
 	this->cols.clear();
 
 	for (auto it = this->indexes.begin(); it != this->indexes.end(); it++) {
-		delete &it;
+		delete it->second;
 	}
 	this->indexes.clear();
 }
@@ -35,8 +37,8 @@ Column* Table::find_column(string search_name) {
 	return this->cols.find(search_name)->second;
 }
 
-void Table::add_columns(vector<Column*>* cols) {
-	for (auto it = cols->begin(); it != cols->end(); ++it) {
+void Table::add_columns(vector<Column*> cols) {
+	for (auto it = cols.begin(); it != cols.end(); ++it) {
 		this->add_column(*it);
 	}
 }
