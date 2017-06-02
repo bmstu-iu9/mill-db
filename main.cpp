@@ -69,7 +69,26 @@ int main(int argc, char *argv[]) {
 
 	if ( (argc == 0) || (argc == 1 && (strcmp(argv[0], "-h") == 0 || strcmp(argv[0], "--help") == 0)) ) {
 		// TODO Write here a help message
-		cout << "help" << endl;
+		cout << "USAGE:" << endl
+		     << "  " << "milldb [<filename>]" << endl
+		     << endl
+		     << "\t<filename>\tfile containing database specification" << endl
+		     << endl
+		     << endl
+		     << "SPECIFICATION RULES:" << endl
+		     << "  " << "Create a new table:" << endl
+		     <<	"  " << "\t" << "CREATE TABLE table-name ( {column-name data-type} ); " << endl
+		     << endl
+		     << "  " << "Create an index on a table:" << endl
+		     <<	"  " << "\t" << "CREATE INDEX index-name ON table-name ( {column-name} ); " << endl
+             << endl
+             << "  " << "Create a stored procedure:" << endl
+             <<	"  " << "\t" << "CREATE PROCEDURE procedure-name ({parameter-name data-type parameter-mode})" << endl
+             <<	"  " << "\t" << "BEGIN" << endl
+             <<	"  " << "\t\t" << "{ [INSERT TABLE table-name VALUES ({argument});] |" << endl
+             <<	"  " << "\t\t" << "[SELECT {column-name SET parameter-name} FROM table-name WHERE {condition}; ] }" << endl
+             <<	"  " << "\t" << "END;" << endl
+				;
 	} else if (argc == 1) {
 		fs::path p(argv[0]);
 		Environment::get_instance()->set_name(p.stem().string());
