@@ -17,3 +17,10 @@ string Procedure::get_name() {
 void Procedure::add_parameter(Parameter* param) {
 	this->params.insert({param->get_name(), param});
 }
+
+Parameter* Procedure::find_parameter(std::string search_name) {
+	std::map<std::string, Parameter*>::iterator it = this->params.find(search_name);
+	if (it == this->params.end())
+		return nullptr;
+	return this->params.find(search_name)->second;
+}

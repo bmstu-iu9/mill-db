@@ -11,3 +11,7 @@ Parameter::Parameter(std::string name, DataType::Type type, Parameter::Mode mode
 string Parameter::get_name() {
 	return this->name;
 }
+
+DataType::Type Parameter::get_type() {
+	return this->type;
+}

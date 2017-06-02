@@ -38,7 +38,24 @@ Column* Table::find_column(string search_name) {
 }
 
 void Table::add_columns(vector<Column*> cols) {
-	for (auto it = cols.begin(); it != cols.end(); ++it) {
+	for (auto it = cols.begin(); it != cols.end(); it++) {
 		this->add_column(*it);
 	}
+}
+
+int Table::cols_size() {
+	return this->cols.size();
+}
+
+Column* Table::cols_at(int index) {
+	if (index > this->cols.size())
+		return nullptr;
+
+	int i = 0;
+	for (auto it = this->cols.begin(); it != this->cols.end(); it++, i++) {
+		if (i == index) {
+			return it->second;
+		}
+	}
+	return nullptr;
 }

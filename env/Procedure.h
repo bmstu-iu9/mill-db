@@ -11,6 +11,7 @@ public:
 	std::string get_name();
 
 	void add_parameter(Parameter* param);
+	Parameter* find_parameter(std::string search_name);
 
 private:
 	std::string name;

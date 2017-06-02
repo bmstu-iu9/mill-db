@@ -19,6 +19,8 @@ public:
 	void add_index(Index* index);
 
 	Column* find_column(std::string search_name);
+	int cols_size();
+	Column* cols_at(int index);
 private:
 	std::string name;
 	std::map<std::string, Column*> cols;

@@ -37,18 +37,18 @@ struct statement {
 }
 
 %union {
-	string*		   str;
-	vector<string>*   str_vec;
-	Table*			table;
-	Column*		   col;
-	vector<Column*>*  col_vec;
-	Index*			idx;
-	vector<Index*>*   idx_vec;
-	Argument*		 arg;
-	Procedure*		proc;
-	Parameter*		param;
-	DataType::Type	dtype;
-	Parameter::Mode   pmode;
+	string*             str;
+	vector<string>*     str_vec;
+	Table*              table;
+	Column*             col;
+	vector<Column*>*    col_vec;
+	Index*              idx;
+	vector<Index*>*     idx_vec;
+	Argument*           arg;
+	Procedure*          proc;
+	Parameter*          param;
+	DataType::Type      dtype;
+	Parameter::Mode     pmode;
 
 	vector<Parameter*>* param_vec;
 
@@ -147,6 +147,44 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 			}
 
 			$$ = new Procedure(procedure_name, *$5);
+
+			for (struct statement* const& stmt: *$8) {
+				if (stmt->type == INSERT_STATEMENT) {
+					Table* table = stmt->table;
+
+					if (table->cols_size() != stmt->arg_str_vec->size()) {
+						throw logic_error(error_msg("incorrent number of arguments"));
+					}
+
+					for (int i = 0; i < stmt->arg_str_vec->size(); i++) {
+						pair<string, Argument::Type> arg = stmt->arg_str_vec->at(i);
+						Argument::Type arg_type = arg.second;
+						if (arg_type == Argument::PARAMETER) {
+							Parameter* param = $$->find_parameter(arg.first);
+
+							if (param == nullptr) {
+								string msg;
+								msg += "parameter ";
+                                msg += arg.first;
+                                msg += " not declared";
+                                throw logic_error(error_msg(msg));
+							}
+
+							if (param->get_type() != table->cols_at(i)->get_type()) {
+								string msg;
+                                msg += "incompatible types with argument ";
+                                msg += to_string(i);
+                                throw logic_error(error_msg(msg));
+							}
+
+
+						}
+
+					}
+
+				} else
+					throw logic_error(error_msg("invalid statement"));
+			}
 		}
 	;
 
@@ -274,14 +312,22 @@ parameter_name: PARAMETER {
 		}
 	;
 
-data_type:	INT_KEYWORD { print_term("data_type 1 BEGIN"); $$ = DataType::INT; print_term("data_type 1 END");}
-			| FLOAT_KEYWORD { $$ = DataType::FLOAT; }
-			| DOUBLE_KEYWORD { $$ = DataType::DOUBLE; }
-			;
+data_type:	INT_KEYWORD {
+			print_term("data_type 1 BEGIN");
+			$$ = DataType::INT;
+			print_term("data_type 1 END");
+		}
+	| FLOAT_KEYWORD { $$ = DataType::FLOAT; }
+	| DOUBLE_KEYWORD { $$ = DataType::DOUBLE; }
+	;
 
-parameter_mode:   IN_KEYWORD { print_term("parameter_mode 1 BEGIN"); $$ = Parameter::IN; print_term("parameter_mode 1 END"); }
-				| OUT_KEYWORD { $$ = Parameter::OUT; }
-				;
+parameter_mode:   IN_KEYWORD {
+			print_term("parameter_mode 1 BEGIN");
+			$$ = Parameter::IN;
+			print_term("parameter_mode 1 END");
+		}
+	| OUT_KEYWORD { $$ = Parameter::OUT; }
+	;
 %%
 void yyerror(char* s) {
 	std::cerr << "line " << yylineno << ": " << s << std::endl;
