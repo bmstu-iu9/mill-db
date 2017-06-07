@@ -24,6 +24,8 @@ void generate(fs::path path) {
 	fs::path library = path / (filename + ".h");
 	std::ofstream ofl(library.string());
 
+
+	e->print(&ofs, &ofl);
 //	ofl << endl;
 
 //	for (std::map<std::string, Table*>::iterator it = e->begin_iter_tables(); it != e->end_iter_tables(); ++it) {

@@ -11,6 +11,7 @@ public:
 	Column(std::string name, DataType::Type type, bool pk);
 	std::string get_name();
 	DataType::Type get_type();
+	bool get_pk();
 
 private:
 	std::string name;

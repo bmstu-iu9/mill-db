@@ -4,8 +4,10 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <fstream>
 #include "Column.h"
 #include "Index.h"
+#include "DataType.h"
 
 class Table {
 public:
@@ -21,6 +23,8 @@ public:
 	Column* find_column(std::string search_name);
 	int cols_size();
 	Column* cols_at(int index);
+
+	void print(std::ofstream* ofs, std::ofstream* ofl);
 private:
 	std::string name;
 	std::map<std::string, Column*> cols;

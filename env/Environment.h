@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include <fstream>
 #include "Table.h"
 #include "Procedure.h"
 
@@ -19,6 +20,8 @@ public:
 
 	Table* find_table(std::string search_name);
 	Procedure* find_procedure(std::string search_name);
+
+	void print(std::ofstream* ofs, std::ofstream* ofl);
 
 private:
 	Environment() { }

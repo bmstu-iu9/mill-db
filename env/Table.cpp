@@ -59,3 +59,46 @@ Column* Table::cols_at(int index) {
 	}
 	return nullptr;
 }
+
+void Table::print(std::ofstream* ofs, std::ofstream* ofl) {
+
+	string name = this->get_name();
+
+	// Key
+	(*ofs) << "struct " << name << "_key {" << endl;
+	for (auto it = this->cols.begin(); it != this->cols.end(); it++) {
+		Column* col = it->second;
+		if (col->get_pk())
+			(*ofs) << "\t" << DataType::convert_type_to_str(col->get_type()) << " " << col->get_name() << ";" << endl;
+	}
+	(*ofs) << "};" << endl
+	       << endl;
+
+	// Key comparator
+	(*ofs) << "int " << name << "_key_compare(struct " << name << "_key* s1, "
+	       << "struct " << name << "_key* s2) {" << endl;
+
+	(*ofs) << "}" << endl
+	       << endl;
+
+	// Table row
+	(*ofs) << "struct " << name << "_struct {" << endl;
+	(*ofs) << "\t" << "struct " << name << "_key* key;" << endl;
+	for (auto it = this->cols.begin(); it != this->cols.end(); it++) {
+		Column* col = it->second;
+		if (!col->get_pk())
+			(*ofs) << "\t" << DataType::convert_type_to_str(col->get_type()) << " " << col->get_name() << ";" << endl;
+	}
+	(*ofs) << "};" << endl
+	       << endl;
+
+	// Row comparator
+	(*ofs) << "int " << name << "_struct_compare(struct " << name << "_struct* s1, "
+	       << "struct " << name << "_struct* s2) {" << endl
+	       << "\t" << "return " << name << "_key_compare(s1->key, s2->key);" << endl
+		   << "}" << endl
+	       << endl;
+
+	(*ofs) << "#define NODE_SIZE 3" << endl
+	       << endl;
+}

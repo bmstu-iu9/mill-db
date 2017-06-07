@@ -17,3 +17,7 @@ enum DataType::Type Column::get_type() {
 string Column::get_name() {
 	return this->name;
 }
+
+bool Column::get_pk() {
+	return this->pk;
+}

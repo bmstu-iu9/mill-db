@@ -43,3 +43,17 @@ Procedure* Environment::find_procedure(std::string search_name) {
 		return nullptr;
 	return this->procedures.find(search_name)->second;
 }
+
+void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
+	// Print standard headers
+	(*ofs) << "#include <stdlib.h>" << endl
+		   << "#include <stdbool.h>" << endl
+		   << "#include <stdio.h>" << endl
+           << "#include \"" << this-> get_name() << ".h\"" << endl
+		   << endl;
+
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		it->second->print(ofs, ofl);
+	}
+
+}

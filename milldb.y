@@ -225,6 +225,8 @@ statement: insert_statement
 insert_statement: INSERT_KEYWORD TABLE_KEYWORD table_name VALUES_KEYWORD LPAREN argument_list RPAREN SEMICOLON {
 			Table* table = find_table($3->c_str());
 
+			// TODO: Add testing if table with this name exists
+
 			$$->type = INSERT_STATEMENT;
 			$$->table = table;
 			$$->arg_str_vec = $6;
