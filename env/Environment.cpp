@@ -1,5 +1,7 @@
 #include "Environment.h"
 
+using namespace std;
+
 Environment::~Environment() {
 	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
 		delete it->second;

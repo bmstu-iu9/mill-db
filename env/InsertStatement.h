@@ -9,7 +9,7 @@
 class InsertStatement: public Statement {
 public:
 	InsertStatement(Table* table, std::vector<Argument*> args);
-
+	std::string print();
 private:
 	Table* table;
 	std::vector<Argument*> args;

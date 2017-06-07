@@ -24,6 +24,7 @@ EQ			"="
 TABLE_KEYWORD		?i:"table"
 
 CREATE_KEYWORD		?i:"create"
+PK_KEYWORD          ?i:"pk"
 
 SELECT_KEYWORD		?i:"select"
 FROM_KEYWORD		?i:"from"
@@ -73,6 +74,7 @@ WHITESPACE			[ \t\n]+
 <INITIAL>{TABLE_KEYWORD}		{ print_token("TABLE_KEYWORD"); return TABLE_KEYWORD; }
 
 <INITIAL>{CREATE_KEYWORD}		{ print_token("CREATE_KEYWORD"); return CREATE_KEYWORD; }
+<INITIAL>{PK_KEYWORD}		    { print_token("PK_KEYWORD"); return PK_KEYWORD; }
 
 <INITIAL>{SELECT_KEYWORD}		{ print_token("SELECT_KEYWORD"); return SELECT_KEYWORD; }
 <INITIAL>{FROM_KEYWORD}			{ print_token("FROM_KEYWORD"); return FROM_KEYWORD; }

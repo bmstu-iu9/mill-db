@@ -4,9 +4,10 @@
 
 using namespace std;
 
-Column::Column(string name, DataType::Type type) {
+Column::Column(string name, DataType::Type type, bool pk) {
 	this->name = name;
 	this->type = type;
+	this->pk = pk;
 }
 
 enum DataType::Type Column::get_type() {

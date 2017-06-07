@@ -63,7 +63,7 @@ struct statement {
 
 %token LPAREN RPAREN SEMICOLON COMMA EQ
 %token TABLE_KEYWORD
-%token CREATE_KEYWORD
+%token CREATE_KEYWORD PK_KEYWORD
 %token SELECT_KEYWORD FROM_KEYWORD WHERE_KEYWORD
 %token INSERT_KEYWORD VALUES_KEYWORD
 %token PROCEDURE_KEYWORD BEGIN_KEYWORD END_KEYWORD IN_KEYWORD OUT_KEYWORD SET_KEYWORD
@@ -104,7 +104,7 @@ program_element_list: program_element
 
 program_element: table_declaration { Environment::get_instance()->add_table($1); }
 	| index_declaration
-	| procedure_declaration
+	| procedure_declaration { Environment::get_instance()->add_procedure($1); }
 	;
 
 table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name
@@ -138,6 +138,8 @@ index_declaration: CREATE_KEYWORD INDEX_KEYWORD index_name ON_KEYWORD
 procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN parameter_declaration_list RPAREN
 		BEGIN_KEYWORD statement_list END_KEYWORD SEMICOLON {
 			string procedure_name = $3->c_str();
+
+			// Check if procedure with the same name already exists
 			Procedure* procedure = Environment::get_instance()->find_procedure(procedure_name);
 			if (procedure != nullptr) {
 				string msg;
@@ -146,41 +148,59 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 				throw logic_error(error_msg(msg));
 			}
 
+			// Create new Procedure instance, init it by name and arguments
 			$$ = new Procedure(procedure_name, *$5);
 
+			// Begin to constuct new Procedure
+			// Iterate by all statement (insert/select)
 			for (struct statement* const& stmt: *$8) {
+
+				Statement* statement;
+
+				// If statement is INSERT
 				if (stmt->type == INSERT_STATEMENT) {
+
+					// Prepare storage for arguments, right now we will populating it
+					vector<Argument*> arguments;
+
+					// Get table in which we will insert
 					Table* table = stmt->table;
 
+					// Check if number of columns is equal to number of arguments
 					if (table->cols_size() != stmt->arg_str_vec->size()) {
 						throw logic_error(error_msg("incorrent number of arguments"));
 					}
 
+					// Iterate by arguments
 					for (int i = 0; i < stmt->arg_str_vec->size(); i++) {
 						pair<string, Argument::Type> arg = stmt->arg_str_vec->at(i);
 						Argument::Type arg_type = arg.second;
+
+						// If current argument is parameter
 						if (arg_type == Argument::PARAMETER) {
+							// Try to get this parameter from procedure signature
 							Parameter* param = $$->find_parameter(arg.first);
 
+							// Check if parameter with this name exists
 							if (param == nullptr) {
-								string msg;
-								msg += "parameter ";
-								msg += arg.first;
-								msg += " not declared";
+								string msg("parameter " + arg.first + " not declared");
 								throw logic_error(error_msg(msg));
 							}
 
+							// Check if argument's type matches to parameter's type
 							if (param->get_type() != table->cols_at(i)->get_type()) {
-								string msg;
-								msg += "incompatible types with argument ";
-								msg += to_string(i);
+								string msg("incompatible types with argument " + to_string(i));
 								throw logic_error(error_msg(msg));
 							}
 
-							// HERE !!!
+							// All is OK, add argument to arg storage
+							Argument* a = new ArgParameter(param);
+							arguments.push_back(a);
 						}
-
 					}
+
+					statement = new InsertStatement(table, arguments);
+					$$->add_statement(statement);
 
 				} else
 					throw logic_error(error_msg("invalid statement"));
@@ -266,10 +286,11 @@ column_declaration_list: column_declaration {
 	;
 
 column_declaration: column_name data_type {
-			print_term("column_declaration BEGIN");
-			$$ = new Column($1->c_str(), $2);
-			print_term("column_declaration END");
+			$$ = new Column($1->c_str(), $2, false);
 		}
+	| column_name data_type PK_KEYWORD {
+      	    $$ = new Column($1->c_str(), $2, true);
+      	}
 	;
 
 argument_list: argument {

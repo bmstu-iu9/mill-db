@@ -8,13 +8,14 @@
 
 class Column {
 public:
-	Column(std::string name, DataType::Type type);
+	Column(std::string name, DataType::Type type, bool pk);
 	std::string get_name();
 	DataType::Type get_type();
 
 private:
 	std::string name;
 	DataType::Type type;
+	bool pk;
 };
 
 

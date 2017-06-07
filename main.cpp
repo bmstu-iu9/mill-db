@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 		     << "\t<filename>\tfile containing database specification" << endl
 		     << endl
 		     << endl
-		     << "SPECIFICATION RULES:" << endl
+		     << "SPECIFICATION HOW-TO:" << endl
 		     << "  " << "Create a new table:" << endl
 		     <<	"  " << "\t" << "CREATE TABLE table-name ( {column-name data-type} ); " << endl
 		     << endl
@@ -85,8 +85,8 @@ int main(int argc, char *argv[]) {
              << "  " << "Create a stored procedure:" << endl
              <<	"  " << "\t" << "CREATE PROCEDURE procedure-name ({parameter-name data-type parameter-mode})" << endl
              <<	"  " << "\t" << "BEGIN" << endl
-             <<	"  " << "\t\t" << "{ [INSERT TABLE table-name VALUES ({argument});] |" << endl
-             <<	"  " << "\t\t" << "[SELECT {column-name SET parameter-name} FROM table-name WHERE {condition}; ] }" << endl
+             <<	"  " << "\t\t" << "{ [INSERT TABLE table-name VALUES ( {argument} ) ; ] |" << endl
+             <<	"  " << "\t\t" << "  [SELECT {column-name SET parameter-name} FROM table-name WHERE {condition} ; ] }" << endl
              <<	"  " << "\t" << "END;" << endl
 				;
 	} else if (argc == 1) {

@@ -24,3 +24,7 @@ Parameter* Procedure::find_parameter(std::string search_name) {
 		return nullptr;
 	return this->params.find(search_name)->second;
 }
+
+void Procedure::add_statement(Statement *statement) {
+	this->statements.push_back(statement);
+}

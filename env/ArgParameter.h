@@ -7,6 +7,7 @@
 class ArgParameter: public Argument {
 public:
 	ArgParameter(Parameter* param);
+	std::string print();
 
 private:
 	Parameter* param;
