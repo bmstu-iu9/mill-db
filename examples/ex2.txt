@@ -1,10 +1,8 @@
 CREATE TABLE Data (
-	id int,
+	id int pk,
 	value float,
 	weight double
 );
-
-CREATE INDEX Data_PK on Data (id);
 
 CREATE PROCEDURE writeproc_Data (@param1 int in, @param2 float in, @param3 double in)
 BEGIN
