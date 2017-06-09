@@ -7,6 +7,7 @@ class Argument {
 public:
 	enum Type { PARAMETER, VALUE };
 	virtual std::string print() = 0;
+	virtual std::string signature() = 0;
 
 };
 

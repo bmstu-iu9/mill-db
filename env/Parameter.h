@@ -11,6 +11,8 @@ public:
 	std::string get_name();
 	DataType::Type get_type();
 
+	std::string signature();
+
 private:
 	std::string name;
 	DataType::Type type;

@@ -1,12 +1,18 @@
 #include "Environment.h"
+#include <algorithm>
 
 using namespace std;
 
 Environment::~Environment() {
-	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-		delete it->second;
-	}
-	this->tables.clear();
+//	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+//		delete it->second;
+//	}
+//	this->tables.clear();
+//
+//	for (auto it = this->procedures.begin(); it != this->procedures.end(); it++) {
+//		delete it->second;
+//	}
+//	this->procedures.clear();
 }
 
 Environment* Environment::get_instance() {
@@ -45,6 +51,14 @@ Procedure* Environment::find_procedure(std::string search_name) {
 }
 
 void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
+	string name_upper = this->get_name();
+	transform(name_upper.begin(), name_upper.end(), name_upper.begin(), ::toupper);
+
+	(*ofl) << "#ifndef " << name_upper << "_H" << endl;
+	(*ofl) << "#define " << name_upper << "_H" << endl
+	       << endl;
+
+
 	// Print standard headers
 	(*ofs) << "#include <stdlib.h>" << endl
 		   << "#include <stdbool.h>" << endl
@@ -52,8 +66,29 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
            << "#include \"" << this-> get_name() << ".h\"" << endl
 		   << endl;
 
-	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-		it->second->print(ofs, ofl);
+	for (auto it = this->procedures.begin(); it != this->procedures.end(); it++) {
+		Procedure* proc = it->second;
+		proc->print(ofs, ofl);
 	}
 
+	(*ofs) << "void " << this->get_name() << "_open() {" << endl
+	       << "}" << endl
+	       << endl;
+	(*ofl) << "void " << this->get_name() << "_open();" << endl;
+
+
+	(*ofs) << "void " << this->get_name() << "_close() {" << endl;
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* t = it->second;
+		if (t->is_printed()) {
+			(*ofs) << "\t" << t->get_name() << "_clean(" << t->get_name() << "_root);" << endl;
+		}
+	}
+	(*ofs) << "}" << endl
+	       << endl;
+	(*ofl) << "void " << this->get_name() << "_close();" << endl
+	       << endl;
+
+	(*ofl) << "#endif" << endl
+	       << endl;
 }

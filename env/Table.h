@@ -25,10 +25,12 @@ public:
 	Column* cols_at(int index);
 
 	void print(std::ofstream* ofs, std::ofstream* ofl);
+	bool is_printed();
 private:
 	std::string name;
 	std::map<std::string, Column*> cols;
 	std::map<std::string, Index*> indexes;
+	bool printed = false;
 };
 
 

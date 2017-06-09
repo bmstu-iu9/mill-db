@@ -24,22 +24,8 @@ void generate(fs::path path) {
 	fs::path library = path / (filename + ".h");
 	std::ofstream ofl(library.string());
 
-
 	e->print(&ofs, &ofl);
-//	ofl << endl;
-
-//	for (std::map<std::string, Table*>::iterator it = e->begin_iter_tables(); it != e->end_iter_tables(); ++it) {
-//		Table* t = it->second;
-//		ofs << "struct " << t->get_name() << " {" << endl;
-//
-//		for (std::map<std::string, Column*>::iterator jt = t->begin_iter_cols(); jt != t->end_iter_cols(); ++jt) {
-//			Column* col = jt->second;
-//			ofs << "\t" << Column::convert_type_to_str(col->get_type()) << " " << col->get_name() << ";" << endl;
-//		}
-//
-//		ofs << "};" << endl;
-//		ofs << endl;
-//	}
+	cout << "output OK" << endl;
 }
 
 int parse_file(std::string filename) {
@@ -62,7 +48,7 @@ int parse_file(std::string filename) {
 	}
 
 	fclose(in);
-	cout << "OK" << endl;
+	cout << "parse OK" << endl;
 	return 0;
 }
 

@@ -1,6 +1,7 @@
 #ifndef PROJECT_ARGPARAMETER_H
 #define PROJECT_ARGPARAMETER_H
 
+#include <string>
 #include "Argument.h"
 #include "Parameter.h"
 
@@ -8,6 +9,7 @@ class ArgParameter: public Argument {
 public:
 	ArgParameter(Parameter* param);
 	std::string print();
+	std::string signature();
 
 private:
 	Parameter* param;

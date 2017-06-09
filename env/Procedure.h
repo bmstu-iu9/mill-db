@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 #include "Table.h"
 #include "Parameter.h"
 #include "Statement.h"
@@ -17,6 +18,7 @@ public:
 
 	void add_statement(Statement* statement);
 
+	void print(std::ofstream* ofs, std::ofstream* ofl);
 private:
 	std::string name;
 	std::map<std::string, Parameter*> params;
