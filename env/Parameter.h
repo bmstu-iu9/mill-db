@@ -10,6 +10,7 @@ public:
 	Parameter(std::string name, DataType::Type type, Mode mode);
 	std::string get_name();
 	DataType::Type get_type();
+	Mode get_mode();
 
 	std::string signature();
 

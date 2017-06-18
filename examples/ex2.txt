@@ -4,7 +4,9 @@ CREATE TABLE Data (
 	weight double
 );
 
-CREATE PROCEDURE writeproc_Data (@param1 int in, @param2 float in, @param3 double in)
+
+CREATE PROCEDURE readproc(@param1 int in, @param2 float out, @param3 double out)
 BEGIN
-	INSERT TABLE Data VALUES (@param1, @param2, @param3);
+	SELECT value SET @param2, weight SET @param3 FROM Data WHERE id = @param1;
 END;
+

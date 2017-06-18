@@ -24,8 +24,8 @@ void generate(fs::path path) {
 	fs::path library = path / (filename + ".h");
 	std::ofstream ofl(library.string());
 
-	e->print(&ofs, &ofl);
-	cout << "output OK" << endl;
+	//e->print(&ofs, &ofl);
+	//cout << "output OK" << endl;
 }
 
 int parse_file(std::string filename) {
@@ -39,8 +39,9 @@ int parse_file(std::string filename) {
 
 	try {
 		yyin = in;
-		if (yyparse())
+		if (int err = yyparse())
 			return 1;
+		yylex_destroy();
 	} catch (const std::exception& e) {
 		cout << e.what() << endl;
 		fclose(in);
@@ -86,5 +87,6 @@ int main(int argc, char *argv[]) {
 	} else {
 		std::cout << "milldb: invalid options\n" << "Try 'milldb --help' for more information." << std::endl;
 	}
+
 	return 0;
 }

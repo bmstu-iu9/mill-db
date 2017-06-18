@@ -10,6 +10,15 @@ Procedure::Procedure(string name, vector<Parameter*> params) {
 	}
 }
 
+Procedure::~Procedure() {
+	for (auto it = this->params.begin(); it != this->params.end(); it++)
+		delete it->second;
+
+	for (auto it = this->statements.begin(); it != this->statements.end(); it++) {
+		delete (*it);
+	}
+}
+
 string Procedure::get_name() {
 	return this->name;
 }

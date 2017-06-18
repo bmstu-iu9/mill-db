@@ -4,15 +4,11 @@
 using namespace std;
 
 Environment::~Environment() {
-//	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-//		delete it->second;
-//	}
-//	this->tables.clear();
-//
-//	for (auto it = this->procedures.begin(); it != this->procedures.end(); it++) {
-//		delete it->second;
-//	}
-//	this->procedures.clear();
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++)
+		delete it->second;
+
+	for (auto it = this->procedures.begin(); it != this->procedures.end(); it++)
+		delete it->second;
 }
 
 Environment* Environment::get_instance() {
@@ -40,7 +36,7 @@ Table* Environment::find_table(std::string search_name) {
 	std::map<std::string, Table*>::iterator it = this->tables.find(search_name);
 	if (it == this->tables.end())
 		return nullptr;
-	return this->tables.find(search_name)->second;
+	return it->second;
 }
 
 Procedure* Environment::find_procedure(std::string search_name) {

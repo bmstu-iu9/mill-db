@@ -9,7 +9,12 @@
 
 class InsertStatement: public Statement {
 public:
-	InsertStatement(Table* table, std::vector<Argument*> args);
+	//InsertStatement(Table* table, std::vector<Argument*> args);
+	InsertStatement(Table* table);
+	void add_argument(Argument* arg);
+
+	~InsertStatement();
+
 	Table* get_table();
 	void print(std::ofstream* ofs, std::ofstream* ofl, std::string func_name);
 

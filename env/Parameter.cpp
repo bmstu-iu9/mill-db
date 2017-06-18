@@ -16,6 +16,10 @@ DataType::Type Parameter::get_type() {
 	return this->type;
 }
 
+Parameter::Mode Parameter::get_mode() {
+	return this->mode;
+}
+
 string Parameter::signature() {
 	return DataType::convert_type_to_str(this->get_type()) + " " + this->get_name();
 }

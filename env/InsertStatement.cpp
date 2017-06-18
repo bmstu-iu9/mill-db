@@ -3,10 +3,22 @@
 
 using namespace std;
 
-InsertStatement::InsertStatement(Table* table, std::vector<Argument*> args) {
-	this->table = table;
-	this->args = vector<Argument*>(args);
+//InsertStatement::InsertStatement(Table* table, std::vector<Argument*> args) {
+//	this->table = table;
+//	this->args = vector<Argument*>(args);
+//}
 
+InsertStatement::InsertStatement(Table *table) {
+	this->table = table;
+}
+
+void InsertStatement::add_argument(Argument *arg) {
+	this->args.push_back(arg);
+}
+
+InsertStatement::~InsertStatement() {
+	for (auto it = this->args.begin(); it != this->args.end(); it++)
+		delete *it;
 }
 
 Table* InsertStatement::get_table() {

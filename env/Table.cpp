@@ -7,15 +7,8 @@ Table::Table(string name) {
 }
 
 Table::~Table() {
-//	for (auto it = this->cols.begin(); it != this->cols.end(); it++) {
-//		delete it->second;
-//	}
-//	this->cols.clear();
-
-//	for (auto it = this->indexes.begin(); it != this->indexes.end(); it++) {
-//		delete it->second;
-//	}
-//	this->indexes.clear();
+	for (auto it = this->cols.begin(); it != this->cols.end(); it++)
+		delete it->second;
 }
 
 string Table::get_name() {

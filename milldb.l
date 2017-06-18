@@ -4,7 +4,7 @@
 
 //#define PRINT_DEBUG
 
-void print_token(char* token_name) {
+void print_token(const char* token_name) {
 #ifdef PRINT_DEBUG
 	std::cout << token_name << std::endl;
 #endif
@@ -90,15 +90,12 @@ WHITESPACE			[ \t\n]+
 <INITIAL>{OUT_KEYWORD}			{ print_token("OUT_KEYWORD"); return OUT_KEYWORD; }
 <INITIAL>{SET_KEYWORD}			{ print_token("SET_KEYWORD"); return SET_KEYWORD; }
 
-<INITIAL>{INDEX_KEYWORD}		{ print_token("INDEX_KEYWORD"); return INDEX_KEYWORD; }
-<INITIAL>{ON_KEYWORD}			{ print_token("ON_KEYWORD"); return ON_KEYWORD; }
-
 <INITIAL>{INT_KEYWORD}		{ print_token("INT_KEYWORD"); return INT_KEYWORD; }
 <INITIAL>{FLOAT_KEYWORD}	{ print_token("FLOAT_KEYWORD"); return FLOAT_KEYWORD; }
 <INITIAL>{DOUBLE_KEYWORD}	{ print_token("DOUBLE_KEYWORD"); return DOUBLE_KEYWORD; }
 
-<INITIAL>{IDENTIFIER}	{ yylval.str = new std::string(yytext); print_token("IDENTIFIER"); return IDENTIFIER; }
-<INITIAL>{PARAMETER}	{ yylval.str = new std::string(yytext); print_token("PARAMETER"); return PARAMETER; }
+<INITIAL>{IDENTIFIER}	{ yylval.char_arr = yytext; print_token("IDENTIFIER"); return IDENTIFIER; }
+<INITIAL>{PARAMETER}	{ yylval.char_arr = yytext + sizeof(char); print_token("PARAMETER"); return PARAMETER; }
 
 
 <INITIAL>{WHITESPACE}	/* eat up whitespace */

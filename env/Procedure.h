@@ -11,6 +11,7 @@
 class Procedure {
 public:
 	Procedure(std::string name, std::vector<Parameter*> params);
+	~Procedure();
 	std::string get_name();
 
 	void add_parameter(Parameter* param);
