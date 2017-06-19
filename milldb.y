@@ -55,8 +55,6 @@ struct condition {
 	Table*              table;
 	Column*             col;
 	vector<Column*>*    col_vec;
-	Index*              idx;
-	vector<Index*>*     idx_vec;
 	Argument*           arg;
 	Procedure*          proc;
 	Parameter*          param;
@@ -102,7 +100,6 @@ struct condition {
 %type <table> table_declaration
 %type <col> column_declaration
 %type <col_vec> column_declaration_list
-%type <idx> index_declaration
 
 %type <arg_str> argument
 %type <arg_str_vec> argument_list

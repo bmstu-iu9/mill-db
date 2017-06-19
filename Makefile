@@ -7,7 +7,7 @@ lexer: $(PROJECT_NAME).l
 	flex --header-file=$(PROJECT_NAME).lex.h -o $(PROJECT_NAME).lex.c $(PROJECT_NAME).l
 
 parser: $(PROJECT_NAME).y
-	bison -d -o $(PROJECT_NAME).tab.c $(PROJECT_NAME).y -Wno-other --no-lines --token-table
+	bison -d -o $(PROJECT_NAME).tab.c $(PROJECT_NAME).y -Wno-other
 
 CLASS_SOURCES=env/*.cpp
 FLAGS=-lboost_system -lboost_filesystem -std=c++11 -Wno-write-strings

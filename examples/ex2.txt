@@ -4,60 +4,12 @@ CREATE TABLE Data (
 	value float
 );
 
-CREATE TABLE Data2 (
-	id int pk,
-    weight double,
-	value float
-);
-
-CREATE TABLE Data3 (
-	id int pk,
-    weight double,
-	value float
-);
-
-CREATE TABLE Data4 (
-	id int pk,
-    weight double,
-	value float
-);
-
 CREATE PROCEDURE writeproc(@param1 int in, @param2 float in, @param3 double in)
 BEGIN
-	INSERT TABLE Data VALUES (@param1, @param3, @param2);
+	INSERT TABLE Data VALUES (@param1, @param2, @param3);
 END;
 
 CREATE PROCEDURE readproc(@param1 int in, @param2 float out, @param3 double out)
 BEGIN
 	SELECT value SET @param2, weight SET @param3 FROM Data WHERE id = @param1;
-END;
-
-CREATE PROCEDURE writeproc2(@param1 int in, @param2 float in, @param3 double in)
-BEGIN
-	INSERT TABLE Data2 VALUES (@param1, @param3, @param2);
-END;
-
-CREATE PROCEDURE readproc2(@param1 int in, @param2 float out, @param3 double out)
-BEGIN
-	SELECT value SET @param2, weight SET @param3 FROM Data2 WHERE id = @param1;
-END;
-
-CREATE PROCEDURE writeproc3(@param1 int in, @param2 float in, @param3 double in)
-BEGIN
-	INSERT TABLE Data3 VALUES (@param1, @param3, @param2);
-END;
-
-CREATE PROCEDURE readproc3(@param1 int in, @param2 float out, @param3 double out)
-BEGIN
-	SELECT value SET @param2, weight SET @param3 FROM Data3 WHERE id = @param1;
-END;
-
-CREATE PROCEDURE writeproc4(@param1 int in, @param2 float in, @param3 double in)
-BEGIN
-	INSERT TABLE Data4 VALUES (@param1, @param3, @param2);
-END;
-
-CREATE PROCEDURE readproc4(@param1 int in, @param2 float out, @param3 double out)
-BEGIN
-	SELECT value SET @param2, weight SET @param3 FROM Data4 WHERE id = @param1;
 END;
