@@ -68,7 +68,12 @@ void InsertStatement::print(ofstream* ofs, ofstream* ofl, string proc_name) {
 	       << this->get_table()->get_name() << "_struct));" << endl;
 
 	for (int i = 0; i < this->get_table()->cols_size(); i++) {
-		(*ofs) << "\t" << "arg->" << this->get_table()->cols_at(i)->get_name() << " = " << this->args[i]->print() << ";" << endl;
+		if (this->get_table()->cols_at(i)->get_type()->get_typecode() == DataType::CHAR)
+			(*ofs) << "\t" << "strncpy(arg->" << this->get_table()->cols_at(i)->get_name() << ", "
+			       << this->args[i]->print() << ", "
+			       << to_string(this->get_table()->cols_at(i)->get_type()->get_length()) << ");" << endl;
+		else
+			(*ofs) << "\t" << "arg->" << this->get_table()->cols_at(i)->get_name() << " = " << this->args[i]->print() << ";" << endl;
 	}
 
 	(*ofs) << "\t" << this->get_table()->get_name() << "_insert(arg);" << endl;

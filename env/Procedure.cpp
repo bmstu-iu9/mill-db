@@ -61,7 +61,7 @@ void Procedure::print(ofstream* ofs, ofstream* ofl) {
 		for (auto it = this->params.begin(); it != this->params.end(); it++) {
 			Parameter* param = (*it);
 			if (param->get_mode() == Parameter::OUT)
-				(*ofl) << "\t" << DataType::convert_type_to_str(param->get_type()) << " " << param->get_name() << ";" << endl;
+				(*ofl) << "\t" << param->get_type()->str(param->get_name()) << ";" << endl;
 		}
 
 		(*ofl) << "};" << endl

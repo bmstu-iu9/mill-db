@@ -60,6 +60,7 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 		   << "#include <stdbool.h>" << endl
 		   << "#include <stdio.h>" << endl
 		   << "#include <stdint.h>" << endl
+		   << "#include <string.h>" << endl
            << "#include \"" << this-> get_name() << ".h\"" << endl
 		   << endl;
 

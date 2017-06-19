@@ -77,7 +77,8 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		(*ofs) << "struct " << name << "_struct {" << endl;
 		for (auto it = this->cols.begin(); it != this->cols.end(); it++) {
 			Column *col = *it;
-			(*ofs) << "\t" << DataType::convert_type_to_str(col->get_type()) << " " << col->get_name() << ";" << endl;
+//			(*ofs) << "\t" << col->get_type()->str() << " " << col->get_name() << ";" << endl;
+			(*ofs) << "\t" << col->get_type()->str(col->get_name()) << ";" << endl;
 		}
 		(*ofs) << "};" << endl
 		       << endl;

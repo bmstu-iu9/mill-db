@@ -6,14 +6,26 @@
 
 class DataType {
 public:
-	enum Type {INT, FLOAT, DOUBLE};
+	enum Type {INT, FLOAT, DOUBLE, CHAR};
 
-	static std::string convert_type_to_str(Type type);
-	static Type convert_str_to_type(std::string str);
+	DataType(Type type);
+	DataType(Type type, int length);
 
+	//static std::string convert_type_to_str(DataType* type);
+//	static DataType* convert_str_to_type(std::string str);
+
+	Type get_typecode();
+	int get_length();
+
+	std::string str(std::string name);
+
+	int equals(DataType* that);
 private:
-	static std::map<std::string, Type> str_to_type;
-	static std::map<Type, std::string> type_to_str;
+//	static std::map<std::string, DataType*> str_to_type;
+//	static std::map<DataType*, std::string> type_to_str;
+
+	Type type;
+	int length;
 };
 
 

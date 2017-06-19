@@ -58,7 +58,7 @@ struct condition {
 	Argument*           arg;
 	Procedure*          proc;
 	Parameter*          param;
-	DataType::Type      dtype;
+	DataType*           dtype;
 	Parameter::Mode     pmode;
 
 	vector<Parameter*>* param_vec;
@@ -85,11 +85,11 @@ struct condition {
 %token INSERT_KEYWORD VALUES_KEYWORD
 %token PROCEDURE_KEYWORD BEGIN_KEYWORD END_KEYWORD IN_KEYWORD OUT_KEYWORD SET_KEYWORD
 %token ON_KEYWORD
-%token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD
-%token IDENTIFIER PARAMETER
+%token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD CHAR_KEYWORD
+%token IDENTIFIER PARAMETER INTEGER
 %token BAD_CHARACTER
 
-%type <char_arr> IDENTIFIER PARAMETER
+%type <char_arr> IDENTIFIER PARAMETER INTEGER
 %type <str> table_name parameter_name column_name procedure_name
 %type <dtype> data_type
 %type <pmode> parameter_mode
@@ -185,7 +185,7 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 					break;
 				}
 			}
-
+			debug("procedure_declaration 1");
 			// Create new Procedure instance, init it by name and arguments
 			$$ = new Procedure(procedure_name, mode, *$5);
 
@@ -199,28 +199,31 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 				if (stmt->type == INSERT_STATEMENT && $$->get_mode() == Procedure::WRITE) {
 
 					InsertStatement* statement = new InsertStatement(table);
-
+					debug("procedure_declaration 2");
 					// Check if number of columns is equal to number of arguments
 					if (table->cols_size() != stmt->arg_str_vec->size()) {
 						throw logic_error(error_msg("incorrent number of arguments"));
 					}
-
+					debug("procedure_declaration 2.1");
 					// Iterate by arguments
 					for (int i = 0; i < stmt->arg_str_vec->size(); i++) {
 						pair<string, Argument::Type> arg = stmt->arg_str_vec->at(i);
 						Argument::Type arg_type = arg.second;
 
+						debug("procedure_declaration 2.2");
 						// If current argument is parameter
 						if (arg_type == Argument::PARAMETER) {
 							// Try to get this parameter from procedure signature
 							Parameter* param = find_parameter($$, arg.first);
 
+							debug("procedure_declaration 2.3");
 							// Check if this parameter have mode IN
 							check_mode(param, Parameter::IN);
 
 							// Check if parameters's type matches to column's type
 							check_type(param, table->cols_at(i));
 
+							debug("procedure_declaration 2.4");
 							// All is OK, add argument to arg storage
 							Argument* a = new ArgParameter(param);
 							statement->add_argument(a);
@@ -238,25 +241,25 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 				} else if (stmt->type == SELECT_STATEMENT && $$->get_mode() == Procedure::READ) {
 
 					SelectStatement* statement = new SelectStatement(table);
-
+					debug("procedure_declaration 3");
 					// Iterate by selections
                     for (int i = 0; i < stmt->selections->size(); i++) {
 
 						Column* col = find_column(table, stmt->selections->at(i).first);
 						Parameter* param = find_parameter($$, stmt->selections->at(i).second);
-
+						debug("procedure_declaration 4");
 						// Check if this parameter have mode OUT
                         check_mode(param, Parameter::OUT);
 
 						// Check if parameters's type matches to column's type
                         check_type(param, col);
-
+						debug("procedure_declaration 5");
 						Selection* selection = new Selection(col, param);
 						statement->add_selection(selection);
                     }
 
 					delete stmt->selections;
-
+					debug("procedure_declaration 6");
                     for (int i = 0; i < stmt->conds->size(); i++) {
 						Column* col = find_column(table, *(stmt->conds)->at(i)->col );
 						Parameter* param = find_parameter($$, *(stmt->conds->at(i)->param));
@@ -504,11 +507,20 @@ parameter_name: PARAMETER {
 
 data_type:	INT_KEYWORD {
 			debug("data_type 1 BEGIN");
-			$$ = DataType::INT;
+			$$ = new DataType(DataType::INT);
 			debug("data_type 1 END");
 		}
-	| FLOAT_KEYWORD { $$ = DataType::FLOAT; }
-	| DOUBLE_KEYWORD { $$ = DataType::DOUBLE; }
+	| FLOAT_KEYWORD { $$ = new DataType(DataType::FLOAT); }
+	| DOUBLE_KEYWORD { $$ = new DataType(DataType::DOUBLE); }
+	| CHAR_KEYWORD LPAREN INTEGER RPAREN {
+			int length = atoi($3);
+			if (length > 255) {
+				string msg("wrong char len, should be less than 256");
+                throw logic_error(error_msg(msg));
+			}
+
+			$$ = new DataType(DataType::CHAR, length);
+		}
 	;
 
 parameter_mode:   IN_KEYWORD {
@@ -575,7 +587,7 @@ Parameter* find_parameter(Procedure* proc, string param_name) {
 }
 
 int check_type(Parameter* param, Column* col) {
-	if (param->get_type() != col->get_type()) {
+	if (!param->get_type()->equals(col->get_type())) {
         string msg("incompatible types parameter " + param->get_name() + " and column " + col->get_name());
         throw logic_error(error_msg(msg));
         return 0;

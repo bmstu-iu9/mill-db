@@ -2,17 +2,21 @@
 
 using namespace std;
 
-Parameter::Parameter(std::string name, DataType::Type type, Parameter::Mode mode) {
+Parameter::Parameter(std::string name, DataType* type, Parameter::Mode mode) {
 	this->name = name;
 	this->type = type;
 	this->mode = mode;
+}
+
+Parameter::~Parameter() {
+	delete this->type;
 }
 
 string Parameter::get_name() {
 	return this->name;
 }
 
-DataType::Type Parameter::get_type() {
+DataType* Parameter::get_type() {
 	return this->type;
 }
 
@@ -21,5 +25,5 @@ Parameter::Mode Parameter::get_mode() {
 }
 
 string Parameter::signature() {
-	return DataType::convert_type_to_str(this->get_type()) + " " + this->get_name();
+	return this->get_type()->str(this->get_name());
 }
