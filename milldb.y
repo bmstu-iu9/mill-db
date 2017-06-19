@@ -126,9 +126,25 @@ program_element_list: program_element
 	| program_element_list program_element
 
 program_element: table_declaration {
+			Table* table = Environment::get_instance()->find_table($1->get_name());
+			if (table != nullptr) {
+				string msg("table ");
+                msg += $1->get_name();
+                msg += " already exists";
+                delete $1;
+                throw logic_error(error_msg(msg));
+			}
 			Environment::get_instance()->add_table($1);
 		}
 	| procedure_declaration {
+			Procedure* procedure = Environment::get_instance()->find_procedure($1->get_name());
+            if (procedure != nullptr) {
+                string msg("procedure ");
+                msg += $1->get_name();
+                msg += " already exists";
+                delete $1;
+                throw logic_error(error_msg(msg));
+            }
 			Environment::get_instance()->add_procedure($1);
 		}
 	;

@@ -39,11 +39,13 @@ int parse_file(std::string filename) {
 
 	try {
 		yyin = in;
-		if (int err = yyparse())
-			return 1;
+		int err = yyparse();
 		yylex_destroy();
+		if (err)
+			return 1;
 	} catch (const std::exception& e) {
 		cout << e.what() << endl;
+		yylex_destroy();
 		fclose(in);
 		return 1;
 	}

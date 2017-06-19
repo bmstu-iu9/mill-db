@@ -133,6 +133,8 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       << endl;
 
 		(*ofs) << "void " << name << "_clean(struct " << name << "_Node* node) {" << endl
+		       << "\t" << "if (node == NULL)" << endl
+               <<"\t\t" << "return;" << endl << endl
 		       << "\t" << "int i;" << endl
 		       << "\t" << "for (i = 0; i < node->n; i++) {" << endl
 		       << "\t\t" << "if (!node->is_leaf)" << endl

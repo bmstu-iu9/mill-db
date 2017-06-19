@@ -67,7 +67,7 @@ void Procedure::print(ofstream* ofs, ofstream* ofl) {
 		(*ofl) << "};" << endl
 		       << endl;
 
-		(*ofs) << "struct " << this->get_name() << "_out_struct** readproc_data = NULL;" << endl
+		(*ofs) << "struct " << this->get_name() << "_out_struct** " << this->get_name() << "_data = NULL;" << endl
 		       << "int " << this->get_name() << "_size = 0;" << endl
 		       << "int " << this->get_name() << "_iter_count = 0;" << endl
 		       << endl;
