@@ -25,7 +25,7 @@ void generate(fs::path path) {
 	std::ofstream ofl(library.string());
 
 	e->print(&ofs, &ofl);
-	cout << "output OK" << endl;
+	cout << "Output files: " << filename << ".c " << filename + ".h" << endl;
 }
 
 int parse_file(std::string filename) {
@@ -41,17 +41,20 @@ int parse_file(std::string filename) {
 		yyin = in;
 		int err = yyparse();
 		yylex_destroy();
-		if (err)
+		if (err) {
+			cout << "Parser returned FAIL" << endl;
 			return 1;
+		}
 	} catch (const std::exception& e) {
 		cout << e.what() << endl;
 		yylex_destroy();
 		fclose(in);
+		cout << "Parser returned FAIL" << endl;
 		return 1;
 	}
 
 	fclose(in);
-	cout << "parse OK" << endl;
+	cout << "Parser returned OK" << endl;
 	return 0;
 }
 

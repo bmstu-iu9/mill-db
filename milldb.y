@@ -84,7 +84,7 @@ struct condition {
 %token SELECT_KEYWORD FROM_KEYWORD WHERE_KEYWORD
 %token INSERT_KEYWORD VALUES_KEYWORD
 %token PROCEDURE_KEYWORD BEGIN_KEYWORD END_KEYWORD IN_KEYWORD OUT_KEYWORD SET_KEYWORD
-%token INDEX_KEYWORD ON_KEYWORD
+%token ON_KEYWORD
 %token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD
 %token IDENTIFIER PARAMETER
 %token BAD_CHARACTER
@@ -230,6 +230,7 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 
 					// Clear temp storage for arguments
 					delete stmt->arg_str_vec;
+					delete stmt;
 
 					// Add this INSERT statement to procedure
 					$$->add_statement(statement);
@@ -273,12 +274,13 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
                         delete stmt->conds->at(i)->col;
                         delete stmt->conds->at(i)->param;
                         delete stmt->conds->at(i);
+
                     }
 
                     $$->add_statement(statement);
 
 					delete stmt->conds;
-
+					delete stmt;
 				} else
 					throw logic_error(error_msg("invalid statement"));
 
@@ -309,6 +311,8 @@ statement: insert_statement
 insert_statement: INSERT_KEYWORD TABLE_KEYWORD table_name VALUES_KEYWORD LPAREN argument_list RPAREN SEMICOLON {
 			debug("insert_statement BEGIN");
 
+			$$ = new statement();
+
 			Table* table = find_table(*$3);
 			delete $3;
 
@@ -322,6 +326,8 @@ insert_statement: INSERT_KEYWORD TABLE_KEYWORD table_name VALUES_KEYWORD LPAREN 
 
 select_statement: SELECT_KEYWORD selection_list FROM_KEYWORD table_name WHERE_KEYWORD condition_list SEMICOLON {
 			debug("select_statement BEGIN");
+
+			$$ = new statement();
 
 			Table* table = find_table(*$4);
 			delete $4;
@@ -478,9 +484,6 @@ table_name: IDENTIFIER {
 			debug("table_name");
 			$$ = new string($1);
 		}
-	;
-
-index_name: IDENTIFIER
 	;
 
 column_name: IDENTIFIER {

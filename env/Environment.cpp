@@ -29,7 +29,6 @@ void Environment::add_table(Table* table) {
 }
 
 void Environment::add_procedure(Procedure *procedure) {
-	cout << procedure->get_name() << endl;
 	this->procedures.insert({procedure->get_name(), procedure});
 }
 
@@ -66,7 +65,6 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 
 	for (auto it = this->procedures.begin(); it != this->procedures.end(); it++) {
 		Procedure* proc = it->second;
-		cout << proc->get_name() << endl;
 		proc->print(ofs, ofl);
 	}
 
