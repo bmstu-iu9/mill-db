@@ -42,7 +42,7 @@ void InsertStatement::print_arguments(std::ofstream* ofs, std::ofstream* ofl) {
 	}
 }
 
-void InsertStatement::print_full_signature(std::ofstream* ofs, std::ofstream* ofl) {
+void InsertStatement::print_full_signature(std::ofstream* ofs, std::ofstream* ofl, string proc_name) {
 	vector<string> sig_arr;
 	for (auto it = this->args.begin(); it != this->args.end(); it++) {
 		string arg_sig = (*it)->signature();
@@ -59,13 +59,11 @@ void InsertStatement::print_full_signature(std::ofstream* ofs, std::ofstream* of
 	}
 }
 
-void InsertStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
+void InsertStatement::print_dependencies(std::ofstream* ofs, std::ofstream* ofl) {
 	this->get_table()->print(ofs, ofl);
+}
 
-	(*ofs) << "void " << func_name << "(";
-	this->print_full_signature(ofs, ofl);
-	(*ofs) << ") {" << endl;
-
+void InsertStatement::print(ofstream* ofs, ofstream* ofl, string proc_name) {
 	(*ofs) << "\t" << "struct " << this->get_table()->get_name() << "_struct* arg = malloc(sizeof(struct "
 	       << this->get_table()->get_name() << "_struct));" << endl;
 
@@ -74,7 +72,4 @@ void InsertStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	}
 
 	(*ofs) << "\t" << this->get_table()->get_name() << "_insert(arg);" << endl;
-
-	(*ofs) << "}" << endl
-	       << endl;
 }

@@ -7,8 +7,11 @@ Table::Table(string name) {
 }
 
 Table::~Table() {
+//	for (auto it = this->cols.begin(); it != this->cols.end(); it++)
+//		delete it->second;
+
 	for (auto it = this->cols.begin(); it != this->cols.end(); it++)
-		delete it->second;
+		delete (*it);
 }
 
 string Table::get_name() {
@@ -16,7 +19,8 @@ string Table::get_name() {
 }
 
 void Table::add_column(Column* col) {
-	this->cols.insert({col->get_name(), col});
+//	this->cols.insert({col->get_name(), col});
+	this->cols.push_back(col);
 }
 
 void Table::add_index(Index* index) {
@@ -24,10 +28,16 @@ void Table::add_index(Index* index) {
 }
 
 Column* Table::find_column(string search_name) {
-	auto it = this->cols.find(search_name);
-	if (it == this->cols.end())
-		return nullptr;
-	return this->cols.find(search_name)->second;
+//	auto it = this->cols.find(search_name);
+//	if (it == this->cols.end())
+//		return nullptr;
+//	return this->cols.find(search_name)->second;
+
+	for (auto it = this->cols.begin(); it != this->cols.end(); it++)
+		if (search_name == (*it)->get_name())
+			return (*it);
+
+	return nullptr;
 }
 
 void Table::add_columns(vector<Column*> cols) {
@@ -44,13 +54,15 @@ Column* Table::cols_at(int index) {
 	if (index > this->cols.size())
 		return nullptr;
 
-	int i = 0;
-	for (auto it = this->cols.begin(); it != this->cols.end(); it++, i++) {
-		if (i == index) {
-			return it->second;
-		}
-	}
-	return nullptr;
+//	int i = 0;
+//	for (auto it = this->cols.begin(); it != this->cols.end(); it++, i++) {
+//		if (i == index) {
+//			return it->second;
+//		}
+//	}
+//	return nullptr;
+
+	return this->cols[index];
 }
 
 bool Table::is_printed() {
@@ -64,7 +76,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		// Table row
 		(*ofs) << "struct " << name << "_struct {" << endl;
 		for (auto it = this->cols.begin(); it != this->cols.end(); it++) {
-			Column *col = it->second;
+			Column *col = *it;
 			(*ofs) << "\t" << DataType::convert_type_to_str(col->get_type()) << " " << col->get_name() << ";" << endl;
 		}
 		(*ofs) << "};" << endl
@@ -76,7 +88,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 
 		string indent = "";
 		for (auto it = this->cols.begin(); it != this->cols.end(); it++) {
-			Column *col = it->second;
+			Column *col = *it;
 			if (col->get_pk()) {
 				indent += "\t";
 				(*ofs) << indent << "if (s1->" << col->get_name() << " > s2->" << col->get_name() << ") {" << endl
@@ -136,6 +148,21 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       << "\t" << "free(node);" << endl
 		       << "}" << endl
 		       << endl;
+
+		(*ofs) << "struct "  << name << "_struct* " << name << "_search(struct " << name << "_Node* this, struct " << name << "_struct* searched) {" << endl
+		       <<"\t" << "int i = 0;" << endl
+               <<"\twhile (i < this->n && " << name << "_struct_compare(searched, this->keys[i]) == 1) {" << endl
+               <<"\t\ti++;" << endl
+               <<"\t}\n"
+               <<"\n"
+               <<"\tif (i != this->n && " << name << "_struct_compare(this->keys[i], searched) == 0) {" << endl
+               <<"\t\treturn this->keys[i];" << endl
+               <<"\t}\n"
+               <<"\tif (this->is_leaf)" << endl
+               <<"\t\treturn NULL;" << endl
+               <<"\treturn " << name << "_search(this->C[i], searched);" << endl
+               <<"}" << endl
+               << endl;
 
 		(*ofs) << "void " << name << "_split_child(struct " << name << "_Node* this, int i, struct " << name
 		       << "_Node* y) {" << endl

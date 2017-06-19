@@ -16,7 +16,11 @@ map<DataType::Type, string> reverse_map(map<string, DataType::Type> str_to_type)
 	return reversed;
 };
 
-map<DataType::Type, string> DataType::type_to_str = reverse_map(DataType::str_to_type);
+map<DataType::Type, string> DataType::type_to_str = {
+		{DataType::INT, "int32_t"},
+		{DataType::FLOAT, "float"},
+		{DataType::DOUBLE, "double"},
+};
 
 string DataType::convert_type_to_str(DataType::Type type) {
 	auto it = DataType::type_to_str.find(type);

@@ -7,6 +7,8 @@
 class Selection {
 public:
 	Selection(Column* col, Parameter* param);
+	Column* get_column();
+	Parameter* get_parameter();
 
 private:
 	Column* col;

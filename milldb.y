@@ -27,9 +27,6 @@ extern "C" {
 #define INSERT_STATEMENT 1
 #define SELECT_STATEMENT 2
 
-#define READ 1
-#define WRITE 2
-
 struct statement {
 	int				 type;
 	Table*			  table;
@@ -128,8 +125,12 @@ program: program_element_list
 program_element_list: program_element
 	| program_element_list program_element
 
-program_element: table_declaration { Environment::get_instance()->add_table($1); }
-	| procedure_declaration { Environment::get_instance()->add_procedure($1); }
+program_element: table_declaration {
+			Environment::get_instance()->add_table($1);
+		}
+	| procedure_declaration {
+			Environment::get_instance()->add_procedure($1);
+		}
 	;
 
 table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name
@@ -162,18 +163,18 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 			// Check if procedure with the same name already exists
 			check_procedure(procedure_name);
 
-			// Determine procedure type (READ or WRITE)
+			// Determine procedure mode (READ or WRITE)
 			// Type READ if at least one parameter have OUT mode, by default type WRITE
-			int type = WRITE;
+			Procedure::Mode mode = Procedure::WRITE;
 			for (int i = 0; i < $5->size(); i++) {
 				if ($5->at(i)->get_mode() == Parameter::OUT) {
-					type = READ;
+					mode = Procedure::READ;
 					break;
 				}
 			}
 
 			// Create new Procedure instance, init it by name and arguments
-			$$ = new Procedure(procedure_name, *$5);
+			$$ = new Procedure(procedure_name, mode, *$5);
 
 			// Begin to constuct new Procedure
 			// Iterate by all statement (INSERT or SELECT)
@@ -182,7 +183,7 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
                 Table* table = stmt->table;
 
 				// If statement is INSERT
-				if (stmt->type == INSERT_STATEMENT && type == WRITE) {
+				if (stmt->type == INSERT_STATEMENT && $$->get_mode() == Procedure::WRITE) {
 
 					InsertStatement* statement = new InsertStatement(table);
 
@@ -220,7 +221,7 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 					// Add this INSERT statement to procedure
 					$$->add_statement(statement);
 
-				} else if (stmt->type == SELECT_STATEMENT && type == READ) {
+				} else if (stmt->type == SELECT_STATEMENT && $$->get_mode() == Procedure::READ) {
 
 					SelectStatement* statement = new SelectStatement(table);
 

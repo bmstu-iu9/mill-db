@@ -1,12 +1,15 @@
 CREATE TABLE Data (
 	id int pk,
-	value float,
-	weight double
+    weight double,
+	value float
 );
 
+CREATE PROCEDURE writeproc(@param1 int in, @param2 float in, @param3 double in)
+BEGIN
+	INSERT TABLE Data VALUES (@param1, @param3, @param2);
+END;
 
 CREATE PROCEDURE readproc(@param1 int in, @param2 float out, @param3 double out)
 BEGIN
 	SELECT value SET @param2, weight SET @param3 FROM Data WHERE id = @param1;
 END;
-

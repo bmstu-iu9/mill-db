@@ -21,10 +21,13 @@ public:
 	void add_selection(Selection* selection);
 	void add_condition(Condition* cond);
 
+	Table* get_table();
 	~SelectStatement();
 
 	void print(std::ofstream* ofs, std::ofstream* ofl, std::string func_name);
 	void print_arguments(std::ofstream* ofs, std::ofstream* ofl);
+	void print_full_signature(std::ofstream* ofs, std::ofstream* ofl, std::string proc_name);
+	void print_dependencies(std::ofstream* ofs, std::ofstream* ofl);
 private:
 	Table* table;
 	std::vector<Selection*> selections;

@@ -7,6 +7,9 @@
 class Condition {
 public:
 	Condition(Column* col, Parameter* param);
+	Column* get_column();
+	Parameter* get_parameter();
+
 private:
 	Column* col;
 	Parameter* param;

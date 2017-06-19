@@ -24,8 +24,8 @@ void generate(fs::path path) {
 	fs::path library = path / (filename + ".h");
 	std::ofstream ofl(library.string());
 
-	//e->print(&ofs, &ofl);
-	//cout << "output OK" << endl;
+	e->print(&ofs, &ofl);
+	cout << "output OK" << endl;
 }
 
 int parse_file(std::string filename) {
@@ -57,7 +57,6 @@ int main(int argc, char *argv[]) {
 	++argv, --argc;
 
 	if ( (argc == 0) || (argc == 1 && (strcmp(argv[0], "-h") == 0 || strcmp(argv[0], "--help") == 0)) ) {
-		// TODO Write here a help message
 		cout << "USAGE:" << endl
 		     << "  " << "milldb [<filename>]" << endl
 		     << endl

@@ -18,8 +18,9 @@ public:
 	Table* get_table();
 	void print(std::ofstream* ofs, std::ofstream* ofl, std::string func_name);
 
-	void print_full_signature(std::ofstream* ofs, std::ofstream* ofl);
+	void print_full_signature(std::ofstream* ofs, std::ofstream* ofl, std::string proc_name);
 	void print_arguments(std::ofstream* ofs, std::ofstream* ofl);
+	void print_dependencies(std::ofstream* ofs, std::ofstream* ofl);
 private:
 	Table* table;
 	std::vector<Argument*> args;
