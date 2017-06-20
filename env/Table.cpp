@@ -277,10 +277,10 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 			Column* col = *it;
 			if (i > 0)
 				(*ofs) << ", ";
-			(*ofs) << "node->keys[i]->" << col->get_name();
+			(*ofs) << "\n\t\t\t" << "node->keys[i]->" << col->get_name();
 		}
 
-		(*ofs) << ");" << endl;
+		(*ofs) << "\n\t\t" << ");" << endl;
 
 		(*ofs) <<"\t" << "}" << endl
 		       <<"\t" << "if (!node->is_leaf)" << endl

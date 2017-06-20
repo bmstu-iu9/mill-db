@@ -86,8 +86,12 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
 		Table* t = it->second;
 		if (t->is_printed()) {
-			(*ofs) << "\t" << t->get_name() << "_serialize(file, " << t->get_name() << "_root);" << endl;
-			(*ofs) << "\t" << t->get_name() << "_clean(" << t->get_name() << "_root);" << endl;
+			(*ofs) << "\t" << "if (" << t->get_name() << "_root != NULL) {" << endl
+			       << "\t\t" << "fprintf(file, \"#table " << t->get_name() << "\\n\");" << endl
+                   << "\t\t" << t->get_name() << "_serialize(file, " << t->get_name() << "_root);" << endl
+                   << "\t\t" << t->get_name() << "_clean(" << t->get_name() << "_root);" << endl
+                   << "\t}" << endl
+                   << endl;
 		}
 	}
 
