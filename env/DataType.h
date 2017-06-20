@@ -16,6 +16,7 @@ public:
 
 	Type get_typecode();
 	int get_length();
+	std::string get_format_specifier();
 
 	std::string str(std::string name);
 

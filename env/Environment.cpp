@@ -54,8 +54,6 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	(*ofl) << "#define " << name_upper << "_H" << endl
 	       << endl;
 
-
-	// Print standard headers
 	(*ofs) << "#include <stdlib.h>" << endl
 		   << "#include <stdbool.h>" << endl
 		   << "#include <stdio.h>" << endl
@@ -64,24 +62,37 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
            << "#include \"" << this-> get_name() << ".h\"" << endl
 		   << endl;
 
+	(*ofs) << "#define NODE_SIZE 10" << endl
+	       << endl;
+
 	for (auto it = this->procedures.begin(); it != this->procedures.end(); it++) {
 		Procedure* proc = it->second;
 		proc->print(ofs, ofl);
 	}
 
-	(*ofs) << "void " << this->get_name() << "_open() {" << endl
+	(*ofs) << "char* " << this->get_name() << "_filename;" << endl
+	       << endl;
+
+	(*ofs) << "void " << this->get_name() << "_open(char* filename) {" << endl
+	       << "\t" << this->get_name() << "_filename = filename;" << endl
 	       << "}" << endl
 	       << endl;
-	(*ofl) << "void " << this->get_name() << "_open();" << endl;
+	(*ofl) << "void " << this->get_name() << "_open(char* filename);" << endl;
 
 
-	(*ofs) << "void " << this->get_name() << "_close() {" << endl;
+	(*ofs) << "void " << this->get_name() << "_close() {" << endl
+	       << "\t" << "FILE* file = fopen(ex2_filename, \"w\");" << endl;
+
 	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
 		Table* t = it->second;
 		if (t->is_printed()) {
+			(*ofs) << "\t" << t->get_name() << "_serialize(file, " << t->get_name() << "_root);" << endl;
 			(*ofs) << "\t" << t->get_name() << "_clean(" << t->get_name() << "_root);" << endl;
 		}
 	}
+
+	(*ofs) << "\t" << "fclose(file);" << endl;
+
 	(*ofs) << "}" << endl
 	       << endl;
 	(*ofl) << "void " << this->get_name() << "_close();" << endl

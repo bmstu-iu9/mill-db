@@ -94,3 +94,20 @@ string DataType::str(string name) {
 
 	return "";
 }
+
+string DataType::get_format_specifier() {
+	if (this->get_typecode() == DataType::INT)
+		return "%d";
+
+	if (this->get_typecode() == DataType::DOUBLE)
+		return "%f";
+
+	if (this->get_typecode() == DataType::FLOAT)
+		return "%f";
+
+	if (this->get_typecode() == DataType::CHAR) {
+		return "%s";
+	}
+
+	return "";
+}

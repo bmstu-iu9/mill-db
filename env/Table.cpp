@@ -71,6 +71,7 @@ bool Table::is_printed() {
 
 void Table::print(ofstream* ofs, ofstream* ofl) {
 	if (!printed) {
+		int i;
 		string name = this->get_name();
 
 		// Table row
@@ -105,9 +106,6 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		}
 
 		(*ofs) << "}" << endl
-		       << endl;
-
-		(*ofs) << "#define NODE_SIZE 10" << endl
 		       << endl;
 
 		(*ofs) << "struct " << name << "_Node {" << endl
@@ -252,6 +250,42 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       << "\t\t}" << endl
 		       << "\t}" << endl
 		       << "}" << endl
+		       << endl;
+
+		(*ofs) << "void " << name << "_serialize(FILE* file, struct " << name << "_Node* node) {" << endl
+		       << "\t" << "if (node == NULL)" << endl
+               <<"\t\t" << "return;" << endl
+		       << "\t" << "int i;" << endl
+		       << "\t" << "for (i = 0; i < node->n; i++) {" << endl
+		       << "\t\t" << "if (!node->is_leaf)" << endl
+		       << "\t\t\t" << name << "_serialize(file, node->C[i]);" << endl;
+
+		(*ofs) << "\t\t" << "fprintf(file, \"(";
+
+		i = 0;
+		for (auto it = this->cols.begin(); it != this->cols.end(); it++, i++) {
+			Column* col = *it;
+			if (i > 0)
+				(*ofs) << ",";
+			(*ofs) << col->get_type()->get_format_specifier();
+		}
+
+		(*ofs) << ")\\n\", ";
+
+		i = 0;
+		for (auto it = this->cols.begin(); it != this->cols.end(); it++, i++) {
+			Column* col = *it;
+			if (i > 0)
+				(*ofs) << ", ";
+			(*ofs) << "node->keys[i]->" << col->get_name();
+		}
+
+		(*ofs) << ");" << endl;
+
+		(*ofs) <<"\t" << "}" << endl
+		       <<"\t" << "if (!node->is_leaf)" << endl
+		       <<"\t\t" << name << "_serialize(file, node->C[i]);" << endl
+		       <<"}" << endl
 		       << endl;
 
 		printed = true;
