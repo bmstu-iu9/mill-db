@@ -22,6 +22,8 @@ public:
 	std::string scan_expr(std::string column_name);
 	std::string init_expr(std::string column_name);
 	std::string select_expr(std::string param, std::string column);
+	std::string compare_less_expr(std::string s1, std::string col1, std::string s2, std::string col2);
+	std::string compare_greater_expr(std::string s1, std::string col1, std::string s2, std::string col2);
 
 	int equals(DataType* that);
 private:

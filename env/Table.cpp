@@ -99,24 +99,22 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		(*ofs) << "int " << name << "_struct_compare(struct " << name << "_struct* s1, "
 		       << "struct " << name << "_struct* s2) {" << endl;
 
-		string indent = "";
 		for (auto it = this->cols.begin(); it != this->cols.end(); it++) {
 			Column *col = *it;
 			if (col->get_pk()) {
-				indent += "\t";
-				(*ofs) << indent << "if (s1->" << col->get_name() << " > s2->" << col->get_name() << ") {" << endl
-				       << indent << "\t" << "return 1;" << endl
-				       << indent << "} else if (s1->" << col->get_name() << " < s2->" << col->get_name() << ") {"
+				(*ofs) << "\t" << "if (" + col->get_type()->compare_greater_expr("s1", col->get_name(), "s2", col->get_name()) + ") {" << endl
+				       << "\t" << "\t" << "return 1;" << endl
+				       << "\t" << "} else if (" + col->get_type()->compare_less_expr("s1", col->get_name(), "s2", col->get_name()) + ") {"
 				       << endl
-				       << indent << "\t" << "return -1;" << endl
-				       << indent << "} else {" << endl
-				       << indent << "\t" << "return 0;" << endl
-				       << indent << "}" << endl;
-				// TODO: Not working for primary key that includes more than one column
+				       << "\t" << "\t" << "return -1;" << endl
+				       << "\t" << "}" << endl
+				       << endl;
 			}
 		}
 
-		(*ofs) << "}" << endl
+		(*ofs) << "\t" << "return 0;" << endl
+		       << endl
+		       << "}" << endl
 		       << endl;
 
 		(*ofs) << "struct " << name << "_Node {" << endl

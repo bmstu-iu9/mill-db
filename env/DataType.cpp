@@ -162,3 +162,37 @@ string DataType::select_expr(std::string param, std::string column) {
 
 	return "";
 }
+
+string DataType::compare_less_expr(string s1, string col1, string s2, string col2) {
+	if (this->get_typecode() == DataType::INT)
+		return "(" + s1 + "->" + col1 + " < " + s2 + "->" + col2 + ")";
+
+	if (this->get_typecode() == DataType::DOUBLE)
+		return "(" + s1 + "->" + col1 + " < " + s2 + "->" + col2 + ")";
+
+	if (this->get_typecode() == DataType::FLOAT)
+		return "(" + s1 + "->" + col1 + " < " + s2 + "->" + col2 + ")";
+
+	if (this->get_typecode() == DataType::CHAR) {
+		return "strcmp(" + s1 + "->" + col1 + ", " + s2 + "->" + col2 + ") < 0";
+	}
+
+	return "";
+}
+
+string DataType::compare_greater_expr(string s1, string col1, string s2, string col2) {
+	if (this->get_typecode() == DataType::INT)
+		return "(" + s1 + "->" + col1 + " > " + s2 + "->" + col2 + ")";
+
+	if (this->get_typecode() == DataType::DOUBLE)
+		return "(" + s1 + "->" + col1 + " > " + s2 + "->" + col2 + ")";
+
+	if (this->get_typecode() == DataType::FLOAT)
+		return "(" + s1 + "->" + col1 + " > " + s2 + "->" + col2 + ")";
+
+	if (this->get_typecode() == DataType::CHAR) {
+		return "strcmp(" + s1 + "->" + col1 + ", " + s2 + "->" + col2 + ") > 0";
+	}
+
+	return "";
+}
