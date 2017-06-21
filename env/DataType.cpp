@@ -10,7 +10,7 @@ DataType::DataType(Type type) {
 
 DataType::DataType(DataType::Type type, int length) {
 	this->type = type;
-	this->length = length;
+	this->length = length + 1;
 }
 
 //map<string, DataType::Type> DataType::str_to_type = {
@@ -106,7 +106,7 @@ string DataType::get_format_specifier() {
 		return "%f";
 
 	if (this->get_typecode() == DataType::CHAR) {
-		return "%s";
+		return "\\\"%s\\\"";
 	}
 
 	return "";
@@ -123,7 +123,7 @@ string DataType::scan_expr(string column_name) {
 		return "sscanf(token, \"%f\", &(arg->" + column_name + "));";
 
 	if (this->get_typecode() == DataType::CHAR) {
-		return "printf(arg->" + column_name + ", \"%s\", token);";
+		return "memcpy(arg->" + column_name + ", token + sizeof(char), strlen(token)-2);";
 	}
 
 	return "";
@@ -141,6 +141,23 @@ string DataType::init_expr(string column_name) {
 
 	if (this->get_typecode() == DataType::CHAR) {
 		return "memset(new->" + column_name + ", 0, " + to_string(this->get_length()) + ");";
+	}
+
+	return "";
+}
+
+string DataType::select_expr(std::string param, std::string column) {
+	if (this->get_typecode() == DataType::INT)
+		return "returned->" + param + " = res->" + column + ";";
+
+	if (this->get_typecode() == DataType::DOUBLE)
+		return "returned->" + param + " = res->" + column + ";";
+
+	if (this->get_typecode() == DataType::FLOAT)
+		return "returned->" + param + " = res->" + column + ";";
+
+	if (this->get_typecode() == DataType::CHAR) {
+		return "strncpy(returned->" + param + ", res->" + column + ", " + to_string(this->get_length()) + ");";
 	}
 
 	return "";

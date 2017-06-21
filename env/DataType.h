@@ -21,6 +21,7 @@ public:
 	std::string str(std::string name);
 	std::string scan_expr(std::string column_name);
 	std::string init_expr(std::string column_name);
+	std::string select_expr(std::string param, std::string column);
 
 	int equals(DataType* that);
 private:

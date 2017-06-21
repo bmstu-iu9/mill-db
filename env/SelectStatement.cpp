@@ -50,8 +50,9 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	(*ofs) << "\t" << "if (res != NULL) {" << endl;
 	(*ofs) << "\t\t" << "struct " << func_name << "_out_struct* returned = malloc(sizeof(struct " << func_name << "_out_struct));" << endl;
 
-	for (auto it = this->selections.begin(); it != this->selections.end(); it++)
-		(*ofs) << "\t\t" << "returned->" << (*it)->get_parameter()->get_name() << " = res->" << (*it)->get_column()->get_name() << ";" << endl;
+	for (auto it = this->selections.begin(); it != this->selections.end(); it++) {
+		(*ofs) << "\t\t" << (*it)->get_column()->get_type()->select_expr((*it)->get_parameter()->get_name(), (*it)->get_column()->get_name()) << endl;
+	}
 
 	(*ofs) << "\t\t" <<func_name << "_size += 1;" << endl
 	       << "\t\t" << func_name << "_data = realloc(" << func_name << "_data, " << func_name<< "_size * sizeof(struct " << func_name << "_out_struct));" << endl

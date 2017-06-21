@@ -86,8 +86,8 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	       << "\t" << "if ((file = fopen(" << this->get_name() << "_filename, \"r\")) == NULL)" << endl
 	       << "\t\t" << "return 0;" << endl
 	       << endl
-	       << "int table_index = -1;" << endl
-           << "\tchar* source = malloc(MILLDB_OUTPUT_MAX_LINE_LENGTH);" << endl
+	       << "\t" << "int table_index = -1;" << endl
+           << "\t" << "char* source = malloc(MILLDB_OUTPUT_MAX_LINE_LENGTH);" << endl
            << endl
            << "\t" << "while (!feof(file)) {" << endl
            << "\t\t" << "if (fgets(source, MILLDB_OUTPUT_MAX_LINE_LENGTH, file) == NULL)" << endl

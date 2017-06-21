@@ -156,9 +156,16 @@ table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name
 			// Clear temp table_name object
 			delete $3;
 
+			int pk_exists = 0;
+
 			// Populate table by its columns
-			for (Column* const& col: *$5)
+			for (Column* const& col: *$5) {
+				pk_exists |= col->get_pk();
 				$$->add_column(col);
+			}
+
+			if (!pk_exists)
+				throw logic_error("table " + $$->get_name() + " must have primary key");
 
 			// Clear temp column storage
 			delete $5;

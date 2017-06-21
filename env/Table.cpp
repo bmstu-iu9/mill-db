@@ -163,18 +163,18 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 
 		(*ofs) << "struct "  << name << "_struct* " << name << "_search(struct " << name << "_Node* this, struct " << name << "_struct* searched) {" << endl
 		       <<"\t" << "int i = 0;" << endl
-               <<"\twhile (i < this->n && " << name << "_struct_compare(searched, this->keys[i]) == 1) {" << endl
-               <<"\t\ti++;" << endl
-               <<"\t}\n"
-               <<"\n"
-               <<"\tif (i != this->n && " << name << "_struct_compare(this->keys[i], searched) == 0) {" << endl
-               <<"\t\treturn this->keys[i];" << endl
-               <<"\t}\n"
-               <<"\tif (this->is_leaf)" << endl
-               <<"\t\treturn NULL;" << endl
-               <<"\treturn " << name << "_search(this->C[i], searched);" << endl
-               <<"}" << endl
-               << endl;
+		       <<"\twhile (i < this->n && " << name << "_struct_compare(searched, this->keys[i]) == 1) {" << endl
+		       <<"\t\ti++;" << endl
+		       <<"\t}\n"
+		       <<"\n"
+		       <<"\tif (i != this->n && " << name << "_struct_compare(this->keys[i], searched) == 0) {" << endl
+		       <<"\t\treturn this->keys[i];" << endl
+		       <<"\t}\n"
+		       <<"\tif (this->is_leaf)" << endl
+		       <<"\t\treturn NULL;" << endl
+		       <<"\treturn " << name << "_search(this->C[i], searched);" << endl
+		       <<"}" << endl
+		       << endl;
 
 		(*ofs) << "void " << name << "_split_child(struct " << name << "_Node* this, int i, struct " << name
 		       << "_Node* y) {" << endl
