@@ -19,6 +19,8 @@ public:
 	std::string get_format_specifier();
 
 	std::string str(std::string name);
+	std::string scan_expr(std::string column_name);
+	std::string init_expr(std::string column_name);
 
 	int equals(DataType* that);
 private:

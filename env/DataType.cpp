@@ -111,3 +111,37 @@ string DataType::get_format_specifier() {
 
 	return "";
 }
+
+string DataType::scan_expr(string column_name) {
+	if (this->get_typecode() == DataType::INT)
+		return "sscanf(token, \"%d\", &(arg->" + column_name + "));";
+
+	if (this->get_typecode() == DataType::DOUBLE)
+		return "sscanf(token, \"%lf\", &(arg->" + column_name + "));";
+
+	if (this->get_typecode() == DataType::FLOAT)
+		return "sscanf(token, \"%f\", &(arg->" + column_name + "));";
+
+	if (this->get_typecode() == DataType::CHAR) {
+		return "printf(arg->" + column_name + ", \"%s\", token);";
+	}
+
+	return "";
+}
+
+string DataType::init_expr(string column_name) {
+	if (this->get_typecode() == DataType::INT)
+		return "new->" + column_name + " = 0;";
+
+	if (this->get_typecode() == DataType::DOUBLE)
+		return "new->" + column_name + " = 0.0;";
+
+	if (this->get_typecode() == DataType::FLOAT)
+		return "new->" + column_name + " = 0.0;";
+
+	if (this->get_typecode() == DataType::CHAR) {
+		return "memset(new->" + column_name + ", 0, " + to_string(this->get_length()) + ");";
+	}
+
+	return "";
+}

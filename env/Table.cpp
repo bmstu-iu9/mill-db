@@ -78,11 +78,22 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		(*ofs) << "struct " << name << "_struct {" << endl;
 		for (auto it = this->cols.begin(); it != this->cols.end(); it++) {
 			Column *col = *it;
-//			(*ofs) << "\t" << col->get_type()->str() << " " << col->get_name() << ";" << endl;
 			(*ofs) << "\t" << col->get_type()->str(col->get_name()) << ";" << endl;
 		}
 		(*ofs) << "};" << endl
 		       << endl;
+
+		(*ofs) << "struct " << name << "_struct* " << name << "_struct_new() {" << endl
+		       << "\t" << "struct " << name << "_struct* new = malloc(sizeof(struct " << name << "_struct));" << endl;
+
+		for (auto it = this->cols.begin(); it != this->cols.end(); it++) {
+			Column* col = *it;
+			(*ofs) << "\t" << col->get_type()->init_expr(col->get_name()) << endl;
+		}
+
+		(*ofs) << "\t" << "return new;" << endl
+		       << "}" << endl
+               << endl;
 
 		// Table row comparator
 		(*ofs) << "int " << name << "_struct_compare(struct " << name << "_struct* s1, "

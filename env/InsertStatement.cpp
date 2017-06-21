@@ -64,8 +64,8 @@ void InsertStatement::print_dependencies(std::ofstream* ofs, std::ofstream* ofl)
 }
 
 void InsertStatement::print(ofstream* ofs, ofstream* ofl, string proc_name) {
-	(*ofs) << "\t" << "struct " << this->get_table()->get_name() << "_struct* arg = malloc(sizeof(struct "
-	       << this->get_table()->get_name() << "_struct));" << endl;
+	(*ofs) << "\t" << "struct " << this->get_table()->get_name() << "_struct* arg = "
+	       << this->get_table()->get_name() << "_struct_new();" << endl;
 
 	for (int i = 0; i < this->get_table()->cols_size(); i++) {
 		if (this->get_table()->cols_at(i)->get_type()->get_typecode() == DataType::CHAR)
