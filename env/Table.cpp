@@ -3,6 +3,7 @@
 using namespace std;
 
 Table::Table(string name) {
+	this->printed = false;
 	this->name = name;
 }
 

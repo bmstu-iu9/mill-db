@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <stdexcept>
 #include "milldb.lex.h"
 #include "env/env.h"
 
