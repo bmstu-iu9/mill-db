@@ -30,7 +30,7 @@ private:
 	std::string name;
 	std::vector<Column*> cols;
 	std::map<std::string, Index*> indexes;
-	bool printed = false;
+	bool printed;
 };
 
 

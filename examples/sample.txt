@@ -1,0 +1,26 @@
+CREATE TABLE Person (
+	id int pk,
+    name char(100),
+	age int,
+	position int
+);
+
+CREATE TABLE Positions (
+	id int pk,
+    name char(20)
+);
+
+CREATE PROCEDURE add_position(@id int in, @name char(20) in)
+BEGIN
+	INSERT TABLE Positions VALUES (@id, @name);
+END;
+
+CREATE PROCEDURE add_person(@id int in, @name char(100) in, @age int in, @position int in)
+BEGIN
+	INSERT TABLE Person VALUES (@id, @name, @age, @position);
+END;
+
+CREATE PROCEDURE get_person_by_id(@id int in, @name char(100) out, @age int out, @position int out)
+BEGIN
+	SELECT name SET @name, age SET @age, position SET @position FROM Person WHERE id = @id;
+END;
