@@ -384,7 +384,8 @@ selection_list: selection {
 			debug("selection_list 1 BEGIN");
 
 			$$ = new vector<pair<string, string> >;
-            $$->push_back(*$1);
+			$$->push_back(*$1);
+			delete $1;
 
 			debug("selection_list 1 END");
 		}
@@ -392,7 +393,8 @@ selection_list: selection {
 			debug("selection_list 2 BEGIN");
 
 			$$ = $1;
-            $$->push_back(*$3);
+			$$->push_back(*$3);
+			delete $3;
 
 			debug("selection_list 2 END");
 		}
@@ -401,8 +403,7 @@ selection_list: selection {
 selection: column_name SET_KEYWORD parameter_name {
 			debug("selection BEGIN");
 
-			pair<string, string> selection = make_pair(*$1, *$3);
-			$$ = &selection;
+			$$ = new pair<string, string>(*$1, *$3);
 
 			delete $1;
 			delete $3;
@@ -469,12 +470,14 @@ argument_list: argument {
 			debug("argument_list 1 BEGIN");
 			$$ = new vector<pair<string, Argument::Type> >;
 			$$->push_back(*$1);
+			delete $1;
 			debug("argument_list 1 END");
 		}
 	| argument_list COMMA argument {
 			debug("argument_list 2 BEGIN");
 			$$ = $1;
 			$$->push_back(*$3);
+			delete $3;
 			debug("argument_list 2 END");
 		}
 	;
@@ -482,8 +485,7 @@ argument_list: argument {
 argument: parameter_name {
 			debug("argument BEGIN");
 
-			pair<string, Argument::Type> argument = make_pair(*$1, Argument::PARAMETER);
-			$$ = &argument;
+			$$ = new pair<string, Argument::Type>(*$1, Argument::PARAMETER);
 
 			delete $1;
 
