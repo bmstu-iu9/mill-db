@@ -251,6 +251,9 @@ void Person_buffer_add(struct Person* inserted) {
 }
 
 void Person_buffer_free() {
+	if (Person_buffer == NULL)
+		return;
+
 	for (uint64_t i = 0; i < Person_buffer_info.count; i++) {
 		Person_free(Person_buffer[i]);
 	}
@@ -307,13 +310,14 @@ char* sample1_file_opened_mode = NULL;
 
 int sample1_open(char* filename, char* mode) {
 	if (!sample1_file_opened) {
-		if (MILLDB_IF_READMODE(mode))
-			if (!(sample1_file = fopen(filename, mode)))
+		if (!(sample1_file = fopen(filename, mode)))
 				return 1;
 
+		if (MILLDB_IF_READMODE(mode)) {
+
+		}
+
 		if (MILLDB_IF_WRITEMODE(mode)) {
-			if (!(sample1_file = fopen(filename, mode)))
-				return 1;
 			Person_buffer_init();
 		}
 
@@ -331,9 +335,9 @@ int sample1_save() {
 		// Prepare and write header
 		struct MILLDB_header* header = malloc(sizeof(struct MILLDB_header));
 		header->count = Person_buffer_info.count;
-		header->data_offset = sizeof(struct MILLDB_header);
+		header->data_offset = MILLDB_HEADER_SIZE;
 		header->index_offset = header->data_offset + Person_buffer_info.count * sizeof(struct Person);
-		fwrite(header, sizeof(struct MILLDB_header), 1, sample1_file);
+		fwrite(header, MILLDB_HEADER_SIZE, 1, sample1_file);
 		free(header);
 
 		// Construct heavy tree
@@ -366,29 +370,25 @@ int sample1_close() {
 
 		if (MILLDB_IF_WRITEMODE(sample1_file_opened_mode)) {
 			sample1_save();
+			Person_buffer_free();
 		}
 
 		fclose(sample1_file);
 		sample1_file = NULL;
 		sample1_file_opened_mode = NULL;
 		sample1_file_opened = 0;
-
-		Person_buffer_free();
 	} else
 		printf("tt_close(): sample1_file_opened == 0\n");
 
 	return 0;
 }
 
-/*
- *	NOT IMPLEMENTED YET
- */
-struct Person* Person_read(FILE* file, int32_t offset) {
-	fseek(file, offset, SEEK_SET);
-	struct Person* new = Person_new();
-	fread(new, sizeof(struct Person), 1, file);
-	return new;
-}
+// struct Person* Person_read(FILE* file, int32_t offset) {
+// 	fseek(file, offset, SEEK_SET);
+// 	struct Person* new = Person_new();
+// 	fread(new, sizeof(struct Person), 1, file);
+// 	return new;
+// }
 
 int writeproc_1(int32_t param1, const char* name) {
 	struct Person* inserted = Person_new();
@@ -406,12 +406,85 @@ int writeproc(int32_t param1, const char* name) {
 	return writeproc_1(param1, name);
 }
 
+struct get_person_by_id_out_struct* get_person_by_id_data = NULL;
+int get_person_by_id_size = 0;
+int get_person_by_id_iter_count = 0;
+
+struct get_person_by_id_out_struct {
+	char name[5];
+};
+
+void get_person_by_id_1(int32_t id) {
+	fseek(sample1_file, 0, SEEK_SET);
+	struct MILLDB_header* header = malloc(MILLDB_HEADER_SIZE);
+	fread(header, MILLDB_HEADER_SIZE, 1, sample1_file);
+
+	for (uint64_t i = 0; i < header->count; i++) {
+		fseek(sample1_file, MILLDB_HEADER_SIZE + i * sizeof(struct Person), SEEK_SET);
+		struct Person* current = malloc(sizeof(struct Person));
+		fread(current, sizeof(struct Person), 1, sample1_file);
+
+		if (current->id == id) {
+			get_person_by_id_data = malloc(sizeof(struct get_person_by_id_out_struct));	
+			memcpy(get_person_by_id_data->name, current->name, 4);
+			get_person_by_id_data->name[4] = '\0';
+			free(current);
+			get_person_by_id_size = 1;
+			break;
+		}
+
+		free(current);
+	}
+
+	free(header);
+	return;
+}
+
+int get_person_by_id_init(struct get_person_by_id_out_struct* iter, int32_t id) {
+	memset(iter, 0, sizeof(*iter));
+
+	get_person_by_id_data = NULL;
+	get_person_by_id_size = 0;
+	get_person_by_id_iter_count = 0;
+
+	get_person_by_id_1(id);
+
+	return 0;
+}
+
+int get_person_by_id_next(struct get_person_by_id_out_struct* iter) {
+	if (get_person_by_id_data != NULL && get_person_by_id_iter_count < get_person_by_id_size) {
+		memcpy(iter, get_person_by_id_data, sizeof(*iter));
+		get_person_by_id_iter_count++;
+		return 1;
+	}
+
+	if (get_person_by_id_data != NULL) {
+		free(get_person_by_id_data);
+	}
+
+	return 0;
+}
+
 int main() {
 	sample1_open("FILE", "w");
 
 	for (int i = 0; i < 30; i++)
 		writeproc(i, "aaaa");
 
+	writeproc(555, "afaa");
+
 	sample1_close();
+
+	sample1_open("FILE", "r");
+
+	struct get_person_by_id_out_struct iter;
+
+	get_person_by_id_init(&iter, 555);
+	while (get_person_by_id_next(&iter))
+		printf("%s\n", iter.name);
+
+	sample1_close();
+
 	return 0;
 }
