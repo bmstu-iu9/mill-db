@@ -57,7 +57,7 @@ struct MILLDB_header {
 
 struct Person {
 	int32_t id;
-	char name[4];
+	char name[32];
 };
 
 struct Person_tree_item {
@@ -114,9 +114,9 @@ int Person_compare(struct Person* s1, struct Person* s2) {
 	else if (s1->id < s2->id)
 		return -1;
 
-	if (strncmp(s1->name, s1->name, 4) == 1)
+	if (strncmp(s1->name, s1->name, 32) == 1)
 		return 1;
-	else if (strncmp(s1->name, s1->name, 4) == -1)
+	else if (strncmp(s1->name, s1->name, 32) == -1)
 		return -1;
 
 	return 0;
@@ -390,11 +390,11 @@ int sample1_close() {
 // 	return new;
 // }
 
-int writeproc_1(int32_t param1, const char* name) {
+int add_person_1(int32_t param1, const char* name) {
 	struct Person* inserted = Person_new();
 
 	inserted->id = param1;
-	memcpy(inserted->name, name, 4);
+	memcpy(inserted->name, name, 32);
 
 	// Just add it to storage in a row
 	Person_buffer_add(inserted);
@@ -402,8 +402,8 @@ int writeproc_1(int32_t param1, const char* name) {
 	return 0;
 }
 
-int writeproc(int32_t param1, const char* name) {
-	return writeproc_1(param1, name);
+int add_person(int32_t param1, const char* name) {
+	return add_person_1(param1, name);
 }
 
 struct get_person_by_id_out_struct* get_person_by_id_data = NULL;
@@ -411,7 +411,7 @@ int get_person_by_id_size = 0;
 int get_person_by_id_iter_count = 0;
 
 struct get_person_by_id_out_struct {
-	char name[5];
+	char name[33];
 };
 
 void get_person_by_id_1(int32_t id) {
@@ -419,23 +419,22 @@ void get_person_by_id_1(int32_t id) {
 	struct MILLDB_header* header = malloc(MILLDB_HEADER_SIZE);
 	fread(header, MILLDB_HEADER_SIZE, 1, sample1_file);
 
+	struct Person* current = malloc(sizeof(struct Person));
+
 	for (uint64_t i = 0; i < header->count; i++) {
 		fseek(sample1_file, MILLDB_HEADER_SIZE + i * sizeof(struct Person), SEEK_SET);
-		struct Person* current = malloc(sizeof(struct Person));
 		fread(current, sizeof(struct Person), 1, sample1_file);
 
 		if (current->id == id) {
 			get_person_by_id_data = malloc(sizeof(struct get_person_by_id_out_struct));	
-			memcpy(get_person_by_id_data->name, current->name, 4);
-			get_person_by_id_data->name[4] = '\0';
-			free(current);
+			memcpy(get_person_by_id_data->name, current->name, 32);
+			get_person_by_id_data->name[32] = '\0';
 			get_person_by_id_size = 1;
 			break;
 		}
-
-		free(current);
 	}
 
+	free(current);
 	free(header);
 	return;
 }
@@ -469,10 +468,18 @@ int get_person_by_id_next(struct get_person_by_id_out_struct* iter) {
 int main() {
 	sample1_open("FILE", "w");
 
-	for (int i = 0; i < 30; i++)
-		writeproc(i, "aaaa");
+	// for (int i = 0; i < 30; i++)
+	// 	add_person(i, "aaaa");
 
-	writeproc(555, "afaa");
+	// add_person(555, "afaa");
+
+	add_person(0, "Sidney Crosby");
+	add_person(1, "Matt Duchene");
+	add_person(2, "Marc-Andre Fleury");
+	add_person(3, "Max Pacioretty");
+	add_person(4, "Corey Perry");
+	add_person(5, "Patrick Hornquist");
+	add_person(6, "George Parros");
 
 	sample1_close();
 
@@ -480,7 +487,7 @@ int main() {
 
 	struct get_person_by_id_out_struct iter;
 
-	get_person_by_id_init(&iter, 555);
+	get_person_by_id_init(&iter, 2);
 	while (get_person_by_id_next(&iter))
 		printf("%s\n", iter.name);
 

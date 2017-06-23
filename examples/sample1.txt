@@ -3,7 +3,12 @@ CREATE TABLE Person (
 	name char(4)
 )
 
-CREATE PROCEDURE writeproc(@id int in, @name char(4) in)
+CREATE PROCEDURE add_person(@id int in, @name char(4) in)
 BEGIN
 	INSERT TABLE Person VALUES (@id, @name);
+END;
+
+CREATE PROCEDURE get_person_by_id(@id int in, @name char(4) out)
+BEGIN
+	SELECT name SET @name FROM Person WHERE id = @id;
 END;
