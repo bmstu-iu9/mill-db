@@ -3,24 +3,34 @@
 #include "sample.h"
 
 int main() {
-	sample_open("Persons.out");
+	sample_open_write("FILE");
 
-	add_position(0, "Employee");
-	add_position(1, "Manager");
-	add_position(2, "TerritorialManager");
+	add_person(0, "Sidney Crosby");
+	add_person(1, "Matt Duchene");
+	add_person(2, "Marc-Andre Fleury");
+	add_person(3, "Max Pacioretty");
+	add_person(4, "Corey Perry");
+	add_person(5, "Patrick Hornquist");
+	add_person(6, "George Parros");
 
-	add_person(0, "Steve Mason", 27, 0);
-	add_person(1, "Sidney Crosby", 32, 1);
-	add_person(2, "Antti Niemi", 30, 1);
-	add_person(3, "Mike Modano", 45, 2);
+	sample_close_write();
 
-	struct get_person_by_id_out_struct* iter;
+	struct sample_handle* handle1 = sample_open_read("FILE");
+	struct sample_handle* handle2 = sample_open_read("FILE");
 
-	get_person_by_id_init(&iter, 2);
-	while (get_person_by_id_next(&iter))
-		printf("%s\n", iter->name);
+	struct get_person_out iter1;
+	struct get_person_out iter2;
 
-	sample_close();
+	get_person_init(&iter1, handle1, 4);
+	while (get_person_next(&iter1))
+		printf("%s\n", iter1.data.name);
+
+	get_person_init(&iter2, handle2, 2);
+	while (get_person_next(&iter2))
+		printf("%s\n", iter2.data.name);
+
+	sample_close_read(handle1);
+	sample_close_read(handle2);
 
 	return 0;
 }

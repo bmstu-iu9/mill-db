@@ -1,21 +1,27 @@
 #ifndef SAMPLE_H
 #define SAMPLE_H
 
-void add_person(int32_t id, char name[101], int32_t age, int32_t position);
+void add_person(int32_t id, const char* name);
 
-void add_position(int32_t id, char name[21]);
+void sample_open_write(const char* filename);
+void sample_close_write(void);
 
-struct get_person_by_id_out_struct {
-	char name[101];
-	int32_t age;
-	int32_t position;
+struct sample_handle;
+
+struct sample_handle* sample_open_read(const char* filename);
+void sample_close_read(struct sample_handle*);
+
+struct get_person_out_data {
+	int32_t id;
+	char name[33];
 };
 
-int get_person_by_id_init(struct get_person_by_id_out_struct** iter, int32_t id);
-int get_person_by_id_next(struct get_person_by_id_out_struct** iter);
+struct get_person_out {
+	struct sample_handle* handle;
+	struct get_person_out_data data;
+};
 
-int sample_open(char* filename);
-int sample_close();
+void get_person_init(struct get_person_out* iter, struct sample_handle* handle, int id);
+int get_person_next(struct get_person_out* iter);
 
 #endif
-
