@@ -308,17 +308,13 @@ struct sample_handle {
 	uint32_t id;
 	FILE* file;
 	int mode;
-
-	struct get_person_out_data* get_person_data;
-	int get_person_size;
-	int get_person_iter_count;
 };
 
 struct sample_handle* sample_write_handle = NULL;
 
 void sample_open_write(const char* filename) {
 	FILE* file;
-	if (!(file = fopen(filename, "w")))
+	if (!(file = fopen(filename, "wb")))
 		return;
 
 	sample_write_handle = malloc(sizeof(struct sample_handle));
@@ -380,7 +376,7 @@ void sample_close_write(void) {
 
 struct sample_handle* sample_open_read(const char* filename) {
 	FILE* file;
-	if (!(file = fopen(filename, "r")))
+	if (!(file = fopen(filename, "rb")))
 		return NULL;
 
 	struct sample_handle* handle = malloc(sizeof(struct sample_handle));
@@ -413,23 +409,30 @@ void add_person(int32_t id, const char* name) {
 	add_person_1(id, name);
 }
 
-void get_person_1(struct sample_handle* handle, int32_t id) {
-	fseek(handle->file, 0, SEEK_SET);
+
+/*
+ *  CREATE PROCEDURE get_person(@id int in, @name char(4) out)
+ *  BEGIN
+ *      SELECT name SET @name FROM Person WHERE id = @id;
+ *  END;
+ */
+void get_person_1(struct get_person_out* iter, int32_t id) {
+	fseek(iter->handle->file, 0, SEEK_SET);
 	struct MILLDB_header* header = malloc(MILLDB_HEADER_SIZE);
-	fread(header, MILLDB_HEADER_SIZE, 1, handle->file);
+	fread(header, MILLDB_HEADER_SIZE, 1, iter->handle->file);
 
 	struct Person* current = malloc(sizeof(struct Person));
 
 	for (uint64_t i = 0; i < header->count; i++) {
-		fseek(handle->file, MILLDB_HEADER_SIZE + i * sizeof(struct Person), SEEK_SET);
-		fread(current, sizeof(struct Person), 1, handle->file);
+		fseek(iter->handle->file, MILLDB_HEADER_SIZE + i * sizeof(struct Person), SEEK_SET);
+		fread(current, sizeof(struct Person), 1, iter->handle->file);
 
 		if (current->id == id) {
-			handle->get_person_data = malloc(sizeof(struct get_person_out));
-			handle->get_person_data->id = id;
-			memcpy(handle->get_person_data->name, current->name, 32);
-			handle->get_person_data->name[32] = '\0';
-			handle->get_person_size = 1;
+			iter->set = malloc(sizeof(struct get_person_out));
+			iter->set->id = id;
+			memcpy(iter->set->name, current->name, 32);
+			iter->set->name[32] = '\0';
+			iter->size = 1;
 			break;
 		}
 	}
@@ -442,12 +445,11 @@ void get_person_1(struct sample_handle* handle, int32_t id) {
 void get_person_init(struct get_person_out* iter, struct sample_handle* handle, int32_t id) {
 	memset(iter, 0, sizeof(*iter));
 	iter->handle = handle;
+	iter->set = NULL;
+	iter->size = 0;
+	iter->count = 0;
 
-	handle->get_person_data = NULL;
-	handle->get_person_size = 0;
-	handle->get_person_iter_count = 0;
-
-	get_person_1(handle, id);
+	get_person_1(iter, id);
 }
 
 int get_person_next(struct get_person_out* iter) {
@@ -458,14 +460,12 @@ int get_person_next(struct get_person_out* iter) {
 	if (handle == NULL)
 		return 0;
 
-	if (handle->get_person_data != NULL && handle->get_person_iter_count < handle->get_person_size) {
-		memcpy(&iter->data, handle->get_person_data, sizeof(*iter));
-		handle->get_person_iter_count++;
+	if (iter->set != NULL && iter->count < iter->size) {
+		memcpy(&iter->data, iter->set, sizeof(struct get_person_out_data));
+		iter->count++;
 		return 1;
-	}
-
-	if (handle->get_person_data != NULL) {
-		free(handle->get_person_data);
+	} else {
+		free(iter->set);
 	}
 
 	return 0;
