@@ -11,40 +11,11 @@
 
 #define MILLDB_BUFFER_INIT_SIZE 32
 
-/*
- *	MillDB buffer
- */
 struct MILLDB_buffer_info {
 	uint64_t size;
 	uint64_t count;
 };
 
-/*
- *	Returns count of last tree_item childs.
- *	n -- total number of rows
- *  clildren -- default number of childs 
- */
-uint32_t MILLDB_last_child_count(uint64_t n, uint32_t children) {
-	return (n - children) % children + children;
-}
-
-/*
- *	Returns number of tree levels
- *	n -- total number of rows
- *  clildren -- default number of childs 
- */
-uint32_t MILLDB_levels(uint64_t n, uint32_t children) {
-	for (uint32_t levels = 1; levels < 20; levels++) {
-		uint64_t x = 2 * pow(children, levels) + (levels - 2);
-		if (x >= n)
-			return levels;
-	}
-	return -1;
-}
-
-/*
- *	MillDB header
- */
 struct MILLDB_header {
 	uint64_t count;
 	uint64_t data_offset;
@@ -55,7 +26,7 @@ struct MILLDB_header {
 
 struct Person {
 	int32_t id;
-	char name[32];
+	char name[4];
 };
 
 struct Person_tree_item {
@@ -69,37 +40,12 @@ struct Person_tree_item* Person_tree_item_new() {
 	return new;
 }
 
-struct Person_tree_item** Person_tree_item_buffer = NULL;
-struct MILLDB_buffer_info Person_tree_item_buffer_info;
-
-void Person_tree_item_buffer_init() {
-	Person_tree_item_buffer_info.size = MILLDB_BUFFER_INIT_SIZE;
-	Person_tree_item_buffer_info.count = 0;
-	Person_tree_item_buffer = calloc(Person_tree_item_buffer_info.size, sizeof(struct Person_tree_item));
-}
-
-void Person_tree_item_add(struct Person_tree_item* inserted) {
-	if (Person_tree_item_buffer_info.count >= Person_tree_item_buffer_info.size) {
-		Person_tree_item_buffer_info.size *= 2;
-		Person_tree_item_buffer = realloc(Person_tree_item_buffer, Person_tree_item_buffer_info.size * sizeof(struct Person_tree_item*));
-	}
-	Person_tree_item_buffer[Person_tree_item_buffer_info.count++] = inserted;
-}
-
 void Person_tree_item_free(struct Person_tree_item* deleted) {
 	free(deleted);
 	return;
 }
-
-void Person_tree_item_buffer_free() {
-	for (uint64_t i = 0; i < Person_tree_item_buffer_info.count; i++) {
-		Person_tree_item_free(Person_tree_item_buffer[i]);
-	}
-	free(Person_tree_item_buffer);
-}
-
-// #define Person_CHILDREN (PAGE_SIZE / sizeof(struct Person_tree_item) + 1)
-#define Person_CHILDREN (2 + 1)
+#define Person_CHILDREN (PAGE_SIZE / sizeof(struct Person_tree_item))
+//#define Person_CHILDREN (3)
 
 union Person_page
 {
@@ -132,106 +78,6 @@ void Person_free(struct Person* deleted) {
 	return;
 }
 
-struct Person_Node {
-	struct Person** keys;
-	struct Person_Node** C;
-	uint64_t n;
-	uint8_t is_leaf;
-};
-
-struct Person_Node* Person_root = NULL;
-
-struct Person_Node* Person_Node_new(uint8_t is_leaf) {
-	struct Person_Node* Person_Node_temp = malloc(sizeof(struct Person_Node));
-	Person_Node_temp->keys = malloc((2*Person_CHILDREN-1) * sizeof(struct Person));
-	Person_Node_temp->C = malloc((2*Person_CHILDREN) * sizeof(struct Person_Node));
-	Person_Node_temp->n = 0;
-	Person_Node_temp->is_leaf = is_leaf;
-	return Person_Node_temp;
-}
-
-void Person_split(struct Person_Node* this, int i, struct Person_Node* y) {
-	struct Person_Node* z = Person_Node_new(y->is_leaf);
-	z->n = Person_CHILDREN - 1;
-
-	for (int j = 0; j < Person_CHILDREN-1; j++)
-		z->keys[j] = y->keys[j+Person_CHILDREN];
-
-	if (!y->is_leaf) {
-		for (int j = 0; j < Person_CHILDREN; j++)
-			z->C[j] = y->C[j+Person_CHILDREN];
-	}
-
-	y->n = Person_CHILDREN - 1;
-
-	for (int j = this->n; j >= i+1; j--)
-		this->C[j+1] = this->C[j];
-
-	this->C[i+1] = z;
-
-	for (int j = this->n-1; j >= i; j--)
-		this->keys[j+1] = this->keys[j];
-
-	this->keys[i] = y->keys[Person_CHILDREN-1];
-	this->n = this->n + 1;
-}
-
-void Person_insert_routine(struct Person_Node* this, struct Person* k) {
-	int i;
-
-	i = this->n-1;
-	if (this->is_leaf == 1) {
-		while (i >= 0 && Person_compare(this->keys[i], k) == 1) {
-			this->keys[i+1] = this->keys[i];
-			i--;
-		}
-
-		this->keys[i+1] = k;
-		this->n = this->n+1;
-	} else {
-		while (i >= 0 && Person_compare(this->keys[i], k) == 1)
-			i--;
-
-		if (this->C[i+1]->n == 2*Person_CHILDREN-1) {
-			Person_split(this, i+1, this->C[i+1]);
-
-			if (this->keys[i+1] < k)
-				i++;
-		}
-		Person_insert_routine(this->C[i+1], k);
-	}
-}
-
-void Person_insert(struct Person* inserted) {
-	if (Person_root == NULL) {
-		Person_root = Person_Node_new(1);
-		Person_root->keys[0] = inserted;
-		Person_root->n = 1;
-	} else {
-		if (Person_root->n == 2*Person_CHILDREN-1) {
-			struct Person_Node* s = Person_Node_new(0);
-			s->C[0] = Person_root;
-
-			Person_split(s, 0, Person_root);
-
-			int i = 0;
-			if (Person_compare(s->keys[0], inserted) == -1)
-				i++;
-			Person_insert_routine(s->C[i], inserted);
-			Person_root = s;
-		} else {
-			Person_insert_routine(Person_root, inserted);
-		}
-	}
-}
-
-
-
-
-/* 
- * PERSON buffer
- */
-
 struct Person** Person_buffer = NULL;
 struct MILLDB_buffer_info Person_buffer_info;
 
@@ -259,44 +105,76 @@ void Person_buffer_free() {
 	free(Person_buffer);
 }
 
+uint64_t Person_partition(struct Person** buffer, uint64_t low, uint64_t high) {
+	if (buffer == NULL)
+		return -1;
 
-int Person_traverse_and_clean(FILE* file, struct Person_Node* node, int offset_) {
-	uint64_t total_children_count = 0;
-	int current_offset = offset_, effective_offset = offset_;
-
-	for (int i = 0; i <= node->n; i++) {
-		if (!node->is_leaf) {
-			int child_count = Person_traverse_and_clean(file, node->C[i], current_offset);
-			total_children_count += child_count;
-			current_offset += child_count * sizeof(struct Person);
-
-			if (effective_offset == offset_)
-				effective_offset = current_offset;
+	uint64_t pivot = (high - low) >> 1;
+	uint64_t i = low, j = high;
+	while (i < j) {
+		while (Person_compare(buffer[i], buffer[pivot]) < 0)
+			i++;
+		while (Person_compare(buffer[j], buffer[pivot]) > 0)
+			j--;
+		if (i < j) {
+			struct Person* temp = Person_new();
+			memcpy(temp, buffer[i], sizeof(struct Person));
+			memcpy(buffer[i], buffer[j], sizeof(struct Person));
+			memcpy(buffer[j], temp, sizeof(struct Person));
+			Person_free(temp);
 		}
+	}
+	return i + 1;
+}
 
-		if (i == node->n) 
-			break;
+void Person_sort(struct Person** buffer, uint64_t low, uint64_t high) {
+	if (buffer == NULL)
+		return;
 
-		fwrite(node->keys[i], sizeof(struct Person), 1, file);
+//	printf("sorting %ld %ld\n", low, high);
 
-		total_children_count++;
-		current_offset += sizeof(struct Person);
+	if (low < high) {
+		uint64_t p = Person_partition(buffer, low, high);
+		Person_sort(buffer, low, p-1);
+		Person_sort(buffer, p, high);
+	}
+}
+
+void Person_write(FILE* file) {
+	Person_sort(Person_buffer, 0, Person_buffer_info.count - 1);
+
+	for (uint64_t i = 0; i < Person_buffer_info.count; i++) {
+		fwrite(Person_buffer[i], sizeof(struct Person), 1, file);
 	}
 
-//	printf("total_children_count=%ld, is_leaf=%d, offset=%d, key=%d\n",
-//		total_children_count, total_children_count == node->n, effective_offset, node->keys[0]->id);
+	uint64_t page_size = Person_CHILDREN;
+	while (page_size < Person_buffer_info.count) {
+		for (uint64_t i = 0; i < Person_buffer_info.count; i += page_size) {
+			struct Person_tree_item *item = Person_tree_item_new();
 
-	struct Person_tree_item* tree_item = Person_tree_item_new();
-	tree_item->key = node->keys[0]->id;
-	tree_item->offset = effective_offset;
-	Person_tree_item_add(tree_item);
+			item->key = Person_buffer[i]->id;
+			item->offset = i * sizeof(struct Person);
 
-	free(node->keys);
-	free(node->C);
-	free(node);
+			fwrite(item, sizeof(struct Person_tree_item), 1, file);
 
-	return total_children_count;
+			Person_tree_item_free(item);
+		}
+		page_size *= Person_CHILDREN;
+	}
+
+	struct Person_tree_item *item = Person_tree_item_new();
+	item->key = Person_buffer[0]->id;
+	item->offset = 0;
+	fwrite(item, sizeof(struct Person_tree_item), 1, file);
+	Person_tree_item_free(item);
 }
+
+struct Person_Node {
+	struct Person_tree_item data;
+	struct Person_Node** childs;
+	uint64_t n;
+
+};
 
 #define MILLDB_FILE_MODE_CLOSED -1
 #define MILLDB_FILE_MODE_READ 0
@@ -308,6 +186,10 @@ struct sample_handle {
 	uint32_t id;
 	FILE* file;
 	int mode;
+
+	struct MILLDB_header* header;
+
+	struct Person_Node* Person_root;
 };
 
 struct sample_handle* sample_write_handle = NULL;
@@ -330,7 +212,7 @@ int sample_save(struct sample_handle* handle) {
 	if (handle == NULL)
 		return 0;
 
-	if (handle->mode == MILLDB_FILE_MODE_WRITE && Person_buffer_info.count > 0) {
+	if (handle->mode == MILLDB_FILE_MODE_WRITE) {
 
 		// Prepare and write header
 		struct MILLDB_header* header = malloc(sizeof(struct MILLDB_header));
@@ -340,27 +222,24 @@ int sample_save(struct sample_handle* handle) {
 		fwrite(header, MILLDB_HEADER_SIZE, 1, handle->file);
 		free(header);
 
-		// Construct heavy tree
-		for (uint64_t i = 0; i < Person_buffer_info.count; i++)
-			Person_insert(Person_buffer[i]);
-
-		// Init buffer for items of light tree, that will be saved to disk
-		Person_tree_item_buffer_init();
-
-		// Collect items of light tree and clean heavy tree
-		Person_traverse_and_clean(handle->file, Person_root, 0);
-
-		// Write light tree to disk
-		for (uint64_t i = 0; i < Person_tree_item_buffer_info.count; i++) {
-			fwrite(Person_tree_item_buffer[i], sizeof(struct Person_tree_item), 1, handle->file);
-		}
-
-		// Clean light tree, deallocate
-		Person_tree_item_buffer_free();
+		if (Person_buffer_info.count > 0)
+			Person_write(handle->file);
 	} else
 		printf("sample_save(): fail\n");
 
 	return 0;
+}
+
+void Person_index_clean(struct Person_Node* node) {
+	if (node == NULL)
+		return;
+
+	for (uint64_t i = 0; i < node->n; i++)
+		Person_index_clean(node->childs[i]);
+
+	if (node->childs)
+		free(node->childs);
+	free(node);
 }
 
 void sample_close_write(void) {
@@ -384,6 +263,59 @@ struct sample_handle* sample_open_read(const char* filename) {
 	handle->file = file;
 	handle->mode = MILLDB_FILE_MODE_READ;
 
+	fseek(handle->file, 0, SEEK_SET);
+	struct MILLDB_header* header = malloc(MILLDB_HEADER_SIZE);
+	fread(header, MILLDB_HEADER_SIZE, 1, handle->file);
+	handle->header = header;
+
+	int32_t levels = log(header->count) / log(Person_CHILDREN) + 1;
+	struct Person_Node** previous_level = NULL;
+	uint64_t previous_level_count;
+	struct Person_Node** current_level = NULL;
+	uint64_t current_level_count;
+	uint64_t big_count_all = 0;
+
+	for (int32_t level = 1; level <= levels; level++) {
+		uint64_t current_level_count = (header->count + pow(Person_CHILDREN, level) - 1) / pow(Person_CHILDREN, level);
+
+		current_level = calloc(current_level_count, sizeof(struct Person_Node*));
+		for (uint64_t i = 0; i < current_level_count; i++) {
+			fseek(handle->file, handle->header->index_offset + (big_count_all++) * sizeof(struct Person_tree_item), SEEK_SET);
+			struct Person_tree_item* current_tree_item = malloc(sizeof(struct Person_tree_item));
+			fread(current_tree_item, sizeof(struct Person_tree_item), 1, handle->file);
+			current_level[i] = malloc(sizeof(struct Person_Node));
+			memcpy(&(current_level[i]->data), current_tree_item, sizeof(struct Person_tree_item));
+			free(current_tree_item);
+		}
+
+		for (uint64_t i = 0; i < current_level_count; i++) {
+			if (!previous_level) {
+				current_level[i]->childs = NULL;
+				current_level[i]->n = 0;
+				continue;
+			}
+
+			current_level[i]->childs = calloc(Person_CHILDREN, sizeof(struct Person_Node*));
+			uint64_t j;
+			for (j = 0; j < Person_CHILDREN; j++) {
+				uint64_t k = i * Person_CHILDREN + j;
+				if (k == previous_level_count)
+					break;
+				current_level[i]->childs[j] = previous_level[k];
+			}
+			current_level[i]->n = j;
+		}
+
+		if (previous_level)
+			free(previous_level);
+
+		previous_level = current_level;
+		previous_level_count = current_level_count;
+	}
+
+	handle->Person_root = current_level[0];
+	free(current_level);
+
 	return handle;
 }
 
@@ -392,6 +324,12 @@ void sample_close_read(struct sample_handle* handle) {
 		return;
 
 	fclose(handle->file);
+
+	if (handle->Person_root) {
+		Person_index_clean(handle->Person_root);
+	}
+
+	free(handle->header);
 	free(handle);
 }
 
@@ -399,7 +337,7 @@ void add_person_1(int32_t id, const char* name) {
 	struct Person* inserted = Person_new();
 
 	inserted->id = id;
-	memcpy(inserted->name, name, 32);
+	memcpy(inserted->name, name, 4);
 
 	// Just add it to storage in a row
 	Person_buffer_add(inserted);
@@ -417,29 +355,7 @@ void add_person(int32_t id, const char* name) {
  *  END;
  */
 void get_person_1(struct get_person_out* iter, int32_t id) {
-	fseek(iter->handle->file, 0, SEEK_SET);
-	struct MILLDB_header* header = malloc(MILLDB_HEADER_SIZE);
-	fread(header, MILLDB_HEADER_SIZE, 1, iter->handle->file);
 
-	struct Person* current = malloc(sizeof(struct Person));
-
-	for (uint64_t i = 0; i < header->count; i++) {
-		fseek(iter->handle->file, MILLDB_HEADER_SIZE + i * sizeof(struct Person), SEEK_SET);
-		fread(current, sizeof(struct Person), 1, iter->handle->file);
-
-		if (current->id == id) {
-			iter->set = malloc(sizeof(struct get_person_out));
-			iter->set->id = id;
-			memcpy(iter->set->name, current->name, 32);
-			iter->set->name[32] = '\0';
-			iter->size = 1;
-			break;
-		}
-	}
-
-	free(current);
-	free(header);
-	return;
 }
 
 void get_person_init(struct get_person_out* iter, struct sample_handle* handle, int32_t id) {
