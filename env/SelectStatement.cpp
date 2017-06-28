@@ -78,17 +78,16 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	       "\t\t\tif (page.items[i]." << this->conds[0]->get_column()->get_name() << " == "
 	       << this->conds[0]->get_parameter()->get_name() << ") {" << endl;
 
-//	if (this->conds.size() > 1) {
-//		int i = 0;
-//		for (auto it = this->conds.begin(); it != this->conds.end(); it++, i++) {
-//			if (i == 0)
-//				continue;
-//
-//			Condition *cond = *it;
-//			(*ofs) << "\t\t\t\t" << s->print(ofs, ofl) << endl;
-//
-//		}
-//	}
+	if (this->conds.size() > 1) {
+		int i = 0;
+		for (auto it = this->conds.begin(); it != this->conds.end(); it++, i++) {
+			if (i == 0 || (*it)->disabled)
+				continue;
+
+			(*ofs) << "\t\t\t\tif (!(page.items[i]." << (*it)->get_column()->get_name() << " == " << (*it)->get_parameter()->get_name() << "))" << endl <<
+					"\t\t\t\t\tcontinue;" << endl << endl;
+		}
+	}
 
 	for (auto it = this->selections.begin(); it != this->selections.end(); it++) {
 		Selection* s = *it;
