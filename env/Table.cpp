@@ -205,19 +205,27 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\tmemcpy(" << name << "_buffer[j], temp, sizeof(struct " << name << "));" << endl <<
 		       "\t" << name << "_free(temp);" << endl <<
 		       "}" << endl <<
-		       "" << endl <<
-		       "void " << name << "_sort(struct " << name << "** buffer, uint64_t low, uint64_t high) {" << endl <<
+		       "" << endl;
+
+		(*ofs) << "void " << name << "_sort(struct " << name << "** buffer, uint64_t low, uint64_t high) {" << endl <<
 		       "\tif (buffer == NULL)" << endl <<
 		       "\t\treturn;" << endl <<
-		       "" << endl <<
-		       "\tif (low < high) {" << endl <<
-		       "\t\tuint64_t p = " << name << "_partition(buffer, low, high);" << endl <<
-		       "\t\t" << name << "_sort(buffer, low, p);" << endl <<
-		       "\t\t" << name << "_sort(buffer, p-1, high);" << endl <<
+		       "\tif (high <= low)" << endl <<
+		       "\t\treturn;" << endl <<
+		       "\tuint64_t pivot = (high + low) / 2;" << endl <<
+		       "\tuint64_t i = low, j = high;" << endl <<
+		       "\twhile (i < j) {" << endl <<
+		       "\t\twhile (" << name << "_compare(buffer[i], buffer[pivot]) < 0) { i++; }" << endl <<
+		       "\t\twhile (" << name << "_compare(buffer[j], buffer[pivot]) > 0) { j--; }" << endl <<
+		       "\t\tif (i < j)" << endl <<
+		       "\t\t\t" << name << "_swap(i++, j--);" << endl <<
 		       "\t}" << endl <<
-		       "}" << endl <<
-		       "" << endl <<
-		       "uint64_t " << name << "_write(FILE* file) {" << endl <<
+		       "\t" << name << "_sort(buffer, i+1, high);" << endl <<
+		       "\t" << name << "_sort(buffer, low, i);" << endl <<
+		       "}" << endl << endl;
+
+		(*ofs) << "uint64_t " << name << "_write(FILE* file) {" << endl <<
+		       "\t" << name << "_sort(" << name << "_buffer, 0, " << name << "_buffer_info.count-1);" << endl <<
 		       "\tfor (uint64_t i = 0; i < " << name << "_buffer_info.count; i++) {" << endl <<
 		       "\t\tfwrite(" << name << "_buffer[i], sizeof(struct " << name << "), 1, file);" << endl <<
 		       "\t}" << endl <<
@@ -257,6 +265,10 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "}" << endl << endl;
 
 		(*ofs) << "void " << name << "_index_load(struct " << Environment::get_instance()->get_name() << "_handle* handle) {" << endl <<
+		       "if (handle->header->count[" << name << "_header_count] == 0) {" << endl <<
+		       "\t\thandle->" << name << "_root = NULL;" << endl <<
+		       "\t\treturn;" << endl <<
+		       "\t}" << endl <<
 		       "\tint32_t levels = log(handle->header->count[" << name << "_header_count]) / log(" << name << "_CHILDREN) + 1;" << endl <<
 		       "\tuint64_t previous_level_count, current_level_count, count = 0;" << endl <<
 		       "\tstruct " << name << "_node** previous_level = NULL;" << endl <<
