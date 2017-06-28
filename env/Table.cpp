@@ -288,7 +288,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\tuint64_t previous_level_count = 0, count = 0;" << endl <<
 		       "\tstruct " << name << "_node** previous_level = NULL;" << endl <<
 		       "\tstruct " << name << "_node** current_level = NULL;" << endl <<
-		       "\t" << endl <<
+		       "" << endl <<
 		       "\tfor (int32_t level = 1; level <= levels; level++) {" << endl <<
 		       "\t\tuint64_t current_level_count = (handle->header->count[" << name << "_header_count] + pow(" << name << "_CHILDREN, level) - 1) / pow(" << name << "_CHILDREN, level);" << endl <<
 		       "\t\tcurrent_level = calloc(current_level_count, sizeof(struct " << name << "_node*));" << endl <<

@@ -61,7 +61,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	       "" << endl <<
 	       "\toffset += handle->header->data_offset[" << this->get_table()->get_name() << "_header_count];" << endl <<
 	       "\tstruct " << func_name << "_out_data* inserted = malloc(sizeof(struct " << func_name << "_out_data));" << endl <<
-	       "\t" << endl <<
+	       "" << endl <<
 	       "\twhile (1) {" << endl <<
 	       "\t\tfseek(handle->file, offset, SEEK_SET);" << endl <<
 	       "\t\tunion " << this->get_table()->get_name() << "_page page;" << endl <<
