@@ -38,11 +38,6 @@ void Procedure::add_parameter(Parameter* param) {
 }
 
 Parameter* Procedure::find_parameter(std::string search_name) {
-//	std::map<std::string, Parameter*>::iterator it = this->params.find(search_name);
-//	if (it == this->params.end())
-//		return nullptr;
-//	return this->params.find(search_name)->second;
-
 	for (auto it = this->params.begin(); it != this->params.end(); it++)
 		if (search_name == (*it)->get_name())
 			return (*it);

@@ -34,6 +34,21 @@ void Table::add_index(Index* index) {
 	this->indexes.insert({index->get_name(), index});
 }
 
+void Table::check_pk() {
+	Column* pk = nullptr;
+	int i = 0;
+	for (auto it = this->cols.begin(); it != this->cols.end(); it++, i++) {
+		if ((*it)->get_pk()) {
+			if (i > 0) {
+				pk = this->cols[i];
+				this->cols[i] = this->cols[0];
+				this->cols[0] = pk;
+			}
+		}
+	}
+
+}
+
 Column* Table::find_column(string search_name) {
 //	auto it = this->cols.find(search_name);
 //	if (it == this->cols.end())

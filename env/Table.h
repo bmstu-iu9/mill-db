@@ -27,6 +27,8 @@ public:
 	void print(std::ofstream* ofs, std::ofstream* ofl);
 	void print_tree_node(std::ofstream* ofs, std::ofstream* ofl);
 	bool is_printed();
+
+	void check_pk();
 private:
 	std::string name;
 	std::vector<Column*> cols;

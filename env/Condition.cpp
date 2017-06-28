@@ -3,6 +3,7 @@
 Condition::Condition(Column *col, Parameter *param) {
 	this->col = col;
 	this->param = param;
+	this->disabled = false;
 }
 
 Column* Condition::get_column() {

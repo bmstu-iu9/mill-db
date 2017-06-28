@@ -28,6 +28,9 @@ public:
 	void print_arguments(std::ofstream* ofs, std::ofstream* ofl);
 	void print_full_signature(std::ofstream* ofs, std::ofstream* ofl, std::string proc_name);
 	void print_dependencies(std::ofstream* ofs, std::ofstream* ofl);
+
+	void check_pk();
+	bool have_pk_cond;
 private:
 	Table* table;
 	std::vector<Selection*> selections;

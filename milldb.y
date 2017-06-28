@@ -85,7 +85,7 @@ struct condition {
 %token SELECT_KEYWORD FROM_KEYWORD WHERE_KEYWORD
 %token INSERT_KEYWORD VALUES_KEYWORD
 %token PROCEDURE_KEYWORD BEGIN_KEYWORD END_KEYWORD IN_KEYWORD OUT_KEYWORD SET_KEYWORD
-%token ON_KEYWORD
+%token ON_KEYWORD AND_KEYWORD
 %token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD CHAR_KEYWORD
 %token IDENTIFIER PARAMETER INTEGER
 %token BAD_CHARACTER
@@ -132,6 +132,7 @@ program_element: table_declaration {
                 delete $1;
                 throw logic_error(error_msg(msg));
 			}
+
 			Environment::get_instance()->add_table($1);
 		}
 	| procedure_declaration {
@@ -158,15 +159,17 @@ table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name
 			delete $3;
 
 			int pk_exists = 0;
+			int pk_already = 0;
 
 			// Populate table by its columns
 			for (Column* const& col: *$5) {
 				pk_exists |= col->get_pk();
-				$$->add_column(col);
+				pk_already |= $$->add_column(col);
 			}
 
-			if (!pk_exists)
-				throw logic_error("table " + $$->get_name() + " must have primary key");
+			if (!pk_exists && pk_already)
+				throw logic_error("table " + $$->get_name() + " must have single_column primary key");
+
 
 			// Clear temp column storage
 			delete $5;
@@ -288,7 +291,10 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 
                     }
 
+					statement->check_pk();
                     $$->add_statement(statement);
+
+
 
 					delete stmt->conds;
 					delete stmt;
@@ -419,6 +425,12 @@ condition_list: condition {
             $$->push_back($1);
 
 			debug("condition_list 1 END");
+		}
+	| condition_list AND_KEYWORD condition {
+
+			$$ = $1;
+            $$->push_back($3);
+
 		}
 	;
 

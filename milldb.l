@@ -2,10 +2,10 @@
 #include <iostream>
 #include "milldb.tab.h"
 
-// #define debugl
+// #define DEBUG
 
 void debugl(const char* token_name) {
-#ifdef debugl
+#ifdef DEBUG
 	std::cout << token_name << std::endl;
 #endif
 }
@@ -39,6 +39,7 @@ END_KEYWORD			?i:"end"
 IN_KEYWORD			?i:"in"
 OUT_KEYWORD			?i:"out"
 SET_KEYWORD			?i:"set"
+AND_KEYWORD			?i:"and"
 
 INDEX_KEYWORD		?i:"index"
 ON_KEYWORD			?i:"on"
@@ -93,6 +94,7 @@ WHITESPACE			[ \t\n]+
 <INITIAL>{IN_KEYWORD}			{ debugl("IN_KEYWORD"); return IN_KEYWORD; }
 <INITIAL>{OUT_KEYWORD}			{ debugl("OUT_KEYWORD"); return OUT_KEYWORD; }
 <INITIAL>{SET_KEYWORD}			{ debugl("SET_KEYWORD"); return SET_KEYWORD; }
+<INITIAL>{AND_KEYWORD}			{ debugl("AND_KEYWORD"); return AND_KEYWORD; }
 
 <INITIAL>{INT_KEYWORD}		{ debugl("INT_KEYWORD"); return INT_KEYWORD; }
 <INITIAL>{FLOAT_KEYWORD}	{ debugl("FLOAT_KEYWORD"); return FLOAT_KEYWORD; }

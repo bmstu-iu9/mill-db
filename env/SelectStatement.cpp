@@ -5,6 +5,7 @@ using namespace std;
 
 SelectStatement::SelectStatement(Table *table) {
 	this->table = table;
+	this->have_pk_cond = false;
 }
 
 SelectStatement::~SelectStatement() {
@@ -77,6 +78,17 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	       "\t\t\tif (page.items[i]." << this->conds[0]->get_column()->get_name() << " == "
 	       << this->conds[0]->get_parameter()->get_name() << ") {" << endl;
 
+//	if (this->conds.size() > 1) {
+//		int i = 0;
+//		for (auto it = this->conds.begin(); it != this->conds.end(); it++, i++) {
+//			if (i == 0)
+//				continue;
+//
+//			Condition *cond = *it;
+//			(*ofs) << "\t\t\t\t" << s->print(ofs, ofl) << endl;
+//
+//		}
+//	}
 
 	for (auto it = this->selections.begin(); it != this->selections.end(); it++) {
 		Selection* s = *it;
@@ -92,6 +104,26 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	       "\t\toffset += PAGE_SIZE;" << endl <<
 	       "\t}" << endl
 	       << endl;
+
+}
+
+void SelectStatement::check_pk() {
+	Condition* cond = nullptr;
+	int i = 0;
+	for (auto it = this->conds.begin(); it != this->conds.end(); it++, i++) {
+		if ((*it)->get_column()->get_pk()) {
+			if (this->have_pk_cond) {
+				(*it)->disabled = true;
+				continue;
+			}
+			if (i > 0) {
+				cond = this->conds[i];
+				this->conds[i] = this->conds[0];
+				this->conds[0] = cond;
+			}
+			this->have_pk_cond = true;
+		}
+	}
 
 }
 

@@ -25,6 +25,7 @@ std::string Environment::get_name() {
 }
 
 void Environment::add_table(Table* table) {
+	table->check_pk();
 	this->tables.insert({table->get_name(), table});
 }
 

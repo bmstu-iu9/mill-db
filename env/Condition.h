@@ -10,6 +10,7 @@ public:
 	Column* get_column();
 	Parameter* get_parameter();
 
+	bool disabled;
 private:
 	Column* col;
 	Parameter* param;
