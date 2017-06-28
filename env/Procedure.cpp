@@ -210,7 +210,7 @@ void Procedure::print(ofstream* ofs, ofstream* ofl) {
 
 		for (int i = 0; i < this->statements.size(); i++) {
 			(*ofs) << "\t" << this->get_name() << "_" << to_string(i + 1) << "(";
-			this->statements[0]->print_arguments(ofs, ofl);
+			this->statements[i]->print_arguments(ofs, ofl);
 			(*ofs) << ");" << endl;
 		}
 
