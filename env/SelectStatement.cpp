@@ -37,6 +37,7 @@ void SelectStatement::print_dependencies(std::ofstream* ofs, std::ofstream* ofl)
 
 
 void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
+<<<<<<< HEAD
 	(*ofs) << "\tstruct " << Environment::get_instance()->get_name() << "_handle* handle = iter->service.handle;"
 	       << endl<< "\tuint64_t offset = 0;" << endl <<
 	       "" << endl;
@@ -73,6 +74,33 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	       "\tstruct " << func_name << "_out_data* inserted = malloc(sizeof(struct " << func_name << "_out_data));"
 	       << endl <<
 	       "\t" << endl <<
+=======
+	(*ofs) << "\tstruct " << Environment::get_instance()->get_name() << "_handle* handle = iter->service.handle;" << endl <<
+	       "\tstruct " << this->get_table()->get_name() << "_node* node = handle->" << this->get_table()->get_name() << "_root;" << endl <<
+	       "\tuint64_t offset = 0, i = 0;" << endl <<
+	       "" << endl <<
+	       "\twhile (1) {" << endl <<
+	       "\t\tif (node->data.key == " << this->conds[0]->get_parameter()->get_name() << " || node->childs == NULL) {" << endl <<
+	       "\t\t\toffset = node->data.offset;" << endl <<
+	       "\t\t\tbreak;" << endl <<
+	       "\t\t}" << endl <<
+	       "\t\tif (node->childs[i]->data.key > " << this->conds[0]->get_parameter()->get_name() << " && i > 0) {" << endl <<
+	       "\t\t\tnode = node->childs[i-1];" << endl <<
+	       "\t\t\ti = 0;" << endl <<
+	       "\t\t\tcontinue;" << endl <<
+	       "\t\t}" << endl <<
+	       "\t\tif (i == node->n-1) {" << endl <<
+	       "\t\t\tnode = node->childs[i];" << endl <<
+	       "\t\t\ti = 0;" << endl <<
+	       "\t\t\tcontinue;" << endl <<
+	       "\t\t}" << endl <<
+	       "\t\ti++;" << endl <<
+	       "\t}" << endl <<
+	       "" << endl <<
+	       "\toffset += handle->header->data_offset[" << this->get_table()->get_name() << "_header_count];" << endl <<
+	       "\tstruct " << func_name << "_out_data* inserted = malloc(sizeof(struct " << func_name << "_out_data));" << endl <<
+	       "" << endl <<
+>>>>>>> ae34c2d505bf2e012cfcd513450b0a39c4717815
 	       "\twhile (1) {" << endl <<
 	       "\t\tfseek(handle->file, offset, SEEK_SET);" << endl <<
 	       "\t\tunion " << this->get_table()->get_name() << "_page page;" << endl <<

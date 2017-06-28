@@ -68,7 +68,7 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	       << endl;
 
 	(*ofs) << "#ifndef PAGE_SIZE\n"
-			"\t#define PAGE_SIZE 4096 \n"
+			"\t#define PAGE_SIZE 4096\n"
 			"#endif\n"
 			"\n"
 			"#define MILLDB_BUFFER_INIT_SIZE 32\n"
