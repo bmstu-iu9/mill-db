@@ -296,8 +296,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\t\tfor (uint64_t i = 0; i < current_level_count; i++) {" << endl <<
 		       "\t\t\tfseek(handle->file, handle->header->index_offset[" << name << "_header_count] + (count++) * sizeof(struct " << name << "_tree_item), SEEK_SET);" << endl <<
 		       "\t\t\tstruct " << name << "_tree_item* current_tree_item = malloc(sizeof(struct " << name << "_tree_item));" << endl <<
-		       "\t\t\tif (sizeof(struct Traffic_tree_item) != fread(current_tree_item, sizeof(struct " << name << "_tree_item), 1, handle->file))" << endl <<
-		       "\t\t\t\treturn;" << endl <<
+		       "\t\t\tuint64_t size = fread(current_tree_item, sizeof(struct " << name << "_tree_item), 1, handle->file);" << endl <<
 		       "\t\t\tcurrent_level[i] = malloc(sizeof(struct " << name << "_node));" << endl <<
 		       "\t\t\tmemcpy(&(current_level[i]->data), current_tree_item, sizeof(struct " << name << "_tree_item));" << endl <<
 		       "\t\t\tfree(current_tree_item);" << endl <<

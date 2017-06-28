@@ -222,8 +222,7 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	       endl <<
 	       "\tfseek(handle->file, 0, SEEK_SET);" << endl <<
 	       "\tstruct MILLDB_header* header = malloc(MILLDB_HEADER_SIZE);" << endl <<
-	       "\tif (MILLDB_HEADER_SIZE != fread(header, MILLDB_HEADER_SIZE, 1, handle->file))" << endl <<
-	       "\t\treturn NULL;" << endl <<
+	       "\tuint64_t size = fread(header, MILLDB_HEADER_SIZE, 1, handle->file);" << endl <<
 	       "\thandle->header = header;" << endl <<
 	       endl;
 
