@@ -183,13 +183,13 @@ string DataType::init_expr(string column_name) {
 
 string DataType::select_expr(std::string param, std::string column) {
 	if (this->get_typecode() == DataType::INT)
-		return "inserted->" + param + " = page.items[i]->" + column + ";";
+		return "inserted->" + param + " = page.items[i]." + column + ";";
 
 	if (this->get_typecode() == DataType::DOUBLE)
-		return "inserted->" + param + " = page.items[i]->" + column + ";";
+		return "inserted->" + param + " = page.items[i]." + column + ";";
 
 	if (this->get_typecode() == DataType::FLOAT)
-		return "inserted->" + param + " = page.items[i]->" + column + ";";
+		return "inserted->" + param + " = page.items[i]." + column + ";";
 
 	if (this->get_typecode() == DataType::CHAR) {
 		return "memcpy(inserted->" + column + ", page.items[i]." + param + ", " + to_string(this->get_length()) +
