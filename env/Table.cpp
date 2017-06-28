@@ -280,12 +280,12 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "}" << endl << endl;
 
 		(*ofs) << "void " << name << "_index_load(struct " << Environment::get_instance()->get_name() << "_handle* handle) {" << endl <<
-		       "if (handle->header->count[" << name << "_header_count] == 0) {" << endl <<
+		       "\tif (handle->header->count[" << name << "_header_count] == 0) {" << endl <<
 		       "\t\thandle->" << name << "_root = NULL;" << endl <<
 		       "\t\treturn;" << endl <<
 		       "\t}" << endl <<
 		       "\tint32_t levels = log(handle->header->count[" << name << "_header_count]) / log(" << name << "_CHILDREN) + 1;" << endl <<
-		       "\tuint64_t previous_level_count, current_level_count, count = 0;" << endl <<
+		       "\tuint64_t previous_level_count = 0, count = 0;" << endl <<
 		       "\tstruct " << name << "_node** previous_level = NULL;" << endl <<
 		       "\tstruct " << name << "_node** current_level = NULL;" << endl <<
 		       "\t" << endl <<
@@ -296,7 +296,8 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\t\tfor (uint64_t i = 0; i < current_level_count; i++) {" << endl <<
 		       "\t\t\tfseek(handle->file, handle->header->index_offset[" << name << "_header_count] + (count++) * sizeof(struct " << name << "_tree_item), SEEK_SET);" << endl <<
 		       "\t\t\tstruct " << name << "_tree_item* current_tree_item = malloc(sizeof(struct " << name << "_tree_item));" << endl <<
-		       "\t\t\tfread(current_tree_item, sizeof(struct " << name << "_tree_item), 1, handle->file);" << endl <<
+		       "\t\t\tif (sizeof(struct Traffic_tree_item) != fread(current_tree_item, sizeof(struct " << name << "_tree_item), 1, handle->file))" << endl <<
+		       "\t\t\t\treturn;" << endl <<
 		       "\t\t\tcurrent_level[i] = malloc(sizeof(struct " << name << "_node));" << endl <<
 		       "\t\t\tmemcpy(&(current_level[i]->data), current_tree_item, sizeof(struct " << name << "_tree_item));" << endl <<
 		       "\t\t\tfree(current_tree_item);" << endl <<

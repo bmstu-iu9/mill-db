@@ -90,9 +90,9 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	int tables_total = this->tables.size();
 
 	(*ofs) << "struct MILLDB_header {\n"
-			"\tint64_t count[" << to_string(tables_total) << "];\n"
-			       "\tint64_t data_offset[" << to_string(tables_total) <<"];\n"
-			       "\tint64_t index_offset[" << to_string(tables_total) <<"];\n"
+			"\tuint64_t count[" << to_string(tables_total) << "];\n"
+			       "\tuint64_t data_offset[" << to_string(tables_total) <<"];\n"
+			       "\tuint64_t index_offset[" << to_string(tables_total) <<"];\n"
 			       "};\n"
 			       "\n"
 			       "#define MILLDB_HEADER_SIZE (sizeof(struct MILLDB_header))" << endl
@@ -222,7 +222,8 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	       endl <<
 	       "\tfseek(handle->file, 0, SEEK_SET);" << endl <<
 	       "\tstruct MILLDB_header* header = malloc(MILLDB_HEADER_SIZE);" << endl <<
-	       "\tfread(header, MILLDB_HEADER_SIZE, 1, handle->file);" << endl <<
+	       "\tif (MILLDB_HEADER_SIZE != fread(header, MILLDB_HEADER_SIZE, 1, handle->file))" << endl <<
+	       "\t\treturn NULL;" << endl <<
 	       "\thandle->header = header;" << endl <<
 	       endl;
 
