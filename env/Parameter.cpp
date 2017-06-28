@@ -25,5 +25,5 @@ Parameter::Mode Parameter::get_mode() {
 }
 
 string Parameter::signature() {
-	return this->get_type()->str(this->get_name());
+	return this->get_type()->signature(this->get_name());
 }

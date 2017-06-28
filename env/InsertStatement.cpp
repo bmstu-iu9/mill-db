@@ -64,17 +64,17 @@ void InsertStatement::print_dependencies(std::ofstream* ofs, std::ofstream* ofl)
 }
 
 void InsertStatement::print(ofstream* ofs, ofstream* ofl, string proc_name) {
-	(*ofs) << "\t" << "struct " << this->get_table()->get_name() << "_struct* arg = "
-	       << this->get_table()->get_name() << "_struct_new();" << endl;
+	(*ofs) << "\t" << "struct " << this->get_table()->get_name() << "* inserted = "
+	       << this->get_table()->get_name() << "_new();" << endl;
 
 	for (int i = 0; i < this->get_table()->cols_size(); i++) {
 		if (this->get_table()->cols_at(i)->get_type()->get_typecode() == DataType::CHAR)
-			(*ofs) << "\t" << "strncpy(arg->" << this->get_table()->cols_at(i)->get_name() << ", "
+			(*ofs) << "\t" << "memcpy(inserted->" << this->get_table()->cols_at(i)->get_name() << ", "
 			       << this->args[i]->print() << ", "
 			       << to_string(this->get_table()->cols_at(i)->get_type()->get_length()) << ");" << endl;
 		else
-			(*ofs) << "\t" << "arg->" << this->get_table()->cols_at(i)->get_name() << " = " << this->args[i]->print() << ";" << endl;
+			(*ofs) << "\t" << "inserted->" << this->get_table()->cols_at(i)->get_name() << " = " << this->args[i]->print() << ";" << endl;
 	}
 
-	(*ofs) << "\t" << this->get_table()->get_name() << "_insert(arg);" << endl;
+	(*ofs) << "\t" << this->get_table()->get_name() << "_buffer_add(inserted);" << endl;
 }

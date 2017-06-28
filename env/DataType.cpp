@@ -10,7 +10,7 @@ DataType::DataType(Type type) {
 
 DataType::DataType(DataType::Type type, int length) {
 	this->type = type;
-	this->length = length + 1;
+	this->length = length;
 }
 
 //map<string, DataType::Type> DataType::str_to_type = {
@@ -95,6 +95,41 @@ string DataType::str(string name) {
 	return "";
 }
 
+string DataType::str_out(string name) {
+	if (this->get_typecode() == DataType::INT)
+		return "int32_t " + name;
+
+	if (this->get_typecode() == DataType::DOUBLE)
+		return "double " + name;
+
+	if (this->get_typecode() == DataType::FLOAT)
+		return "float " + name;
+
+	if (this->get_typecode() == DataType::CHAR) {
+		string s("char " + name + "[" + to_string(this->get_length()+1) + "]");
+		return s;
+	}
+
+	return "";
+}
+
+string DataType::signature(string name) {
+	if (this->get_typecode() == DataType::INT)
+		return "int32_t " + name;
+
+	if (this->get_typecode() == DataType::DOUBLE)
+		return "double " + name;
+
+	if (this->get_typecode() == DataType::FLOAT)
+		return "float " + name;
+
+	if (this->get_typecode() == DataType::CHAR) {
+		return "const char* " + name;
+	}
+
+	return "";
+}
+
 string DataType::get_format_specifier() {
 	if (this->get_typecode() == DataType::INT)
 		return "%d";
@@ -148,16 +183,17 @@ string DataType::init_expr(string column_name) {
 
 string DataType::select_expr(std::string param, std::string column) {
 	if (this->get_typecode() == DataType::INT)
-		return "returned->" + param + " = res->" + column + ";";
+		return "inserted->" + param + " = page.items[i]->" + column + ";";
 
 	if (this->get_typecode() == DataType::DOUBLE)
-		return "returned->" + param + " = res->" + column + ";";
+		return "inserted->" + param + " = page.items[i]->" + column + ";";
 
 	if (this->get_typecode() == DataType::FLOAT)
-		return "returned->" + param + " = res->" + column + ";";
+		return "inserted->" + param + " = page.items[i]->" + column + ";";
 
 	if (this->get_typecode() == DataType::CHAR) {
-		return "strncpy(returned->" + param + ", res->" + column + ", " + to_string(this->get_length()) + ");";
+		return "memcpy(inserted->" + param + ", page.items[i]." + column + ", " + to_string(this->get_length()) +
+				"); inserted->" + param + "[" + to_string(this->get_length()) + "] = '\\0';";
 	}
 
 	return "";
@@ -174,7 +210,7 @@ string DataType::compare_less_expr(string s1, string col1, string s2, string col
 		return "(" + s1 + "->" + col1 + " < " + s2 + "->" + col2 + ")";
 
 	if (this->get_typecode() == DataType::CHAR) {
-		return "strcmp(" + s1 + "->" + col1 + ", " + s2 + "->" + col2 + ") < 0";
+		return "strncmp(" + s1 + "->" + col1 + ", " + s2 + "->" + col2 + ", " + to_string(this->get_length()) + ") < 0";
 	}
 
 	return "";
@@ -191,7 +227,7 @@ string DataType::compare_greater_expr(string s1, string col1, string s2, string 
 		return "(" + s1 + "->" + col1 + " > " + s2 + "->" + col2 + ")";
 
 	if (this->get_typecode() == DataType::CHAR) {
-		return "strcmp(" + s1 + "->" + col1 + ", " + s2 + "->" + col2 + ") > 0";
+		return "strncmp(" + s1 + "->" + col1 + ", " + s2 + "->" + col2 + ", " + to_string(this->get_length()) + ") > 0";
 	}
 
 	return "";

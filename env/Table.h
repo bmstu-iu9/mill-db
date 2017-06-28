@@ -16,7 +16,7 @@ public:
 
 	std::string get_name();
 
-	void add_column(Column* col);
+	int add_column(Column* col);
 	void add_columns(std::vector<Column*> cols);
 	void add_index(Index* index);
 
@@ -25,10 +25,12 @@ public:
 	Column* cols_at(int index);
 
 	void print(std::ofstream* ofs, std::ofstream* ofl);
+	void print_tree_node(std::ofstream* ofs, std::ofstream* ofl);
 	bool is_printed();
 private:
 	std::string name;
 	std::vector<Column*> cols;
+	Column* pk;
 	std::map<std::string, Index*> indexes;
 	bool printed;
 };

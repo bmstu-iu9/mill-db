@@ -1,4 +1,5 @@
 #include "SelectStatement.h"
+#include "Environment.h"
 
 using namespace std;
 
@@ -35,29 +36,62 @@ void SelectStatement::print_dependencies(std::ofstream* ofs, std::ofstream* ofl)
 
 
 void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
-	(*ofs) << "\t" << "struct " << this->get_table()->get_name() << "_struct* searched = malloc(sizeof(struct "
-	       << this->get_table()->get_name() << "_struct));" << endl;
+	(*ofs) << "\tstruct " << Environment::get_instance()->get_name() << "_handle* handle = iter->service.handle;" << endl <<
+	       "\tstruct " << this->get_table()->get_name() << "_node* node = handle->" << this->get_table()->get_name() << "_root;" << endl <<
+	       "\tuint64_t offset = 0, i = 0;" << endl <<
+	       "" << endl <<
+	       "\twhile (1) {" << endl <<
+	       "\t\tif (node->data.key == " << this->conds[0]->get_parameter()->get_name() << " || node->childs == NULL) {" << endl <<
+	       "\t\t\toffset = node->data.offset;" << endl <<
+	       "\t\t\tbreak;" << endl <<
+	       "\t\t}" << endl <<
+	       "\t\tif (node->childs[i]->data.key > " << this->conds[0]->get_parameter()->get_name() << " && i > 0) {" << endl <<
+	       "\t\t\tnode = node->childs[i-1];" << endl <<
+	       "\t\t\ti = 0;" << endl <<
+	       "\t\t\tcontinue;" << endl <<
+	       "\t\t}" << endl <<
+	       "\t\tif (i == node->n-1) {" << endl <<
+	       "\t\t\tnode = node->childs[i];" << endl <<
+	       "\t\t\ti = 0;" << endl <<
+	       "\t\t\tcontinue;" << endl <<
+	       "\t\t}" << endl <<
+	       "\t\ti++;" << endl <<
+	       "\t}" << endl <<
+	       "" << endl <<
+	       "\toffset += handle->header->data_offset[" << this->get_table()->get_name() << "_header_count];" << endl <<
+	       "\tstruct " << func_name << "_out_data* inserted = malloc(sizeof(struct " << func_name << "_out_data));" << endl <<
+	       "\t" << endl <<
+	       "\twhile (1) {" << endl <<
+	       "\t\tfseek(handle->file, offset, SEEK_SET);" << endl <<
+	       "\t\tunion " << this->get_table()->get_name() << "_page page;" << endl <<
+	       "\t\tfread(&page, PAGE_SIZE, 1, handle->file);" << endl <<
+	       "" << endl <<
+	       "\t\tfor (uint64_t i = 0; i < " << this->get_table()->get_name() << "_CHILDREN; i++) {" << endl <<
+	       "\t\t\tif (page.items[i]." << this->conds[0]->get_column()->get_name() << " > "
+	       << this->conds[0]->get_parameter()->get_name() << " || offset + i * sizeof(struct "
+	       << this->get_table()->get_name() << ") >= handle->header->index_offset["
+	       << this->get_table()->get_name() << "_header_count]) {" << endl <<
+	       "\t\t\t\tfree(inserted);" << endl <<
+	       "\t\t\t\treturn;" << endl <<
+	       "\t\t\t}" << endl <<
+	       "\t\t\tif (page.items[i]." << this->conds[0]->get_column()->get_name() << " == "
+	       << this->conds[0]->get_parameter()->get_name() << ") {" << endl;
 
-	for (auto it = this->conds.begin(); it != this->conds.end(); it++)
-		(*ofs) << "\t" << "searched->" << (*it)->get_column()->get_name() << " = " << (*it)->get_parameter()->get_name() << ";" << endl;
-
-	(*ofs) << "\t" << "struct "<< this->get_table()->get_name() << "_struct* res = "
-	       << this->get_table()->get_name() << "_search("<< this->get_table()->get_name() << "_root, searched);" << endl;
-
-	(*ofs) << "\t" << "free(searched);" << endl
-	       << endl;
-
-	(*ofs) << "\t" << "if (res != NULL) {" << endl;
-	(*ofs) << "\t\t" << "struct " << func_name << "_out_struct* returned = malloc(sizeof(struct " << func_name << "_out_struct));" << endl;
 
 	for (auto it = this->selections.begin(); it != this->selections.end(); it++) {
-		(*ofs) << "\t\t" << (*it)->get_column()->get_type()->select_expr((*it)->get_parameter()->get_name(), (*it)->get_column()->get_name()) << endl;
+		Selection* s = *it;
+		(*ofs) << "\t\t\t\t" << s->print(ofs, ofl) << endl;
 	}
 
-	(*ofs) << "\t\t" <<func_name << "_size += 1;" << endl
-	       << "\t\t" << func_name << "_data = realloc(" << func_name << "_data, " << func_name<< "_size * sizeof(struct " << func_name << "_out_struct));" << endl
-	       << "\t\t" << func_name << "_data[" << func_name << "_size - 1] = returned;" << endl
-           << "\t" << "}" << endl;
+//	(*ofs) << "\t\t\t\tinserted->id = page.items[i]->id;" << endl <<
+//	       "\t\t\t\tmemcpy(inserted->name, page.items[i]->name, 4); inserted->name[4] = '\\0';" << endl;
+
+	(*ofs) << "\t\t\t\t" << func_name << "_add(iter, inserted);" << endl <<
+	       "\t\t\t}" << endl <<
+	       "\t\t}" << endl <<
+	       "\t\toffset += PAGE_SIZE;" << endl <<
+	       "\t}" << endl
+	       << endl;
 
 }
 

@@ -265,8 +265,8 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 						Selection* selection = new Selection(col, param);
 						statement->add_selection(selection);
                     }
-
 					delete stmt->selections;
+
 					debug("procedure_declaration 6");
                     for (int i = 0; i < stmt->conds->size(); i++) {
 						Column* col = find_column(table, *(stmt->conds)->at(i)->col );

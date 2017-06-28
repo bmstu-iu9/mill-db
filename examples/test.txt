@@ -1,0 +1,14 @@
+CREATE TABLE Person (
+	id int,
+	name char(4)
+)
+
+CREATE PROCEDURE add_person(@id int in, @name char(4) in)
+BEGIN
+	INSERT TABLE Person VALUES (@id, @name);
+END;
+
+CREATE PROCEDURE get_person(@id int in, @name char(4) out)
+BEGIN
+	SELECT name SET @name FROM Person WHERE id = @id;
+END;

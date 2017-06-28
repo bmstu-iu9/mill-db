@@ -55,16 +55,72 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	(*ofl) << "#define " << name_upper << "_H" << endl
 	       << endl;
 
-	(*ofs) << "#include <stdlib.h>" << endl
-		   << "#include <stdbool.h>" << endl
-		   << "#include <stdio.h>" << endl
-		   << "#include <stdint.h>" << endl
-		   << "#include <string.h>" << endl
-		   << "#include <unistd.h>" << endl
-           << "#include \"" << this-> get_name() << ".h\"" << endl
-		   << endl;
+	(*ofl) << "#include <stdint.h>" << endl
+			<< endl;
 
-	(*ofs) << "#define NODE_SIZE 10" << endl
+	(*ofs) << "#include <stdlib.h>" << endl
+	       << "#include <stdio.h>" << endl
+	       << "#include <stdint.h>" << endl
+	       << "#include <string.h>" << endl
+	       << "#include <math.h>" << endl
+	       << "#include \"" << this-> get_name() << ".h\"" << endl
+	       << endl;
+
+	(*ofs) << "#ifndef PAGE_SIZE\n"
+			"\t#define PAGE_SIZE 4096 \n"
+			"#endif\n"
+			"\n"
+			"#define MILLDB_BUFFER_INIT_SIZE 32\n"
+			"\n"
+			"struct MILLDB_buffer_info {\n"
+			"\tuint64_t size;\n"
+			"\tuint64_t count;\n"
+			"};\n"
+			"\n";
+
+	i = 0;
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++, i++) {
+		Table* table = it->second;
+		(*ofs) << "#define " << table->get_name() << "_header_count " << to_string(i) << endl;
+	}
+
+	(*ofs) << endl;
+
+	int tables_total = this->tables.size();
+
+	(*ofs) << "struct MILLDB_header {\n"
+			"\tint64_t count[" << to_string(tables_total) << "];\n"
+			       "\tint64_t data_offset[" << to_string(tables_total) <<"];\n"
+			       "\tint64_t index_offset[" << to_string(tables_total) <<"];\n"
+			       "};\n"
+			       "\n"
+			       "#define MILLDB_HEADER_SIZE (sizeof(struct MILLDB_header))" << endl
+	       << endl;
+
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		table->print_tree_node(ofs, ofl);
+	}
+
+	(*ofs) << "#define MILLDB_FILE_MODE_CLOSED -1" << endl <<
+	       "#define MILLDB_FILE_MODE_READ 0" << endl <<
+	       "#define MILLDB_FILE_MODE_WRITE 1" << endl <<
+	       endl <<
+	       "struct " << this->get_name() << "_handle {" << endl <<
+	       "\tFILE* file;" << endl <<
+	       "\tint mode;" << endl <<
+	       "\tstruct MILLDB_header* header;" << endl <<
+	       endl;
+
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		(*ofs) << "\tstruct " << table->get_name() << "_node* " << table->get_name() << "_root;" << endl;
+	}
+
+	(*ofs) << "};" << endl <<
+	       endl;
+
+	(*ofl) << "struct " << this->get_name() << "_handle;" << endl
 	       << endl;
 
 	for (auto it = this->procedures.begin(); it != this->procedures.end(); it++) {
@@ -72,125 +128,134 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 		proc->print(ofs, ofl);
 	}
 
-	(*ofs) << "char* " << this->get_name() << "_filename;" << endl
-	       << endl;
+	(*ofs) << "struct " << this->get_name() << "_handle* " << this->get_name() << "_write_handle = NULL;" << endl <<
+	       endl;
 
-	(*ofs) << "#define MILLDB_OUTPUT_MAX_LINE_LENGTH 512" << endl
-	       << "#define MILLDB_OUTPUT_TABLE_DIRECTIVE (\"#table \")" << endl
-	       << endl;
+	(*ofl) << "void " << this->get_name() << "_open_write(const char* filename);" << endl;
 
-	(*ofs) << "int " << this->get_name() << "_open(char* filename) {" << endl
-	       << "\t" << this->get_name() << "_filename = filename;" << endl
-	       << "\t" << "FILE* file;" << endl
-	       << endl
-	       << "\t" << "if ((file = fopen(" << this->get_name() << "_filename, \"r\")) == NULL)" << endl
-	       << "\t\t" << "return 0;" << endl
-	       << endl
-	       << "\t" << "int table_index = -1;" << endl
-           << "\t" << "char* source = malloc(MILLDB_OUTPUT_MAX_LINE_LENGTH);" << endl
-           << endl
-           << "\t" << "while (!feof(file)) {" << endl
-           << "\t\t" << "if (fgets(source, MILLDB_OUTPUT_MAX_LINE_LENGTH, file) == NULL)" << endl
-           << "\t\t\t" << "break;" << endl
-           << endl
-           << "\t\t" << "char* line = source;" << endl
-           <<"\t\t" << "line[strlen(line) - 1] = '\\0';" << endl
-           << endl
-           << "\t\t" << "if (line[0] == '(') {" << endl
-           << "\t\t\t" << "line++;" << endl
-           << "\t\t\t" << "line[strlen(line) - 1] = '\\0';" << endl;
+	(*ofs) << "void " << this->get_name() << "_open_write(const char* filename) {" << endl <<
+	       "\tFILE* file;" << endl <<
+	       "\tif (!(file = fopen(filename, \"wb\")))" << endl <<
+	       "\t\treturn;" << endl <<
+	       endl <<
+	       "\t" << this->get_name() << "_write_handle = malloc(sizeof(struct " << this->get_name() << "_handle));" << endl <<
+	       "\t" << this->get_name() << "_write_handle->file = file;" << endl <<
+	       "\t" << this->get_name() << "_write_handle->mode = MILLDB_FILE_MODE_WRITE;" << endl <<
+	       endl;
 
-	i = 0;
-	for (auto it = this->tables.begin(); it != this->tables.end(); it++, i++) {
-		Table* t = it->second;
-		(*ofs) << "\t\t\t\t" << "if (table_index == " << to_string(i) << ") {" << endl
-		       << "\t\t\t\t" << "struct " << t->get_name() << "_struct* arg = " << t->get_name() << "_struct_new();" << endl
-		       << "\t\t\t\t" << "char* token = strtok(line, \",\");" << endl
-		       << endl
-	           << "\t\t\t\t" << "int i = 0;" << endl
-	           << "\t\t\t\t" << "while (token != NULL) {" << endl
-	           << "\t\t\t\t\t" << "switch (i) {" << endl;
-
-		int j;
-		for (j = 0; j < t->cols_size(); j++) {
-			Column* col = t->cols_at(j);
-			(*ofs) << "\t\t\t\t\t\t" << "case " << to_string(j) << ":" << endl
-			       << "\t\t\t\t\t\t\t" << col->get_type()->scan_expr(col->get_name()) << endl
-			       << "\t\t\t\t\t\t\t" << "break;" << endl
-			       << endl;
-		}
-
-		(*ofs) << "\t\t\t\t\t" << "}" << endl
-		       << endl
-		       << "\t\t\t\t\t" << "if (i >= " << to_string(t->cols_size()) << ")" << endl
-		       << "\t\t\t\t\t\t" << "break;" << endl
-		       << endl
-	           << "\t\t\t\t\t" << "token = strtok(NULL, \",\");" << endl
-	           << "\t\t\t\t\t" << "i++;" << endl
-	           << "\t\t\t\t" << "}" << endl
-	           << "\t\t\t\t" << t->get_name() <<"_insert(arg);" << endl
-	           << endl
-	           << "\t\t\t" << "}" << endl
-	           << endl;
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		(*ofs) << "\t" << table->get_name() << "_buffer_init();" << endl;
 	}
 
-	(*ofs) << "\t\t\t" << "continue;" << endl
-	       << "\t\t" << "}" << endl
-	       << endl;
 
-	(*ofs) << "\t\t" << "if (line[0] == '#') {" << endl
-	       << "\t\t\t" << "line += sizeof(char) * strlen(MILLDB_OUTPUT_TABLE_DIRECTIVE);" << endl
-           << endl;
+	(*ofs) << "}" << endl <<
+	       endl;
 
-	i = 0;
-	for (auto it = this->tables.begin(); it != this->tables.end(); it++, i++) {
-		Table* t = it->second;
-		(*ofs) << "\t\t\t" << "if (strcmp(line, \"" << t->get_name() << "\") == 0)" << endl
-		       << "\t\t\t\t" << "table_index = " << to_string(i) << ";" << endl
+	(*ofs) << "int " << this->get_name() << "_save(struct " << this->get_name() << "_handle* handle) {" << endl <<
+	       "\tif (handle && handle->mode == MILLDB_FILE_MODE_WRITE) {" << endl <<
+	       "\t\tstruct MILLDB_header* header = malloc(sizeof(struct MILLDB_header));" << endl <<
+	       "\t\tfseek(handle->file, MILLDB_HEADER_SIZE, SEEK_SET);" << endl <<
+	       endl;
+
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		(*ofs) << "\t\tuint64_t " << table->get_name() << "_index_count = 0;" << endl <<
+		       "\t\tif (" << table->get_name() << "_buffer_info.count > 0)" << endl <<
+		       "\t\t\t" << table->get_name() << "_index_count = " << table->get_name() << "_write(handle->file);" << endl
+				<< endl;
+	}
+
+	(*ofs) << "\t\tuint64_t offset = MILLDB_HEADER_SIZE;" << endl <<
+	       endl;
+
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		(*ofs) << "\t\theader->count[" << table->get_name() << "_header_count] = " << table->get_name() << "_buffer_info.count;" << endl <<
+		       "\t\theader->data_offset[" << table->get_name() << "_header_count] = offset;" << endl <<
+		       "\t\toffset += " << table->get_name() << "_buffer_info.count * sizeof(struct " << table->get_name() << ");" << endl <<
+		       "\t\theader->index_offset[" << table->get_name() << "_header_count] = offset;" << endl <<
+		       "\t\toffset += " << table->get_name() << "_index_count * sizeof(struct " << table->get_name() << "_tree_item);" << endl
 		       << endl;
 	}
 
-	(*ofs) << "\t\t\t" << "continue;" << endl
-			<< "\t\t" << "}" << endl
-			<< endl
-			<< "\t\t" << "break;" << endl
-			<< "\t" << "}" << endl
-			<< endl
-			<< "\t" << "free(source);" << endl
-			<< endl
-			<< "\t" << "fclose(file);" << endl
-			<< "\t" << "return 0;" << endl
-			<< "}" << endl
-	        << endl;
+	(*ofs) << endl <<
+	       "\t\tfseek(handle->file, 0, SEEK_SET);" << endl <<
+	       "\t\tfwrite(header, MILLDB_HEADER_SIZE, 1, handle->file);" << endl <<
+	       "\t\tfree(header);" << endl <<
+	       "\t}" << endl <<
+	       "\treturn 0;" << endl <<
+	       "}" << endl << endl;
 
-	(*ofl) << "int " << this->get_name() << "_open(char* filename);" << endl;
+	(*ofl) <<  "void " << this->get_name() << "_close_write(void);" << endl
+	       << endl;
 
-
-	(*ofs) << "int " << this->get_name() << "_close() {" << endl
-	       << "\t" << "FILE* file = fopen(" << this->get_name() << "_filename, \"w\");" << endl;
+	(*ofs) <<  "void " << this->get_name() << "_close_write(void) {" << endl <<
+	       "\tif (" << this->get_name() << "_write_handle == NULL)" << endl <<
+	       "\t\treturn;" << endl <<
+	       endl <<
+	       "\t" << this->get_name() << "_save(" << this->get_name() << "_write_handle);" << endl <<
+	       endl;
 
 	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-		Table* t = it->second;
-		if (t->is_printed()) {
-			(*ofs) << "\t" << "if (" << t->get_name() << "_root != NULL) {" << endl
-			       << "\t\t" << "fprintf(file, MILLDB_OUTPUT_TABLE_DIRECTIVE);" << endl
-			       << "\t\t" << "fprintf(file, \"" << t->get_name() << "\\n\");" << endl
-                   << "\t\t" << t->get_name() << "_serialize(file, " << t->get_name() << "_root);" << endl
-                   << "\t\t" << t->get_name() << "_clean(" << t->get_name() << "_root);" << endl
-                   << "\t\t" << t->get_name() << "_root = NULL;" << endl
-                   << "\t}" << endl
-                   << endl;
-		}
+		Table* table = it->second;
+		(*ofs) << "\t" << table->get_name() << "_buffer_free();" << endl;
 	}
 
-	(*ofs) << "\t" << "fclose(file);" << endl
-	       << "\t" << "return 0;" << endl
+	(*ofs) << endl <<
+	       "\tfclose(" << this->get_name() << "_write_handle->file);" << endl <<
+	       "\tfree(" << this->get_name() << "_write_handle);" << endl <<
+	       "}" << endl <<
+	       endl;
+
+	(*ofl) << "struct " << this->get_name() << "_handle* " << this->get_name() << "_open_read(const char* filename);" << endl;
+
+	(*ofs) << "struct " << this->get_name() << "_handle* " << this->get_name() << "_open_read(const char* filename) {" << endl <<
+	       "\tFILE* file;" << endl <<
+	       "\tif (!(file = fopen(filename, \"rb\")))" << endl <<
+	       "\t\treturn NULL;" << endl <<
+	       endl <<
+	       "\tstruct " << this->get_name() << "_handle* handle = malloc(sizeof(struct " << this->get_name() << "_handle));" << endl <<
+	       "\thandle->file = file;" << endl <<
+	       "\thandle->mode = MILLDB_FILE_MODE_READ;" << endl <<
+	       endl <<
+	       "\tfseek(handle->file, 0, SEEK_SET);" << endl <<
+	       "\tstruct MILLDB_header* header = malloc(MILLDB_HEADER_SIZE);" << endl <<
+	       "\tfread(header, MILLDB_HEADER_SIZE, 1, handle->file);" << endl <<
+	       "\thandle->header = header;" << endl <<
+	       endl;
+
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		(*ofs) << "\t" << table->get_name() << "_index_load(handle);" << endl;
+	}
+
+	(*ofs) << endl <<
+	       "\treturn handle;" << endl <<
+	       "}" << endl <<
+	       endl;
+
+	(*ofl) << "void " << this->get_name() << "_close_read(struct " << this->get_name() << "_handle* handle);" << endl
 	       << endl;
 
-	(*ofs) << "}" << endl
-	       << endl;
-	(*ofl) << "int " << this->get_name() << "_close();" << endl
-	       << endl;
+	(*ofs) << "void " << this->get_name() << "_close_read(struct " << this->get_name() << "_handle* handle) {" << endl <<
+	       "\tif (handle == NULL)" << endl <<
+	       "\t\treturn;" << endl <<
+	       endl <<
+	       "\tfclose(handle->file);" << endl <<
+	       endl;
+
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		(*ofs) << "\tif (handle->" << table->get_name() << "_root)" << endl <<
+				"\t\t" << table->get_name() << "_index_clean(handle->" << table->get_name() << "_root);" << endl
+		       << endl;
+	}
+
+	(*ofs) << endl <<
+	       "\tfree(handle->header);" << endl <<
+	       "\tfree(handle);" << endl <<
+	       "}" << endl << endl;
 
 	(*ofl) << "#endif" << endl
 	       << endl;
