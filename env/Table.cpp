@@ -288,7 +288,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\tuint64_t previous_level_count = 0, count = 0;" << endl <<
 		       "\tstruct " << name << "_node** previous_level = NULL;" << endl <<
 		       "\tstruct " << name << "_node** current_level = NULL;" << endl <<
-		       "" << endl <<
+		       endl <<
 		       "\tfor (int32_t level = 1; level <= levels; level++) {" << endl <<
 		       "\t\tuint64_t current_level_count = (handle->header->count[" << name << "_header_count] + pow(" << name << "_CHILDREN, level) - 1) / pow(" << name << "_CHILDREN, level);" << endl <<
 		       "\t\tcurrent_level = calloc(current_level_count, sizeof(struct " << name << "_node*));" << endl <<
@@ -296,7 +296,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\t\tfor (uint64_t i = 0; i < current_level_count; i++) {" << endl <<
 		       "\t\t\tfseek(handle->file, handle->header->index_offset[" << name << "_header_count] + (count++) * sizeof(struct " << name << "_tree_item), SEEK_SET);" << endl <<
 		       "\t\t\tstruct " << name << "_tree_item* current_tree_item = malloc(sizeof(struct " << name << "_tree_item));" << endl <<
-		       "\t\t\tuint64_t size = fread(current_tree_item, sizeof(struct " << name << "_tree_item), 1, handle->file);" << endl <<
+		       "\t\t\tuint64_t size = fread(current_tree_item, sizeof(struct " << name << "_tree_item), 1, handle->file);  if (size == 0) return;" << endl <<
 		       "\t\t\tcurrent_level[i] = malloc(sizeof(struct " << name << "_node));" << endl <<
 		       "\t\t\tmemcpy(&(current_level[i]->data), current_tree_item, sizeof(struct " << name << "_tree_item));" << endl <<
 		       "\t\t\tfree(current_tree_item);" << endl <<
