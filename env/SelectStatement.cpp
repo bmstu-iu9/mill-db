@@ -76,7 +76,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	       "\twhile (1) {" << endl <<
 	       "\t\tfseek(handle->file, offset, SEEK_SET);" << endl <<
 	       "\t\tunion " << this->get_table()->get_name() << "_page page;" << endl <<
-	       "\t\tuint64_t size = fread(&page, PAGE_SIZE, 1, handle->file);  if (size > 1) return;" << endl <<
+	       "\t\tuint64_t size = fread(&page, sizeof(struct " << this->get_table()->get_name() << "), " << this->get_table()->get_name() << "_CHILDREN, handle->file);  if (size == 0) return;" << endl <<
 	       "" << endl <<
 	       "\t\tfor (uint64_t i = 0; i < " << this->get_table()->get_name() << "_CHILDREN; i++) {" << endl;
 
@@ -122,7 +122,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	(*ofs) << "\t\t\t\t" << func_name << "_add(iter, inserted);" << endl <<
 	       "\t\t\t}" << endl <<
 	       "\t\t}" << endl <<
-	       "\t\toffset += PAGE_SIZE;" << endl <<
+	       "\t\toffset += " << this->get_table()->get_name() << "_CHILDREN * sizeof(struct " << this->get_table()->get_name() << ");" << endl <<
 	       "\t}" << endl
 	       << endl;
 }

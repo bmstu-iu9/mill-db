@@ -190,57 +190,14 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\t}" << endl <<
 		       "\tfree(" << name << "_buffer);" << endl <<
 		       "}" << endl <<
-		       "" << endl <<
-		       "uint64_t " << name << "_partition(struct " << name << "** buffer, uint64_t low, uint64_t high) {" << endl <<
-		       "\tif (buffer == NULL)" << endl <<
-		       "\t\treturn -1;" << endl <<
-		       "" << endl <<
-		       "\tuint64_t pivot = ((high - low) >> 1) + low;" << endl <<
-		       "\tuint64_t i = low, j = high;" << endl <<
-		       "\twhile (i < j) {" << endl <<
-		       "\t\twhile (" << name << "_compare(buffer[i], buffer[pivot]) < 0)" << endl <<
-		       "\t\t\ti++;" << endl <<
-		       "\t\twhile (" << name << "_compare(buffer[j], buffer[pivot]) > 0)" << endl <<
-		       "\t\t\tj--;" << endl <<
-		       "\t\tif (i < j) {" << endl <<
-		       "\t\t\tstruct " << name << "* temp = " << name << "_new();" << endl <<
-		       "\t\t\tmemcpy(temp, buffer[i], sizeof(struct " << name << "));" << endl <<
-		       "\t\t\tmemcpy(buffer[i], buffer[j], sizeof(struct " << name << "));" << endl <<
-		       "\t\t\tmemcpy(buffer[j], temp, sizeof(struct " << name << "));" << endl <<
-		       "\t\t\t" << name << "_free(temp);" << endl <<
-		       "\t\t}" << endl <<
-		       "\t}" << endl <<
-		       "\treturn i + 1;" << endl <<
-		       "}" << endl <<
-		       "" << endl <<
-		       "void " << name << "_swap(uint64_t i, uint64_t j) {" << endl <<
-		       "\tstruct " << name << "* temp = " << name << "_new();" << endl <<
-		       "\tmemcpy(temp, " << name << "_buffer[i], sizeof(struct " << name << "));" << endl <<
-		       "\tmemcpy(" << name << "_buffer[i], " << name << "_buffer[j], sizeof(struct " << name << "));" << endl <<
-		       "\tmemcpy(" << name << "_buffer[j], temp, sizeof(struct " << name << "));" << endl <<
-		       "\t" << name << "_free(temp);" << endl <<
-		       "}" << endl <<
 		       "" << endl;
 
-		(*ofs) << "void " << name << "_sort(struct " << name << "** buffer, uint64_t low, uint64_t high) {" << endl <<
-		       "\tif (buffer == NULL)" << endl <<
-		       "\t\treturn;" << endl <<
-		       "\tif (high <= low)" << endl <<
-		       "\t\treturn;" << endl <<
-		       "\tuint64_t pivot = (high + low) / 2;" << endl <<
-		       "\tuint64_t i = low, j = high;" << endl <<
-		       "\twhile (i < j) {" << endl <<
-		       "\t\twhile (" << name << "_compare(buffer[i], buffer[pivot]) < 0) { i++; }" << endl <<
-		       "\t\twhile (" << name << "_compare(buffer[j], buffer[pivot]) > 0) { j--; }" << endl <<
-		       "\t\tif (i < j)" << endl <<
-		       "\t\t\t" << name << "_swap(i++, j--);" << endl <<
-		       "\t}" << endl <<
-		       "\t" << name << "_sort(buffer, i+1, high);" << endl <<
-		       "\t" << name << "_sort(buffer, low, i);" << endl <<
-		       "}" << endl << endl;
+		(*ofs) << "int " << name << "_sort_compare(const void* a, const void* b) {" << endl <<
+				"\treturn " << name << "_compare((struct " << name << "*)a, (struct " << name << "*)b);" << endl <<
+				"}" << endl << endl;
 
 		(*ofs) << "uint64_t " << name << "_write(FILE* file) {" << endl <<
-		       "\t" << name << "_sort(" << name << "_buffer, 0, " << name << "_buffer_info.count-1);" << endl <<
+		       "\tqsort(" << name << "_buffer, " << name << "_buffer_info.count, sizeof(struct " << name << "*), " << name << "_sort_compare);" << endl <<
 		       "\tfor (uint64_t i = 0; i < " << name << "_buffer_info.count; i++) {" << endl <<
 		       "\t\tfwrite(" << name << "_buffer[i], sizeof(struct " << name << "), 1, file);" << endl <<
 		       "\t}" << endl <<

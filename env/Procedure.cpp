@@ -88,9 +88,9 @@ void Procedure::print(ofstream* ofs, ofstream* ofl) {
 		       "\t\tservice->size = MILLDB_BUFFER_INIT_SIZE;" << endl <<
 		       "\t\tservice->set = calloc(service->size, sizeof(struct " << name << "_out));" << endl <<
 		       "\t}" << endl <<
-		       "\tif (service->count >= service->size) {" << endl <<
+		       "\tif (service->length >= service->size) {" << endl <<
 		       "\t\tservice->size = service->size * 2;" << endl <<
-		       "\t\tservice->set = calloc(service->size, sizeof(struct " << name << "_out));" << endl <<
+		       "\t\tservice->set = realloc(service->set, service->size * sizeof(struct " << name << "_out));" << endl <<
 		       "\t}" << endl <<
 		       "\tmemcpy(&(service->set[service->length++]), selected, sizeof(struct " << name << "_out_data));" << endl <<
 		       "}" << endl
