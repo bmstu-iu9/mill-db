@@ -95,6 +95,43 @@ string DataType::str(string name) {
 	return "";
 }
 
+string DataType::str_param_for_select(string name) {
+	if (this->get_typecode() == DataType::INT)
+		return "int32_t p_" + name;
+
+	if (this->get_typecode() == DataType::DOUBLE)
+		return "double p_" + name;
+
+	if (this->get_typecode() == DataType::FLOAT)
+		return "float p_" + name;
+
+	if (this->get_typecode() == DataType::CHAR) {
+		string s("const char* p_" + name );//+ "[" + to_string(this->get_length()) + "]");
+		return s;
+	}
+
+	return "";
+}
+
+string DataType::str_column_for_select(string name) {
+	if (this->get_typecode() == DataType::INT)
+		return "int32_t c_" + name;
+
+	if (this->get_typecode() == DataType::DOUBLE)
+		return "double c_" + name;
+
+	if (this->get_typecode() == DataType::FLOAT)
+		return "float c_" + name;
+
+	if (this->get_typecode() == DataType::CHAR) {
+		string s("const char* c_" + name );//[" + to_string(this->get_length()) + "]");
+		return s;
+	}
+
+	return "";
+}
+
+
 string DataType::str_out(string name) {
 	if (this->get_typecode() == DataType::INT)
 		return "int32_t " + name;
@@ -183,16 +220,16 @@ string DataType::init_expr(string column_name) {
 
 string DataType::select_expr(std::string param, std::string column) {
 	if (this->get_typecode() == DataType::INT)
-		return "inserted->" + param + " = page.items[i]." + column + ";";
+		return "inserted->" + param + " = c_" + column + ";";
 
 	if (this->get_typecode() == DataType::DOUBLE)
-		return "inserted->" + param + " = page.items[i]." + column + ";";
+		return "inserted->" + param + " = c_" + column + ";";
 
 	if (this->get_typecode() == DataType::FLOAT)
-		return "inserted->" + param + " = page.items[i]." + column + ";";
+		return "inserted->" + param + " = c_" + column + ";";
 
 	if (this->get_typecode() == DataType::CHAR) {
-		return "memcpy(inserted->" + column + ", page.items[i]." + param + ", " + to_string(this->get_length()) +
+		return "memcpy(inserted->" + column + ", c_" + param + ", " + to_string(this->get_length()) +
 				"); inserted->" + column + "[" + to_string(this->get_length()) + "] = '\\0';";
 	}
 

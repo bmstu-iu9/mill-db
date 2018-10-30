@@ -9,6 +9,8 @@ Environment::~Environment() {
 
 	for (auto it = this->procedures.begin(); it != this->procedures.end(); it++)
 		delete it->second;
+	for (auto it = this->sequences.begin(); it != this->sequences.end(); it++)
+		delete it->second;
 }
 
 Environment* Environment::get_instance() {
@@ -33,6 +35,10 @@ void Environment::add_procedure(Procedure *procedure) {
 	this->procedures.insert({procedure->get_name(), procedure});
 }
 
+void Environment::add_sequence(Sequence *sequence) {
+	this->sequences.insert({sequence->get_name(), sequence});
+}
+
 Table* Environment::find_table(std::string search_name) {
 	std::map<std::string, Table*>::iterator it = this->tables.find(search_name);
 	if (it == this->tables.end())
@@ -45,6 +51,13 @@ Procedure* Environment::find_procedure(std::string search_name) {
 	if (it == this->procedures.end())
 		return nullptr;
 	return this->procedures.find(search_name)->second;
+}
+
+Sequence* Environment::find_sequence(std::string search_name){
+	std::map<std::string, Sequence*>::iterator it = this->sequences.find(search_name);
+	if (it == this->sequences.end())
+		return nullptr;
+	return this->sequences.find(search_name)->second;
 }
 
 void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
@@ -123,6 +136,11 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 
 	(*ofl) << "struct " << this->get_name() << "_handle;" << endl
 	       << endl;
+
+	for (auto it = this->sequences.begin(); it != this->sequences.end(); it++) {
+		Sequence* seq = it->second;
+		seq->print(ofs, ofl);
+	}
 
 	for (auto it = this->procedures.begin(); it != this->procedures.end(); it++) {
 		Procedure* proc = it->second;

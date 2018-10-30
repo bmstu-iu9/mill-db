@@ -8,13 +8,16 @@
 
 using namespace std;
 
-// #define DEBUG
+ #define DEBUG
 
 string error_msg(string s);
 Table* find_table(string table_name);
 Column* find_column(Table* table, string column_name);
+Column* find_column1(vector<Table*>* tables, string column_name,string* table_name);
 Parameter* find_parameter(Procedure* proc, string param_name);
+Sequence* find_sequence(string seq_name);
 int check_type(Parameter* param, Column* col);
+int check_type_col(Column* col1, Column* col2);
 int check_mode(Parameter* param, Parameter::Mode mode);
 int check_procedure(string procedure_name);
 
@@ -31,6 +34,9 @@ extern "C" {
 struct statement {
 	int				 type;
 	Table*			  table;
+//	vector<pair<Table*, vector<struct joined_condition*> > >* tables;
+//	vector<pair<Table*, vector<struct condition*> > >* tables;
+	vector<Table*>* tables;
 	vector<pair<string, Argument::Type> >*  arg_str_vec;
 	vector<pair<string, string> >* selections;
 	vector<struct condition*>*  conds;
@@ -39,11 +45,19 @@ struct statement {
 struct condition {
 	string*     col;
 	string*     param;
+	string*     col_r;
+	bool	    on;
 };
+
+/*struct joined_condition {
+	string*     col_l;
+	string*     col_r;
+};*/
 %}
 %code requires {
 	#include <utility>
 	#include <vector>
+	#include <map>
 	#include <string>
 	#include "env/env.h"
 
@@ -54,6 +68,7 @@ struct condition {
 	char*               char_arr;
 	string*             str;
 	Table*              table;
+	Sequence*	    sequence;
 	Column*             col;
 	vector<Column*>*    col_vec;
 	Argument*           arg;
@@ -61,6 +76,9 @@ struct condition {
 	Parameter*          param;
 	DataType*           dtype;
 	Parameter::Mode     pmode;
+
+	//vector<pair<Table*, vector<struct joined_condition*> > > join_tables_vec;
+	vector<Table*>* table_vec;
 
 	vector<Parameter*>* param_vec;
 
@@ -81,6 +99,10 @@ struct condition {
 
 %token LPAREN RPAREN SEMICOLON COMMA EQ
 %token TABLE_KEYWORD
+%token JOIN_KEYWORD
+%token SEQUENCE_KEYWORD
+%token NEXTVAL_KEYWORD
+%token CURRVAL_KEYWORD
 %token CREATE_KEYWORD PK_KEYWORD
 %token SELECT_KEYWORD FROM_KEYWORD WHERE_KEYWORD
 %token INSERT_KEYWORD VALUES_KEYWORD
@@ -91,7 +113,7 @@ struct condition {
 %token BAD_CHARACTER
 
 %type <char_arr> IDENTIFIER PARAMETER INTEGER
-%type <str> table_name parameter_name column_name procedure_name
+%type <str> table_name parameter_name column_name procedure_name sequence_name
 %type <dtype> data_type
 %type <pmode> parameter_mode
 
@@ -101,6 +123,8 @@ struct condition {
 %type <table> table_declaration
 %type <col> column_declaration
 %type <col_vec> column_declaration_list
+
+%type <sequence> sequence_declaration
 
 %type <arg_str> argument
 %type <arg_str_vec> argument_list
@@ -114,6 +138,7 @@ struct condition {
 
 %type <cond> condition
 %type <cond_vec> condition_list
+%type <table_vec> table_lst
 
 %%
 
@@ -121,7 +146,7 @@ program: program_element_list
 	;
 
 program_element_list: program_element
-	| program_element_list program_element
+	| program_element_list program_element;
 
 program_element: table_declaration {
 			Table* table = Environment::get_instance()->find_table($1->get_name());
@@ -146,7 +171,27 @@ program_element: table_declaration {
             }
 			Environment::get_instance()->add_procedure($1);
 		}
+	| sequence_declaration {
+			Sequence* sequence = Environment::get_instance()->find_sequence($1->get_name());
+			if (sequence != nullptr) {
+				string msg("sequence ");
+				msg+=$1->get_name();
+				msg+=" already exists";
+				delete $1;
+				throw logic_error(error_msg(msg));
+			}
+			Environment::get_instance()->add_sequence($1);
+		}
 	;
+
+sequence_declaration: CREATE_KEYWORD SEQUENCE_KEYWORD sequence_name SEMICOLON {
+		debug("sequence_declaration BEGIN");
+		$$ = new Sequence(*$3);
+		delete $3;
+		debug("sequence_declaration END");
+	};
+
+
 
 table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name
 		LPAREN column_declaration_list RPAREN SEMICOLON {
@@ -204,10 +249,10 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 			// Iterate by all statement (INSERT or SELECT)
 			for (struct statement* const& stmt: *$8) {
 				// Get table
-                Table* table = stmt->table;
 
 				// If statement is INSERT
 				if (stmt->type == INSERT_STATEMENT && $$->get_mode() == Procedure::WRITE) {
+					Table* table = stmt->table;
 
 					InsertStatement* statement = new InsertStatement(table);
 					debug("procedure_declaration 2");
@@ -238,8 +283,18 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 							// All is OK, add argument to arg storage
 							Argument* a = new ArgParameter(param);
 							statement->add_argument(a);
-						} else
+						}
+						else if (arg_type == Argument::SEQUENCE_CURR) {
+							statement->add_currVal(i,arg.first);
+							statement->seq_curr_pos.push_back(i);
+						}
+						else if (arg_type == Argument::SEQUENCE_NEXT) {
+							statement->add_nextVal(i,arg.first);
+							statement->seq_next_pos.push_back(i);
+						}
+						else {
 							throw logic_error(error_msg("invalid argument"));
+						}
 					}
 
 					// Clear temp storage for arguments
@@ -250,52 +305,67 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 					$$->add_statement(statement);
 
 				} else if (stmt->type == SELECT_STATEMENT && $$->get_mode() == Procedure::READ) {
+					vector<Table*>* tables = stmt->tables;
+					string table_name;
 
-					SelectStatement* statement = new SelectStatement(table);
+					SelectStatement* statement = new SelectStatement(tables);
 					debug("procedure_declaration 3");
 					// Iterate by selections
-                    for (int i = 0; i < stmt->selections->size(); i++) {
+			                for (int i = 0; i < stmt->selections->size(); i++) {
 
-						Column* col = find_column(table, stmt->selections->at(i).first);
+						Column* col = find_column1(tables, stmt->selections->at(i).first,&table_name);
 						Parameter* param = find_parameter($$, stmt->selections->at(i).second);
 						debug("procedure_declaration 4");
 						// Check if this parameter have mode OUT
-                        check_mode(param, Parameter::OUT);
+			                        check_mode(param, Parameter::OUT);
 
 						// Check if parameters's type matches to column's type
-                        check_type(param, col);
+						check_type(param, col);
 						debug("procedure_declaration 5");
 						Selection* selection = new Selection(col, param);
+						statement->add_selection_to_table(table_name,selection);
 						statement->add_selection(selection);
-                    }
+			                }
 					delete stmt->selections;
 
 					debug("procedure_declaration 6");
-                    for (int i = 0; i < stmt->conds->size(); i++) {
-						Column* col = find_column(table, *(stmt->conds)->at(i)->col );
-						Parameter* param = find_parameter($$, *(stmt->conds->at(i)->param));
+			                for (int i = 0; i < stmt->conds->size(); i++) {
+						Column* col = find_column1(tables, *(stmt->conds)->at(i)->col ,&table_name);
+						printf("\t\ttable_name= %s\n",table_name.c_str());
+						if (stmt->conds->at(i)->on){
+							string joined_table;
+							Column* column_right=find_column1(tables,*(stmt->conds)->at(i)->col_r, &joined_table);
+							check_type_col(col,column_right);
+							Condition* cond = new Condition(col, column_right);
+							statement->add_condition(cond);
+							statement->add_condition_to_table(table_name,cond);
 
-						// Check if this parameter have mode IN
-                        check_mode(param, Parameter::IN);
+							delete stmt->conds->at(i)->col;
+							delete stmt->conds->at(i)->col_r;
+							delete stmt->conds->at(i);
+						} else {
+							Parameter* param = find_parameter($$, *(stmt->conds->at(i)->param));
 
-                        // Check if parameters's type matches to column's type
-                        check_type(param, col);
+							// Check if this parameter have mode IN
+					                check_mode(param, Parameter::IN);
 
-                        Condition* cond = new Condition(col, param);
+							// Check if parameters's type matches to column's type
+							check_type(param, col);
 
-                        statement->add_condition(cond);
+							Condition* cond = new Condition(col, param);
 
-                        delete stmt->conds->at(i)->col;
-                        delete stmt->conds->at(i)->param;
-                        delete stmt->conds->at(i);
+							statement->add_condition(cond);
+							statement->add_condition_to_table(table_name,cond);
 
-                    }
+							delete stmt->conds->at(i)->col;
+							delete stmt->conds->at(i)->param;
+							delete stmt->conds->at(i);
+						}
 
-					statement->check_pk();
-                    $$->add_statement(statement);
+					 }
 
-
-
+//					statement->check_pk();
+			                $$->add_statement(statement);
 					delete stmt->conds;
 					delete stmt;
 				} else
@@ -341,20 +411,33 @@ insert_statement: INSERT_KEYWORD TABLE_KEYWORD table_name VALUES_KEYWORD LPAREN 
 		}
 	;
 
-select_statement: SELECT_KEYWORD selection_list FROM_KEYWORD table_name WHERE_KEYWORD condition_list SEMICOLON {
+select_statement: SELECT_KEYWORD selection_list FROM_KEYWORD table_lst WHERE_KEYWORD condition_list SEMICOLON {
 			debug("select_statement BEGIN");
 
 			$$ = new statement();
 
-			Table* table = find_table(*$4);
-			delete $4;
+//			Table* table = find_table(*$4);
+//			delete $4;
 
 			$$->type = SELECT_STATEMENT;
-			$$->table = table;
-			$$->selections = $2;
-			$$->conds = $6;
+			//$$->table = table;
+			$$->selections=$2;
+			$$->tables=$4;
+			$$->conds=$6;
 
 			debug("select_statement END");
+		}
+	;
+
+table_lst: table_lst JOIN_KEYWORD table_name {
+		$$=$1;
+		Table* table = find_table(*$3);
+		$$->push_back(table);
+		}
+	| table_name{
+		$$=new vector<Table*>();
+		Table* table = find_table(*$1);
+		$$->push_back(table);
 		}
 	;
 
@@ -441,6 +524,18 @@ condition: column_name EQ parameter_name {
 
 			$$->col = $1;
 			$$->param = $3;
+			$$->on=false;
+
+			debug("condition 1 END");
+		}
+	| column_name EQ column_name {
+			debug("condition 1 BEGIN");
+
+			$$ = new condition();
+
+			$$->col = $1;
+			$$->col_r = $3;
+			$$->on=true;
 
 			debug("condition 1 END");
 		}
@@ -503,10 +598,36 @@ argument: parameter_name {
 
 			debug("argument END");
 		}
+	| CURRVAL_KEYWORD LPAREN sequence_name RPAREN {
+			debug("argument BEGIN!!!!!!!!!!");
+
+			$$ = new pair<string, Argument::Type>(*$3, Argument::SEQUENCE_CURR);
+
+			delete $3;
+
+			debug("argument END");
+		}
+	| NEXTVAL_KEYWORD LPAREN sequence_name RPAREN {
+			debug("argument BEGIN!!!!!!!!!!!!!");
+
+			$$ = new pair<string, Argument::Type>(*$3, Argument::SEQUENCE_NEXT);
+
+			delete $3;
+
+			debug("argument END");
+		}
 	;
+
+
 
 table_name: IDENTIFIER {
 			debug("table_name");
+			$$ = new string($1);
+		}
+	;
+
+sequence_name: IDENTIFIER {
+			debug("sequence_name");
 			$$ = new string($1);
 		}
 	;
@@ -599,11 +720,40 @@ Column* find_column(Table* table, string column_name) {
     return col;
 }
 
+Column* find_column1(vector<Table*>* tables, string column_name,string* table_name) {
+	Column* col=nullptr;
+	for (Table* table: *tables) {
+		col = table->find_column(column_name);
+		*table_name=table->get_name();
+		if (col!=nullptr) break;
+	}
+    if (col == nullptr) {
+        string msg("wrong column name ");
+        msg += column_name;
+        throw logic_error(error_msg(msg));
+    }
+    return col;
+}
+
+Sequence* find_sequence(string seq_name) {
+	Sequence* sequence = Environment::get_instance()->find_sequence( seq_name.substr(8, seq_name.length()-9) );
+	if (sequence == nullptr) {
+		string msg("parameter " + seq_name + " not declared");
+		throw logic_error(error_msg(msg));
+	}
+	////////////////////////////////
+
+        //string msg("parameter " + param_name + " not declared");
+        //throw logic_error(error_msg(msg));
+    return sequence;
+}
+
+
 Parameter* find_parameter(Procedure* proc, string param_name) {
 	Parameter* param = proc->find_parameter(param_name);
     if (param == nullptr) {
         string msg("parameter " + param_name + " not declared");
-        throw logic_error(error_msg(msg));
+	throw logic_error(error_msg(msg));
     }
     return param;
 }
@@ -611,6 +761,15 @@ Parameter* find_parameter(Procedure* proc, string param_name) {
 int check_type(Parameter* param, Column* col) {
 	if (!param->get_type()->equals(col->get_type())) {
         string msg("incompatible types parameter " + param->get_name() + " and column " + col->get_name());
+        throw logic_error(error_msg(msg));
+        return 0;
+    }
+    return 1;
+}
+
+int check_type_col(Column* col1, Column* col2) {
+	if (!col1->get_type()->equals(col2->get_type())) {
+        string msg("incompatible types column " + col1->get_name() + " and column " + col2->get_name());
         throw logic_error(error_msg(msg));
         return 0;
     }

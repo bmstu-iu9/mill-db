@@ -3,10 +3,11 @@
 
 #include <map>
 #include <string>
+#include "Sequence.h"
 
 class DataType {
 public:
-	enum Type {INT, FLOAT, DOUBLE, CHAR};
+	enum Type {INT, FLOAT, DOUBLE, CHAR, Sequence};
 
 	DataType(Type type);
 	DataType(Type type, int length);
@@ -19,6 +20,8 @@ public:
 	std::string get_format_specifier();
 
 	std::string str(std::string name);
+	std::string str_param_for_select(std::string name);
+	std::string str_column_for_select(std::string name);
 	std::string str_out(std::string name);
 	std::string signature(std::string name);
 	std::string scan_expr(std::string column_name);

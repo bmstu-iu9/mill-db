@@ -29,9 +29,10 @@ public:
 	bool is_printed();
 
 	void check_pk();
+	std::vector<Column*> cols;
 private:
 	std::string name;
-	std::vector<Column*> cols;
+
 	Column* pk;
 	std::map<std::string, Index*> indexes;
 	bool printed;
