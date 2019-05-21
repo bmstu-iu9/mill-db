@@ -48,6 +48,7 @@ struct condition {
 	string*					col_r;
 	Condition::Operator		operator_;
 	bool	    			on;
+	bool 					has_not;
 };
 
 /*struct joined_condition {
@@ -112,6 +113,7 @@ struct condition {
 %token ON_KEYWORD 
 %token OR_KEYWORD
 %token AND_KEYWORD
+%token NOT_KEYWORD
 %token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD CHAR_KEYWORD
 %token IDENTIFIER PARAMETER INTEGER
 %token BAD_CHARACTER
@@ -141,7 +143,7 @@ struct condition {
 %type <param_vec> parameter_declaration_list
 
 %type <operator_> operator
-%type <cond> condition
+%type <cond> condition condition_simple
 %type <cond_vec> condition_list
 %type <table_vec> table_lst
 
@@ -341,7 +343,7 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 							string joined_table;
 							Column* column_right=find_column1(tables,*(stmt->conds)->at(i)->col_r, &joined_table);
 							check_type_col(col,column_right);
-							Condition* cond = new Condition(col, column_right, stmt->conds->at(i)->operator_);
+							Condition* cond = new Condition(col, column_right, stmt->conds->at(i)->operator_, stmt->conds->at(i)->has_not);
 							statement->add_condition(cond);
 							statement->add_condition_to_table(table_name,cond);
 
@@ -357,7 +359,7 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 							// Check if parameters's type matches to column's type
 							check_type(param, col);
 
-							Condition* cond = new Condition(col, param, stmt->conds->at(i)->operator_);
+							Condition* cond = new Condition(col, param, stmt->conds->at(i)->operator_, stmt->conds->at(i)->has_not);
 
 							statement->add_condition(cond);
 							statement->add_condition_to_table(table_name,cond);
@@ -528,11 +530,25 @@ condition_list: condition {
 		}
 	;
 
-condition: column_name operator parameter_name {
+condition: condition_simple {
+			debug("condition without NOT");
+		
+			$$ = $1;
+			$$->has_not = false;
+		}
+	| NOT_KEYWORD condition_simple {
+			debug("condition with NOT");
+			
+			$$ = $2;
+			$$->has_not = true;
+		}
+	;
+	
+	
+condition_simple: column_name operator parameter_name {
 			debug("condition 1 BEGIN");
 
 			$$ = new condition();
-
 			$$->col = $1;
 			$$->operator_ = $2;
 			$$->param = $3;
@@ -541,16 +557,15 @@ condition: column_name operator parameter_name {
 			debug("condition 1 END");
 		}
 	| column_name operator column_name {
-			debug("condition 1 BEGIN");
+			debug("condition 2 BEGIN");
 
 			$$ = new condition();
-
 			$$->col = $1;
 			$$->operator_ = $2;
 			$$->col_r = $3;
 			$$->on=true;
 
-			debug("condition 1 END");
+			debug("condition 2 END");
 		}
 	;
 	

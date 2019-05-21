@@ -1,18 +1,18 @@
 #include <stdio.h>
 #include <time.h>
-#include "test_or.h"
-#include "test_or.c"
+#include "test_logic.h"
+#include "test_logic.c"
 
 int main() {
 	// Write sample people with their name and ages to file.
 	char people[4][100] = {"Ivan", "Sergey", "Nikolas", "Daniel"};
-	test_or_open_write("FILE_TEST");
+	test_logic_open_write("FILE_TEST");
 	add_person(1, people[0], 18);
 	add_person(2, people[1], 19);
 	add_person(3, people[2], 20);
 	add_person(4, people[3], 18);
-	test_or_close_write();
-	struct test_or_handle* handle = test_or_open_read("FILE_TEST");
+	test_logic_close_write();
+	struct test_logic_handle* handle = test_logic_open_read("FILE_TEST");
 	// Test '<'
 	printf("age < 20:\n");
 	struct get_people_younger_than_age_out iter1;
@@ -47,11 +47,19 @@ int main() {
 	printf("\n");
 	// Test '<>'
 	printf("age <> 20:\n");
-	struct get_people_not_equal_age_out iter5;
-	get_people_not_equal_age_init(&iter5, handle, 20);
-    while (get_people_not_equal_age_next(&iter5)) {
+	struct get_people_not_equal_age_1_out iter5;
+	get_people_not_equal_age_1_init(&iter5, handle, 20);
+    while (get_people_not_equal_age_1_next(&iter5)) {
 		printf("%s\n", iter5.data.name);
 	}
-	test_or_close_read(handle);
+	printf("\n");
+	// Test 'NOT'
+	printf("NOT age = 20:\n");
+	struct get_people_not_equal_age_2_out iter6;
+	get_people_not_equal_age_2_init(&iter6, handle, 20);
+    while (get_people_not_equal_age_2_next(&iter6)) {
+		printf("%s\n", iter6.data.name);
+	}
+	test_logic_close_read(handle);
 	return 0;
 }

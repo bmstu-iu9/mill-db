@@ -29,7 +29,12 @@ BEGIN
 	SELECT name SET @name FROM person WHERE age <= @age;
 END;
 
-CREATE PROCEDURE get_people_not_equal_age(@age int in, @name char(100) out)
+CREATE PROCEDURE get_people_not_equal_age_1(@age int in, @name char(100) out)
 BEGIN
 	SELECT name SET @name FROM person WHERE age <> @age;
+END;
+
+CREATE PROCEDURE get_people_not_equal_age_2(@age int in, @name char(100) out)
+BEGIN
+	SELECT name SET @name FROM person WHERE NOT age = @age;
 END;

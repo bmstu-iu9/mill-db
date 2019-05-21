@@ -177,7 +177,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 							joined_table_name=t.first->get_name();
 							corr=true;
 							if (this->tb_ind[table_name]<this->tb_ind[joined_table_name]){
-								this->tables[this->tb_ind[joined_table_name]].second.push_back(new Condition((*it)->get_column_right(),(*it)->get_column(), (*it)->get_operator()));
+								this->tables[this->tb_ind[joined_table_name]].second.push_back(new Condition((*it)->get_column_right(),(*it)->get_column(), (*it)->get_operator(), (*it)->has_keyword_not()));
 								corr=false;
 							}
 
@@ -218,8 +218,12 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 						op = " >= ";
 						break;
 					}
+					std::string not_kw = "!";
+					if ((*it)->has_keyword_not()) {
+						not_kw = "";
+					}
 					if ((*it)->get_column()->get_type()->get_typecode()!=DataType::CHAR) {
-						(*ofs) <<tab<< "\t\t\t\tif (!(c_" << (*it)->get_column()->get_name() << op << rhs << "))" 
+						(*ofs) <<tab<< "\t\t\t\tif (" + not_kw + "(c_" << (*it)->get_column()->get_name() << op << rhs << "))" 
 						<< endl<<tab << "\t\t\t\t\tcontinue;" << endl << endl;
 					} else {
 						(*ofs) <<tab<< "\t\t\t\tif (strcmp(c_" << (*it)->get_column()->get_name() << " , "

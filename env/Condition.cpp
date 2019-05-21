@@ -1,21 +1,23 @@
 #include "Condition.h"
 
-Condition::Condition(Column *col, Parameter *param, Operator op) {
+Condition::Condition(Column *col, Parameter *param, Operator op, bool has_keyword_not) {
 	this->col = col;
 	this->col_r=nullptr;
 	this->param = param;
 	this->disabled = false;
 	this->mode=SIMPLE;
 	operator_ = op;
+	has_not = has_keyword_not;
 }
 
-Condition::Condition(Column *col, Column *col_r, Operator op) {
+Condition::Condition(Column *col, Column *col_r, Operator op, bool has_keyword_not) {
 	this->col = col;
 	this->param=nullptr;
 	this->col_r = col_r;
 	this->disabled = false;
 	this->mode=JOIN;
 	operator_ = op;
+	has_not = has_keyword_not;
 }
 
 Condition::Mode Condition::get_mode() {
@@ -38,8 +40,12 @@ Condition::Operator Condition::get_operator() {
 	return operator_;
 }
 
+bool Condition::has_keyword_not() {
+	return has_not;
+}
+
 std::string Condition::print(){
-	std::string op;
+	std::string op, not_kw;
 	switch (operator_) {
 	case EQ:
 		op = " = ";
@@ -62,9 +68,12 @@ std::string Condition::print(){
 	default:
 		op = "???";
 	}
+	if (has_not) {
+		not_kw = "NOT ";
+	}
 	if (this->mode == Mode::JOIN){
-		return this->col->get_name()+op+this->col_r->get_name();
+		return not_kw + this->col->get_name()+op+this->col_r->get_name();
 	} else {
-		return this->col->get_name()+op+"@"+this->param->get_name();
+		return not_kw + this->col->get_name()+op+"@"+this->param->get_name();
 	}
 }
