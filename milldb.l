@@ -20,6 +20,12 @@ SEMICOLON	";"
 COMMA		","
 AT			"@"
 EQ			"="
+LESS        "<"
+MORE        ">"
+NOT_EQ      "<>"
+LESS_OR_EQ  "<="
+MORE_OR_EQ  ">="
+
 
 TABLE_KEYWORD		?i:"table"
 JOIN_KEYWORD		?i:"join"
@@ -45,6 +51,8 @@ IN_KEYWORD			?i:"in"
 OUT_KEYWORD			?i:"out"
 SET_KEYWORD			?i:"set"
 AND_KEYWORD			?i:"and"
+OR_KEYWORD          ?i:"or"
+NOT_KEYWORD         ?i:"not"
 
 INDEX_KEYWORD		?i:"index"
 ON_KEYWORD			?i:"on"
@@ -80,6 +88,11 @@ WHITESPACE			[ \t\n]+
 <INITIAL>{SEMICOLON}	{ debugl("SEMICOLON"); return SEMICOLON; }
 <INITIAL>{COMMA}		{ debugl("COMMA"); return COMMA; }
 <INITIAL>{EQ}			{ debugl("EQ"); return EQ; }
+<INITIAL>{LESS}			{ debugl("LESS"); return LESS; }
+<INITIAL>{MORE}			{ debugl("MORE"); return MORE; }
+<INITIAL>{NOT_EQ}		{ debugl("NOT_EQ"); return NOT_EQ; }
+<INITIAL>{LESS_OR_EQ}	{ debugl("LESS_OR_EQ"); return LESS_OR_EQ; }
+<INITIAL>{MORE_OR_EQ}	{ debugl("MORE_OR_EQ"); return MORE_OR_EQ; }
 
 <INITIAL>{TABLE_KEYWORD}		{ debugl("TABLE_KEYWORD"); return TABLE_KEYWORD; }
 
@@ -105,6 +118,7 @@ WHITESPACE			[ \t\n]+
 <INITIAL>{OUT_KEYWORD}			{ debugl("OUT_KEYWORD"); return OUT_KEYWORD; }
 <INITIAL>{SET_KEYWORD}			{ debugl("SET_KEYWORD"); return SET_KEYWORD; }
 <INITIAL>{AND_KEYWORD}			{ debugl("AND_KEYWORD"); return AND_KEYWORD; }
+<INITIAL>{OR_KEYWORD}			{ debugl("OR_KEYWORD"); return OR_KEYWORD; }
 
 <INITIAL>{INT_KEYWORD}		{ debugl("INT_KEYWORD"); return INT_KEYWORD; }
 <INITIAL>{FLOAT_KEYWORD}	{ debugl("FLOAT_KEYWORD"); return FLOAT_KEYWORD; }

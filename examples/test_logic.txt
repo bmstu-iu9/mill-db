@@ -1,0 +1,35 @@
+CREATE TABLE person (
+	id int pk,
+	age int,
+	name char(100)
+);
+
+CREATE PROCEDURE add_person(@id int in, @name char(100) in, @age int in)
+BEGIN
+	INSERT TABLE person VALUES (@id, @age, @name);
+END;
+
+CREATE PROCEDURE get_people_older_than_age(@age int in, @name char(100) out)
+BEGIN
+	SELECT name SET @name FROM person WHERE age > @age;
+END;
+
+CREATE PROCEDURE get_people_younger_than_age(@age int in, @name char(100) out)
+BEGIN
+	SELECT name SET @name FROM person WHERE age < @age;
+END;
+
+CREATE PROCEDURE get_people_older_or_same_age(@age int in, @name char(100) out)
+BEGIN
+	SELECT name SET @name FROM person WHERE age >= @age;
+END;
+
+CREATE PROCEDURE get_people_younger_or_same_age(@age int in, @name char(100) out)
+BEGIN
+	SELECT name SET @name FROM person WHERE age <= @age;
+END;
+
+CREATE PROCEDURE get_people_not_equal_age(@age int in, @name char(100) out)
+BEGIN
+	SELECT name SET @name FROM person WHERE age <> @age;
+END;

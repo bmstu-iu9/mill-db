@@ -43,10 +43,11 @@ struct statement {
 };
 
 struct condition {
-	string*     col;
-	string*     param;
-	string*     col_r;
-	bool	    on;
+	string*     			col;
+	string*					param;
+	string*					col_r;
+	Condition::Operator		operator_;
+	bool	    			on;
 };
 
 /*struct joined_condition {
@@ -76,6 +77,7 @@ struct condition {
 	Parameter*          param;
 	DataType*           dtype;
 	Parameter::Mode     pmode;
+	Condition::Operator operator_;
 
 	//vector<pair<Table*, vector<struct joined_condition*> > > join_tables_vec;
 	vector<Table*>* table_vec;
@@ -97,7 +99,7 @@ struct condition {
 
 %start program
 
-%token LPAREN RPAREN SEMICOLON COMMA EQ
+%token LPAREN RPAREN SEMICOLON COMMA EQ LESS MORE NOT_EQ LESS_OR_EQ MORE_OR_EQ
 %token TABLE_KEYWORD
 %token JOIN_KEYWORD
 %token SEQUENCE_KEYWORD
@@ -107,7 +109,9 @@ struct condition {
 %token SELECT_KEYWORD FROM_KEYWORD WHERE_KEYWORD
 %token INSERT_KEYWORD VALUES_KEYWORD
 %token PROCEDURE_KEYWORD BEGIN_KEYWORD END_KEYWORD IN_KEYWORD OUT_KEYWORD SET_KEYWORD
-%token ON_KEYWORD AND_KEYWORD
+%token ON_KEYWORD 
+%token OR_KEYWORD
+%token AND_KEYWORD
 %token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD CHAR_KEYWORD
 %token IDENTIFIER PARAMETER INTEGER
 %token BAD_CHARACTER
@@ -136,6 +140,7 @@ struct condition {
 %type <param> parameter_declaration
 %type <param_vec> parameter_declaration_list
 
+%type <operator_> operator
 %type <cond> condition
 %type <cond_vec> condition_list
 %type <table_vec> table_lst
@@ -329,14 +334,14 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 					delete stmt->selections;
 
 					debug("procedure_declaration 6");
-			                for (int i = 0; i < stmt->conds->size(); i++) {
+			        for (int i = 0; i < stmt->conds->size(); i++) {
 						Column* col = find_column1(tables, *(stmt->conds)->at(i)->col ,&table_name);
 						printf("\t\ttable_name= %s\n",table_name.c_str());
 						if (stmt->conds->at(i)->on){
 							string joined_table;
 							Column* column_right=find_column1(tables,*(stmt->conds)->at(i)->col_r, &joined_table);
 							check_type_col(col,column_right);
-							Condition* cond = new Condition(col, column_right);
+							Condition* cond = new Condition(col, column_right, stmt->conds->at(i)->operator_);
 							statement->add_condition(cond);
 							statement->add_condition_to_table(table_name,cond);
 
@@ -352,7 +357,7 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 							// Check if parameters's type matches to column's type
 							check_type(param, col);
 
-							Condition* cond = new Condition(col, param);
+							Condition* cond = new Condition(col, param, stmt->conds->at(i)->operator_);
 
 							statement->add_condition(cond);
 							statement->add_condition_to_table(table_name,cond);
@@ -365,7 +370,7 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 					 }
 
 //					statement->check_pk();
-			                $$->add_statement(statement);
+			        $$->add_statement(statement);
 					delete stmt->conds;
 					delete stmt;
 				} else
@@ -509,6 +514,12 @@ condition_list: condition {
 
 			debug("condition_list 1 END");
 		}
+	| condition_list OR_KEYWORD condition {
+
+			$$ = $1;
+            $$->push_back($3);
+
+		}
 	| condition_list AND_KEYWORD condition {
 
 			$$ = $1;
@@ -517,30 +528,52 @@ condition_list: condition {
 		}
 	;
 
-condition: column_name EQ parameter_name {
+condition: column_name operator parameter_name {
 			debug("condition 1 BEGIN");
 
 			$$ = new condition();
 
 			$$->col = $1;
+			$$->operator_ = $2;
 			$$->param = $3;
 			$$->on=false;
 
 			debug("condition 1 END");
 		}
-	| column_name EQ column_name {
+	| column_name operator column_name {
 			debug("condition 1 BEGIN");
 
 			$$ = new condition();
 
 			$$->col = $1;
+			$$->operator_ = $2;
 			$$->col_r = $3;
 			$$->on=true;
 
 			debug("condition 1 END");
 		}
 	;
-
+	
+operator: EQ {
+			$$ = Condition::EQ;
+		}
+	| LESS {
+			$$ = Condition::LESS;
+		}
+	| MORE {
+			$$ = Condition::MORE;
+		}
+	| NOT_EQ {
+			$$ = Condition::NOT_EQ;
+		}
+	| LESS_OR_EQ {
+			$$ = Condition::LESS_OR_EQ;
+		}
+	| MORE_OR_EQ {
+			$$ = Condition::MORE_OR_EQ;
+		}
+	;
+		
 column_declaration_list: column_declaration {
 			debug("column_declaration_list 1 BEGIN");
 			$$ = new vector<Column*>;

@@ -177,7 +177,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 							joined_table_name=t.first->get_name();
 							corr=true;
 							if (this->tb_ind[table_name]<this->tb_ind[joined_table_name]){
-								this->tables[this->tb_ind[joined_table_name]].second.push_back(new Condition((*it)->get_column_right(),(*it)->get_column()));
+								this->tables[this->tb_ind[joined_table_name]].second.push_back(new Condition((*it)->get_column_right(),(*it)->get_column(), (*it)->get_operator()));
 								corr=false;
 							}
 
@@ -197,10 +197,30 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 					continue;
 
 				if (corr) {
-					if ((*it)->get_column()->get_type()->get_typecode()!=DataType::CHAR){
-						(*ofs) <<tab<< "\t\t\t\tif (!(c_" << (*it)->get_column()->get_name() << " == "
-						       << rhs<< "))" << endl<<tab <<
-						       "\t\t\t\t\tcontinue;" << endl << endl;
+					std::string op;
+					switch ((*it)->get_operator()) {
+					case Condition::EQ:
+						op = " == ";
+						break;
+					case Condition::LESS:
+						op = " < ";
+						break;
+					case Condition::MORE:
+						op = " > ";
+						break;
+					case Condition::NOT_EQ:
+						op = " != ";
+						break;
+					case Condition::LESS_OR_EQ:
+						op = " <= ";
+						break;
+					case Condition::MORE_OR_EQ:
+						op = " >= ";
+						break;
+					}
+					if ((*it)->get_column()->get_type()->get_typecode()!=DataType::CHAR) {
+						(*ofs) <<tab<< "\t\t\t\tif (!(c_" << (*it)->get_column()->get_name() << op << rhs << "))" 
+						<< endl<<tab << "\t\t\t\t\tcontinue;" << endl << endl;
 					} else {
 						(*ofs) <<tab<< "\t\t\t\tif (strcmp(c_" << (*it)->get_column()->get_name() << " , "
 						       << rhs<< ")!=0)" << endl<<tab <<
