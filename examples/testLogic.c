@@ -60,6 +60,14 @@ int main() {
     while (get_people_not_equal_age_2_next(&iter6)) {
 		printf("%s\n", iter6.data.name);
 	}
+	printf("\n");
+	// Test 'OR'
+	printf("(age = 19 or age = 20) and (not age <= 19):\n");
+	struct get_people_either_age_out iter7;
+	get_people_either_age_init(&iter7, handle, 19, 20);
+    while (get_people_either_age_next(&iter7)) {
+		printf("%s\n", iter7.data.name);
+	}
 	test_logic_close_read(handle);
 	return 0;
 }

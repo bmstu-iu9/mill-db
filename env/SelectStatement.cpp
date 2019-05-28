@@ -45,6 +45,10 @@ void SelectStatement::add_condition(Condition *cond) {
 	this->conds.push_back(cond);
 }
 
+void SelectStatement::add_condition_tree(ConditionTreeNode* tree) {
+	this->condition_tree = tree;
+}
+
 void SelectStatement::add_condition_to_table(std::string table_name,Condition *cond) {
 //	this->conds.push_back(cond);
 	this->tables[this->tb_ind[table_name]].second.push_back(cond);
@@ -64,6 +68,64 @@ void SelectStatement::print_dependencies(std::ofstream* ofs, std::ofstream* ofl)
 	}
 }
 
+
+void SelectStatement::remove_join_conditions(ConditionTreeNode* node, string& table_name, int* i) {
+	switch(node->get_mode()) {
+	case ConditionTreeNode::NONE:
+		break;
+	case ConditionTreeNode::AND:
+	case ConditionTreeNode::OR:
+	
+		if (node->left()->get_mode() == ConditionTreeNode::NONE) {
+			if (should_remove_condition(node->left()->get_value(), table_name, i)) {
+				node->set_mode(ConditionTreeNode::NONE);
+				node->set_value(node->right()->get_value());
+				
+			}
+		} else {
+			remove_join_conditions(node->left(), table_name, i);
+		}
+		
+		if (node->right()->get_mode() == ConditionTreeNode::NONE) {
+			if (should_remove_condition(node->right()->get_value(), table_name, i)) {
+				node->set_mode(ConditionTreeNode::NONE);
+				node->set_value(node->left()->get_value());
+				
+			}
+		} else {
+			remove_join_conditions(node->right(), table_name, i);
+		}
+		
+		break;
+	}
+}
+
+bool SelectStatement::should_remove_condition(Condition* c, string& table_name, int* i) {
+	bool corr = false;
+	if (c->get_mode()==c->Mode::JOIN){
+		string joined_table_name;
+		for (auto t: this->tables){
+			if (t.first->find_column(c->get_column_right()->get_name())!=nullptr) {
+				joined_table_name=t.first->get_name();
+				corr=true;
+				if (this->tb_ind[table_name]<this->tb_ind[joined_table_name]){
+					this->tables[this->tb_ind[joined_table_name]].second.push_back(new Condition(c->get_column_right(),c->get_column(), c->get_operator(), c->has_keyword_not()));
+					corr=false;
+				}
+				break;
+			}
+		}
+	}
+	if (c->get_mode() != c->Mode::JOIN) {
+		corr = true;
+	} 
+	if (c->disabled)
+		bool corr = false;
+	if (this->has_pk_cond[table_name] && (*i == 0))
+		bool corr = false;
+	(*i)++;
+	return !corr;
+}
 
 void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	for (auto p : this->tables){
@@ -159,13 +221,13 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 			       << table_name << "_header_count]) {" << endl<<tab <<
 			       "\t\t\t\tfree(inserted);" << endl<<tab <<
 			       "\t\t\t\treturn;" << endl<<tab <<
-			       "\t\t\t}" << endl<<tab <<
+			       "\t\t\t}" << endl << tab <<
 			       "\t\t\tif (1) {" << endl;
 		}
 
 		if (this->has_pk_cond[table_name] && (*conds).size() > 1 || !this->has_pk_cond[table_name] && (*conds).size() > 0) {
 
-
+			/*
 			int i = 0;
 
 			for (auto it = (*conds).begin(); it != (*conds).end(); it++, i++) {
@@ -185,7 +247,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 						}
 					}
 				}
-
+				
 				string rhs;
 				if ((*it)->get_mode()==(*it)->Mode::JOIN) {
 					rhs="c_"+(*it)->get_column_right()->get_name();
@@ -222,6 +284,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 					if ((*it)->has_keyword_not()) {
 						not_kw = "";
 					}
+					
 					if ((*it)->get_column()->get_type()->get_typecode()!=DataType::CHAR) {
 						(*ofs) <<tab<< "\t\t\t\tif (" + not_kw + "(c_" << (*it)->get_column()->get_name() << op << rhs << "))" 
 						<< endl<<tab << "\t\t\t\t\tcontinue;" << endl << endl;
@@ -230,8 +293,20 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 						       << rhs<< ")!=0)" << endl<<tab <<
 						       "\t\t\t\t\tcontinue;" << endl << endl;
 					}
+					
+				
+				
+				} else {
+					std::cout << "incorrect" << std::endl;
 				}
 			}
+			*/
+			
+			//condition_tree->walk();
+			int count = 0;
+			remove_join_conditions(condition_tree, table_name, &count);
+			(*ofs) << "\t\t\t\tif(!(" << condition_tree->print() << "))\n\t\t\t\t\tcontinue;\n\n";
+			delete condition_tree;
 		}
 
 		if (index==this->tb_ind.size()-1){

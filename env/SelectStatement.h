@@ -10,6 +10,7 @@
 #include "Column.h"
 #include "Parameter.h"
 #include "Condition.h"
+#include "ConditionTreeNode.h"
 #include "Selection.h"
 
 class SelectStatement: public Statement {
@@ -20,7 +21,10 @@ public:
 //	SelectStatement(Table* table);
 	SelectStatement(std::vector<Table*>* tables);
 	void add_selection(Selection* selection);
-	void add_condition(Condition* cond);
+	void add_condition(Condition* cond); // DEPRECATED: use add_condition_tree
+	void add_condition_tree(ConditionTreeNode* tree);
+	void remove_join_conditions(ConditionTreeNode* node, std::string& table_name, int* i);
+	bool should_remove_condition(Condition* c, std::string& table_name, int* i); 
 	void add_condition_to_table(std::string table_name,Condition* cond);
 	void add_selection_to_table(std::string table_name,Selection* cond);
 
@@ -44,6 +48,7 @@ private:
 	std::vector<std::pair<Table*, std::vector<Selection*> > > selects;
 	std::vector<Selection*> selections;
 	std::vector<Condition*> conds;
+	ConditionTreeNode* condition_tree;
 //	SelectStatement *joined_statement;
 };
 

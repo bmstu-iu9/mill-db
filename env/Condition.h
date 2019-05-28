@@ -8,6 +8,7 @@ class Condition {
 public:
 	enum Mode {JOIN,SIMPLE};
 	enum Operator {EQ, LESS, MORE, NOT_EQ, LESS_OR_EQ, MORE_OR_EQ};
+	enum Multiple {AND, OR, NONE};
 	Condition(Column* col, Parameter* param, Operator op, bool has_keyword_not);
 	Condition(Column* col, Column* col_r, Operator op, bool has_keyword_not);
 	Column* get_column();

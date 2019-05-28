@@ -236,6 +236,85 @@ void add_person(int32_t id, const char* name, int32_t age) {
 	add_person_1(id, age, name);
 }
 
+void get_people_either_age_add(struct get_people_either_age_out* iter, struct get_people_either_age_out_data* selected) {
+	struct get_people_either_age_out_service* service = &(iter->service);
+	if (service->set == NULL) {
+		service->size = MILLDB_BUFFER_INIT_SIZE;
+		service->set = calloc(service->size, sizeof(struct get_people_either_age_out));
+	}
+	if (service->length >= service->size) {
+		service->size = service->size * 2;
+		service->set = realloc(service->set, service->size * sizeof(struct get_people_either_age_out));
+	}
+	memcpy(&(service->set[service->length++]), selected, sizeof(struct get_people_either_age_out_data));
+}
+
+void get_people_either_age_1(struct get_people_either_age_out* iter, int32_t age1, int32_t age2) {
+//table person	cond: age = @age1
+//table person	cond: age = @age2
+//table person	cond: NOT age <= @age1
+	struct test_logic_handle* handle = iter->service.handle;
+	struct get_people_either_age_out_data* inserted = malloc(sizeof(struct get_people_either_age_out_data));
+//TABLE person
+	uint64_t offset = 0;
+
+	offset += handle->header->data_offset[person_header_count];
+	
+	while (1) {
+		fseek(handle->file, offset, SEEK_SET);
+		union person_page page;
+		uint64_t size = fread(&page, sizeof(struct person), person_CHILDREN, handle->file);  if (size == 0) return;
+
+		for (uint64_t i = 0; i < person_CHILDREN; i++) {
+			const char* p_name= page.items[i].name;
+			int32_t c_id= page.items[i].id;
+			int32_t c_age= page.items[i].age;
+			const char* c_name= page.items[i].name;
+			if (offset + i * sizeof(struct person) >= handle->header->index_offset[person_header_count]) {
+				free(inserted);
+				return;
+			}
+			if (1) {
+				if(!((((c_age == age1) || (c_age == age2)) && !(c_age <= age1))))
+					continue;
+
+				memcpy(inserted->name, c_name, 100); inserted->name[100] = '\0';
+				get_people_either_age_add(iter, inserted);
+			}
+		}
+		offset += person_CHILDREN * sizeof(struct person);
+	}
+
+}
+
+void get_people_either_age_init(struct get_people_either_age_out* iter, struct test_logic_handle* handle, int32_t age1, int32_t age2) {
+	memset(iter, 0, sizeof(*iter));
+	iter->service.handle = handle;
+	iter->service.set = NULL;
+	iter->service.size = 0;
+	iter->service.count = 0;
+	iter->service.length = 0;
+
+	get_people_either_age_1(iter, age1, age2);
+}
+
+int get_people_either_age_next(struct get_people_either_age_out* iter) {
+	if (iter == NULL)
+		return 0;
+
+	struct get_people_either_age_out_service* service = &(iter->service);
+
+	if (service->set != NULL && service->count < service->length) {
+		memcpy(&iter->data, &(service->set[service->count]), sizeof(struct get_people_either_age_out_data));
+		service->count++;
+		return 1;
+	} else {
+		free(service->set);
+	}
+
+	return 0;
+}
+
 void get_people_not_equal_age_1_add(struct get_people_not_equal_age_1_out* iter, struct get_people_not_equal_age_1_out_data* selected) {
 	struct get_people_not_equal_age_1_out_service* service = &(iter->service);
 	if (service->set == NULL) {
@@ -273,7 +352,7 @@ void get_people_not_equal_age_1_1(struct get_people_not_equal_age_1_out* iter, i
 				return;
 			}
 			if (1) {
-				if (!(c_age != age))
+				if(!((c_age != age)))
 					continue;
 
 				memcpy(inserted->name, c_name, 100); inserted->name[100] = '\0';
@@ -350,7 +429,7 @@ void get_people_not_equal_age_2_1(struct get_people_not_equal_age_2_out* iter, i
 				return;
 			}
 			if (1) {
-				if ((c_age == age))
+				if(!(!(c_age == age)))
 					continue;
 
 				memcpy(inserted->name, c_name, 100); inserted->name[100] = '\0';
@@ -427,7 +506,7 @@ void get_people_older_or_same_age_1(struct get_people_older_or_same_age_out* ite
 				return;
 			}
 			if (1) {
-				if (!(c_age >= age))
+				if(!((c_age >= age)))
 					continue;
 
 				memcpy(inserted->name, c_name, 100); inserted->name[100] = '\0';
@@ -504,7 +583,7 @@ void get_people_older_than_age_1(struct get_people_older_than_age_out* iter, int
 				return;
 			}
 			if (1) {
-				if (!(c_age > age))
+				if(!((c_age > age)))
 					continue;
 
 				memcpy(inserted->name, c_name, 100); inserted->name[100] = '\0';
@@ -581,7 +660,7 @@ void get_people_younger_or_same_age_1(struct get_people_younger_or_same_age_out*
 				return;
 			}
 			if (1) {
-				if (!(c_age <= age))
+				if(!((c_age <= age)))
 					continue;
 
 				memcpy(inserted->name, c_name, 100); inserted->name[100] = '\0';
@@ -658,7 +737,7 @@ void get_people_younger_than_age_1(struct get_people_younger_than_age_out* iter,
 				return;
 			}
 			if (1) {
-				if (!(c_age < age))
+				if(!((c_age < age)))
 					continue;
 
 				memcpy(inserted->name, c_name, 100); inserted->name[100] = '\0';

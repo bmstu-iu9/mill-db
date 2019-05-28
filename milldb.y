@@ -20,6 +20,7 @@ int check_type(Parameter* param, Column* col);
 int check_type_col(Column* col1, Column* col2);
 int check_mode(Parameter* param, Parameter::Mode mode);
 int check_procedure(string procedure_name);
+ConditionTreeNode* condition_tree_walk(struct condition_tree_node* node, vector<Table*>* tables, std::__cxx11::string* table_name, SelectStatement* statement, Procedure* procedure);
 
 void debug(const char* message);
 
@@ -39,7 +40,7 @@ struct statement {
 	vector<Table*>* tables;
 	vector<pair<string, Argument::Type> >*  arg_str_vec;
 	vector<pair<string, string> >* selections;
-	vector<struct condition*>*  conds;
+	struct condition_tree_node*  conds;
 };
 
 struct condition {
@@ -51,10 +52,13 @@ struct condition {
 	bool 					has_not;
 };
 
-/*struct joined_condition {
-	string*     col_l;
-	string*     col_r;
-};*/
+struct condition_tree_node {
+	Condition::Multiple     mult;
+	condition_tree_node*    left_cond;
+	condition_tree_node*    right_cond;
+	condition* 				value;
+};
+
 %}
 %code requires {
 	#include <utility>
@@ -70,7 +74,7 @@ struct condition {
 	char*               char_arr;
 	string*             str;
 	Table*              table;
-	Sequence*	    sequence;
+	Sequence*	        sequence;
 	Column*             col;
 	vector<Column*>*    col_vec;
 	Argument*           arg;
@@ -96,6 +100,9 @@ struct condition {
 
 	struct condition*       cond;
 	vector<struct condition*>*  cond_vec;
+	
+	struct condition_tree_node* condition_tree_root;
+	
 }
 
 %start program
@@ -143,8 +150,8 @@ struct condition {
 %type <param_vec> parameter_declaration_list
 
 %type <operator_> operator
-%type <cond> condition condition_simple
-%type <cond_vec> condition_list
+%type <condition_tree_root> condition_list search_cond_not
+%type <cond> condition_simple
 %type <table_vec> table_lst
 
 %%
@@ -336,42 +343,10 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
 					delete stmt->selections;
 
 					debug("procedure_declaration 6");
-			        for (int i = 0; i < stmt->conds->size(); i++) {
-						Column* col = find_column1(tables, *(stmt->conds)->at(i)->col ,&table_name);
-						printf("\t\ttable_name= %s\n",table_name.c_str());
-						if (stmt->conds->at(i)->on){
-							string joined_table;
-							Column* column_right=find_column1(tables,*(stmt->conds)->at(i)->col_r, &joined_table);
-							check_type_col(col,column_right);
-							Condition* cond = new Condition(col, column_right, stmt->conds->at(i)->operator_, stmt->conds->at(i)->has_not);
-							statement->add_condition(cond);
-							statement->add_condition_to_table(table_name,cond);
+					ConditionTreeNode* root = condition_tree_walk(stmt->conds, tables, &table_name, statement, $$);
+					statement->add_condition_tree(root);
 
-							delete stmt->conds->at(i)->col;
-							delete stmt->conds->at(i)->col_r;
-							delete stmt->conds->at(i);
-						} else {
-							Parameter* param = find_parameter($$, *(stmt->conds->at(i)->param));
-
-							// Check if this parameter have mode IN
-					                check_mode(param, Parameter::IN);
-
-							// Check if parameters's type matches to column's type
-							check_type(param, col);
-
-							Condition* cond = new Condition(col, param, stmt->conds->at(i)->operator_, stmt->conds->at(i)->has_not);
-
-							statement->add_condition(cond);
-							statement->add_condition_to_table(table_name,cond);
-
-							delete stmt->conds->at(i)->col;
-							delete stmt->conds->at(i)->param;
-							delete stmt->conds->at(i);
-						}
-
-					 }
-
-//					statement->check_pk();
+					debug("procedure_declaration 7");
 			        $$->add_statement(statement);
 					delete stmt->conds;
 					delete stmt;
@@ -507,43 +482,80 @@ selection: column_name SET_KEYWORD parameter_name {
 			debug("selection END");
 		}
 	;
-
-condition_list: condition {
+	
+/**********/
+condition_list: search_cond_not {
 			debug("condition_list 1 BEGIN");
-
-			$$ = new vector<struct condition*>;
-            $$->push_back($1);
-
+			
+			$$ = $1;
+			
 			debug("condition_list 1 END");
 		}
-	| condition_list OR_KEYWORD condition {
-
-			$$ = $1;
-            $$->push_back($3);
-
+	| search_cond_not AND_KEYWORD condition_list {
+			debug("condition_list 2 BEGIN");
+			
+			$$ = new condition_tree_node();
+			$$->mult = Condition::AND;
+			$$->left_cond = $1;
+			$$->right_cond = $3;
+			
+			debug("condition_list 2 END");
 		}
-	| condition_list AND_KEYWORD condition {
-
-			$$ = $1;
-            $$->push_back($3);
-
+	| search_cond_not OR_KEYWORD condition_list {
+			debug("condition_list 3 BEGIN");
+			
+			$$ = new condition_tree_node();
+			$$->mult = Condition::OR;
+			$$->left_cond = $1;
+			$$->right_cond = $3;
+			
+			debug("condition_list 3 END");
 		}
-	;
-
-condition: condition_simple {
-			debug("condition without NOT");
-		
-			$$ = $1;
-			$$->has_not = false;
-		}
-	| NOT_KEYWORD condition_simple {
-			debug("condition with NOT");
+	| LPAREN condition_list RPAREN {
+			debug("condition_list 4 BEGIN");
 			
 			$$ = $2;
-			$$->has_not = true;
+			
+			debug("condition_list 4 END");
+		}
+	| LPAREN condition_list RPAREN AND_KEYWORD condition_list {
+			debug("condition_list 5 BEGIN");
+			
+			$$ = new condition_tree_node();
+			$$->mult = Condition::AND;
+			$$->left_cond = $2;
+			$$->right_cond = $5;
+			
+			debug("condition_list 5 END");
+		}
+	| LPAREN condition_list RPAREN OR_KEYWORD condition_list {
+			debug("condition_list 6 BEGIN");
+			
+			$$ = new condition_tree_node();
+			$$->mult = Condition::OR;
+			$$->left_cond = $2;
+			$$->right_cond = $5;
+			
+			debug("condition_list 6 END");
 		}
 	;
 	
+search_cond_not: condition_simple {
+	
+			$$ = new condition_tree_node();
+			$$->mult = Condition::NONE;
+			$$->value = $1;
+			$$->value->has_not = false;
+		}
+	| NOT_KEYWORD condition_simple {
+			debug("NOT condition");
+			
+			$$ = new condition_tree_node();
+			$$->mult = Condition::NONE;
+			$$->value = $2;
+			$$->value->has_not = true;
+		}
+	;
 	
 condition_simple: column_name operator parameter_name {
 			debug("condition 1 BEGIN");
@@ -568,6 +580,8 @@ condition_simple: column_name operator parameter_name {
 			debug("condition 2 END");
 		}
 	;
+	
+/**********/
 	
 operator: EQ {
 			$$ = Condition::EQ;
@@ -831,6 +845,43 @@ int check_mode(Parameter* param, Parameter::Mode mode) {
 	string msg("parameter " + param->get_name() + " should have other mode");
     throw logic_error(error_msg(msg));
     return 0;
+}
+
+ConditionTreeNode* condition_tree_walk(struct condition_tree_node* node, vector<Table*>* tables, std::__cxx11::string* table_name, SelectStatement* statement, Procedure* procedure) {
+	ConditionTreeNode *left, *right;
+	switch (node->mult) {
+	case Condition::AND :
+		debug("tree_walk AND");
+		left = condition_tree_walk(node->left_cond, tables, table_name, statement, procedure);
+		right = condition_tree_walk(node->right_cond, tables, table_name, statement, procedure);
+		return new ConditionTreeNode(ConditionTreeNode::AND, left, right);
+	case Condition::OR :
+		debug("tree_walk OR");
+		left = condition_tree_walk(node->left_cond, tables, table_name, statement, procedure);
+		right = condition_tree_walk(node->right_cond, tables, table_name, statement, procedure);
+		return new ConditionTreeNode(ConditionTreeNode::OR, left, right);
+	case Condition::NONE :
+		debug("tree_walk");
+		Column* col = find_column1(tables, *(node->value->col), table_name);
+		printf("\t\ttable_name= %s\n", table_name->c_str());
+		Condition* cond;
+		if (node->value->on) {
+			string joined_table;
+			Column* column_right = find_column1(tables, *(node->value->col_r), &joined_table);
+			check_type_col(col, column_right);
+			cond = new Condition(col, column_right, node->value->operator_, node->value->has_not);
+			statement->add_condition_to_table(*table_name, cond);
+		} else {
+			Parameter* param = find_parameter(procedure, *(node->value->param));
+			// Check if this parameter have mode IN
+			check_mode(param, Parameter::IN);
+			// Check if parameters's type matches to column's type
+			check_type(param, col);
+			cond = new Condition(col, param, node->value->operator_, node->value->has_not);
+			statement->add_condition_to_table(*table_name, cond);
+		}
+		return new ConditionTreeNode(cond);
+	}
 }
 
 void debug(const char* message) {
