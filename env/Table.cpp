@@ -194,7 +194,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "" << endl;
 
 		(*ofs) << "int " << name << "_sort_compare(const void* a, const void* b) {" << endl <<
-				"\treturn " << name << "_compare((struct " << name << "*)a, (struct " << name << "*)b);" << endl <<
+				"\treturn " << name << "_compare(*((struct " << name << "**)a), *((struct " << name << "**)b));" << endl <<
 				"}" << endl << endl;
 
 		(*ofs) << "uint64_t " << name << "_write(FILE* file) {" << endl <<
