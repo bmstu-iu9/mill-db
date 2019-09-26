@@ -6,19 +6,27 @@
 #include <map>
 #include "DataType.h"
 
+#define COLUMN_COMMON 0
+#define COLUMN_BLOOM 1
+#define COLUMN_INDEXED 2
+#define COLUMN_PRIMARY 3
+#define DEFAULT_FAIL_SHARE 0.2
+
 class Column {
 public:
-	Column(std::string name, DataType* type, bool pk);
+	Column(std::string name, DataType* type, int mod, float fail_share);
 	~Column();
 
 	std::string get_name();
 	DataType* get_type();
-	bool get_pk();
+	int get_mod();
+	float get_fail_share();
 
 private:
 	std::string name;
 	DataType* type;
-	bool pk;
+	int mod;
+	float fail_share;
 };
 
 

@@ -30,6 +30,8 @@ CURRVAL_KEYWORD		?i:"currval"
 
 CREATE_KEYWORD		?i:"create"
 PK_KEYWORD          ?i:"pk"
+INDEXED_KEYWORD     ?i:"indexed"
+BLOOM_KEYWORD       ?i:"bloom"
 
 SELECT_KEYWORD		?i:"select"
 FROM_KEYWORD		?i:"from"
@@ -61,6 +63,7 @@ IDENTIFIER_PART		[[:alnum:]_]
 PARAMETER			{AT}{IDENTIFIER}
 
 INTEGER             {DIGIT}+
+FLOAT               {DIGIT}+\.{DIGIT}+
 DIGIT               [[:alnum:]]
 
 COMMENT_START		"--"
@@ -89,6 +92,8 @@ WHITESPACE			[ \t\n]+
 
 <INITIAL>{CREATE_KEYWORD}		{ debugl("CREATE_KEYWORD"); return CREATE_KEYWORD; }
 <INITIAL>{PK_KEYWORD}		    { debugl("PK_KEYWORD"); return PK_KEYWORD; }
+<INITIAL>{INDEXED_KEYWORD}		{ debugl("INDEXED_KEYWORD"); return INDEXED_KEYWORD; }
+<INITIAL>{BLOOM_KEYWORD}		{ debugl("BLOOM_KEYWORD"); return BLOOM_KEYWORD; }
 <INITIAL>{JOIN_KEYWORD}		    { debugl("JOIN_KEYWORD"); return JOIN_KEYWORD; }
 
 <INITIAL>{SELECT_KEYWORD}		{ debugl("SELECT_KEYWORD"); return SELECT_KEYWORD; }
@@ -114,6 +119,7 @@ WHITESPACE			[ \t\n]+
 <INITIAL>{IDENTIFIER}	{ yylval.char_arr = yytext; debugl("IDENTIFIER"); return IDENTIFIER; }
 <INITIAL>{PARAMETER}	{ yylval.char_arr = yytext + sizeof(char); debugl("PARAMETER"); return PARAMETER; }
 <INITIAL>{INTEGER}	    { yylval.char_arr = yytext; debugl("INTEGER"); return INTEGER; }
+<INITIAL>{FLOAT}	    { yylval.char_arr = yytext; debugl("FLOAT"); return FLOAT; }
 
 
 <INITIAL>{WHITESPACE}	/* eat up whitespace */

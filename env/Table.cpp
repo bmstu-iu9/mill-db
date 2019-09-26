@@ -1,5 +1,6 @@
 #include "Table.h"
 #include "Environment.h"
+#include <sstream>
 
 using namespace std;
 
@@ -19,12 +20,12 @@ string Table::get_name() {
 }
 
 int Table::add_column(Column* col) {
-	if (col->get_pk() && this->pk != nullptr)
+	if (col->get_mod() == COLUMN_PRIMARY && this->pk != nullptr)
 		return 0;
 
 	this->cols.push_back(col);
 
-	if (col->get_pk())
+	if (col->get_mod() == COLUMN_PRIMARY)
 		this->pk = col;
 
 	return 1;
@@ -38,7 +39,7 @@ void Table::check_pk() {
 	Column* pk = nullptr;
 	int i = 0;
 	for (auto it = this->cols.begin(); it != this->cols.end(); it++, i++) {
-		if ((*it)->get_pk()) {
+		if ((*it)->get_mod() == COLUMN_PRIMARY) {
 			if (i > 0) {
 				pk = this->cols[i];
 				this->cols[i] = this->cols[0];
@@ -223,6 +224,66 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 			   "\treturn items + 1;" << endl <<
 		       "}" << endl <<
 		       endl;
+
+		stringstream new_bf;
+        stringstream add_bf;
+        stringstream delete_bf;
+
+		for (Column *f : this->cols) {
+		    if (f->get_mod() >= COLUMN_BLOOM) {
+
+		        stringstream bloom_name_ss;
+		        bloom_name_ss << this->name << "_" << f->get_name();
+		        string bloom_name = bloom_name_ss.str();
+		        string param_type = f->get_type()->signature(f->get_name());
+		        string pointer = f->get_name();
+		        string size = "sizeof(char) * ";
+		        size += to_string(f->get_type()->get_length());
+		        if (f->get_type()->get_typecode() != DataType::CHAR) {
+		            pointer = "&";
+		            pointer += f->get_name();
+		            size = "sizeof(";
+		            size += f->get_name();
+		            size += ")";
+		        }
+
+		        new_bf << "\t" << bloom_name << "_bloom = new_bf(count, " << f->get_fail_share() << ");\n";
+		        add_bf << "\t\tadd_" << bloom_name << "_bloom(current_item->" << f->get_name() << ");\n";
+		        delete_bf << "\tdelete_bf(" << bloom_name << "_bloom);\n";
+
+                (*ofs) << "struct bloom_filter *" << bloom_name << "_bloom;\n"
+                          "\n"
+                          "void add_" << bloom_name << "_bloom(" << param_type << ") {\n"
+                          "\tadd_bf(" << bloom_name << "_bloom, (char *)(" << pointer << "), " << size << ");\n"
+                          "}\n"
+                          "\n"
+                          "int is_" << bloom_name << "_bloom(" << param_type << ") {\n"
+                          "    return check_bf(" << bloom_name << "_bloom, (char *)(" << pointer << "), " << size << ");\n"
+                          "}\n\n";
+
+            }
+        }
+
+        (*ofs) << "void person_bloom_load(struct my_base_handle* handle) {\n"
+                  "\tuint64_t count = handle->header->count[person_header_count];\n"
+                  "\n";
+		(*ofs) << new_bf.str();
+		(*ofs) << "\n"
+                  "\tuint64_t offset = handle->header->data_offset[person_header_count];\n"
+                  "\tfseek(handle->file, offset, SEEK_SET);\n"
+                  "\n"
+                  "\twhile (offset < handle->header->index_offset[person_header_count]) {\n"
+                  "\t\tstruct person *current_item = malloc(sizeof(struct person));\n"
+                  "\t\tfread(current_item, sizeof(struct person), 1, handle->file);\n";
+        (*ofs) << add_bf.str();
+        (*ofs) << "\t\tfree(current_item);\n"
+                  "\t\toffset += sizeof(struct person);\n"
+                  "\t}\n"
+                  "}\n"
+                  "\n"
+                  "void person_bloom_delete() {\n";
+        (*ofs) << delete_bf.str();
+        (*ofs) << "}\n\n";
 
 		(*ofs) << "void " << name << "_index_clean(struct " << name << "_node* node) {" << endl <<
 		       "\tif (node == NULL)" << endl <<

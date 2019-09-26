@@ -1,3 +1,4 @@
+#include <sstream>
 #include "SelectStatement.h"
 #include "Environment.h"
 
@@ -71,6 +72,21 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 			(*ofs)<<"//table "<<p.first->get_name()<<"\tcond: "<<cond->print()<<endl;
 		}
 	}
+
+	for (auto p : this->tables) {
+	    for (auto cond : p.second) {
+	        if (cond->get_column()->get_mod() >= COLUMN_BLOOM) {
+	            stringstream bloom_name;
+	            bloom_name << p.first->get_name() << "_" << cond->get_column()->get_name();
+                (*ofs) << "\tif (!is_" << bloom_name.str() <<
+                          "_bloom(" << cond->get_column()->get_name() << ")) {\n"
+                          "\t\tprintf(\"kokokoke  " << cond->get_column()->get_name() << "\\n\");\n"
+                          "\t\treturn;\n"
+                          "\t}\n";
+	        }
+	    }
+	}
+
 	(*ofs) << "\tstruct " << Environment::get_instance()->get_name() << "_handle* handle = iter->service.handle;"<< endl;
 	(*ofs)<<"\tstruct " << func_name << "_out_data* inserted = malloc(sizeof(struct " << func_name << "_out_data));"<< endl;
 	string tab="";
@@ -131,7 +147,8 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 		auto table_name = table->get_name();
 
 		for (Selection* sel:this->selects[tb_ind[table_name]].second){
-			(*ofs)<<tab<<"\t\t\t"<<sel->get_column()->get_type()->str_param_for_select(sel->get_column()->get_name())<<"="<<" page.items[i]."<<sel->get_column()->get_name()<<";"<<endl;
+			(*ofs)<<tab<<"\t\t\t"<<sel->get_column()->get_type()->str_param_for_select(sel->get_column()->get_name())<<
+			    "="<<" page.items[i]."<<sel->get_column()->get_name()<<";"<<endl;
 		}
 		for (Column* col: table->cols){
 			string s=col->get_type()->str_column_for_select(col->get_name());
@@ -237,7 +254,7 @@ void SelectStatement::check_table_pk(std::string table_name) {
 		int i = 0;
 		for (auto it = this->tables[tb_index].second.begin();
 		it != this->tables[tb_index].second.end(); it++, i++) {
-			if ((*it)->get_column()->get_pk()){
+			if ((*it)->get_column()->get_mod() == COLUMN_PRIMARY){
 				bool admit=false;
 				if ((*it)->get_parameter()==nullptr && (*it)->get_column_right()!=nullptr){
 					for (int j=0;j<tb_index;j++){
