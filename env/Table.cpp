@@ -247,41 +247,39 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		            size += ")";
 		        }
 
-		        new_bf << "\t" << bloom_name << "_bloom = new_bf(count, " << f->get_fail_share() << ");\n";
-		        add_bf << "\t\tadd_" << bloom_name << "_bloom(current_item->" << f->get_name() << ");\n";
-		        delete_bf << "\tdelete_bf(" << bloom_name << "_bloom);\n";
+		        new_bf << "\thandle->" << bloom_name << "_bloom = new_bf(count, " << f->get_fail_share() << ");\n";
+		        add_bf << "\t\tadd_" << bloom_name << "_bloom(handle, current_item->" << f->get_name() << ");\n";
+		        delete_bf << "\tdelete_bf(handle->" << bloom_name << "_bloom);\n";
 
-                (*ofs) << "struct bloom_filter *" << bloom_name << "_bloom;\n"
-                          "\n"
-                          "void add_" << bloom_name << "_bloom(" << param_type << ") {\n"
-                          "\tadd_bf(" << bloom_name << "_bloom, (char *)(" << pointer << "), " << size << ");\n"
+                (*ofs) << "void add_" << bloom_name << "_bloom(struct my_base_handle* handle, " << param_type << ") {\n"
+                          "\tadd_bf(handle->" << bloom_name << "_bloom, (char *)(" << pointer << "), " << size << ");\n"
                           "}\n"
                           "\n"
-                          "int is_" << bloom_name << "_bloom(" << param_type << ") {\n"
-                          "    return check_bf(" << bloom_name << "_bloom, (char *)(" << pointer << "), " << size << ");\n"
+                          "int is_" << bloom_name << "_bloom(struct my_base_handle* handle, " << param_type << ") {\n"
+                          "\treturn check_bf(handle->" << bloom_name << "_bloom, (char *)(" << pointer << "), " << size << ");\n"
                           "}\n\n";
 
             }
         }
 
-        (*ofs) << "void person_bloom_load(struct my_base_handle* handle) {\n"
-                  "\tuint64_t count = handle->header->count[person_header_count];\n"
+        (*ofs) << "void " << this->name << "_bloom_load(struct my_base_handle* handle) {\n"
+                  "\tuint64_t count = handle->header->count[" << this->name << "_header_count];\n"
                   "\n";
 		(*ofs) << new_bf.str();
 		(*ofs) << "\n"
-                  "\tuint64_t offset = handle->header->data_offset[person_header_count];\n"
+                  "\tuint64_t offset = handle->header->data_offset[" << this->name << "_header_count];\n"
                   "\tfseek(handle->file, offset, SEEK_SET);\n"
                   "\n"
-                  "\twhile (offset < handle->header->index_offset[person_header_count]) {\n"
-                  "\t\tstruct person *current_item = malloc(sizeof(struct person));\n"
-                  "\t\tfread(current_item, sizeof(struct person), 1, handle->file);\n";
+                  "\twhile (offset < handle->header->index_offset[" << this->name << "_header_count]) {\n"
+                  "\t\tstruct " << this->name << " *current_item = malloc(sizeof(struct " << this->name << "));\n"
+                  "\t\tfread(current_item, sizeof(struct " << this->name << "), 1, handle->file);\n";
         (*ofs) << add_bf.str();
         (*ofs) << "\t\tfree(current_item);\n"
-                  "\t\toffset += sizeof(struct person);\n"
+                  "\t\toffset += sizeof(struct " << this->name << ");\n"
                   "\t}\n"
                   "}\n"
                   "\n"
-                  "void person_bloom_delete() {\n";
+                  "void " << this->name << "_bloom_delete(struct my_base_handle* handle) {\n";
         (*ofs) << delete_bf.str();
         (*ofs) << "}\n\n";
 

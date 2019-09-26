@@ -214,6 +214,15 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 		(*ofs) << "\tstruct " << table->get_name() << "_node* " << table->get_name() << "_root;" << endl;
 	}
 
+    for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+        Table* table = it->second;
+        for (Column *f : table->cols) {
+            if (f->get_mod() >= COLUMN_BLOOM) {
+                (*ofs) << "\tstruct bloom_filter *" << table->get_name() << "_" << f->get_name() << "_bloom;\n";
+            }
+        }
+    }
+
 	(*ofs) << "};" << endl <<
 	       endl;
 
@@ -329,7 +338,7 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 
 	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
 		Table* table = it->second;
-		(*ofs) << "\t" << table->get_name() << "_bloom_load(my_base_write_handle);\n"
+		(*ofs) << "\t" << table->get_name() << "_bloom_load(handle);\n"
             "\t" << table->get_name() << "_index_load(handle);" << endl;
 	}
 
@@ -352,7 +361,7 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 		Table* table = it->second;
 		(*ofs) << "\tif (handle->" << table->get_name() << "_root)" << endl <<
 				"\t\t" << table->get_name() << "_index_clean(handle->" << table->get_name() << "_root);\n\t"
-		       << table->get_name() << "_bloom_delete();\n";
+		       << table->get_name() << "_bloom_delete(handle);\n";
 	}
 
 	(*ofs) << endl <<

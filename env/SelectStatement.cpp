@@ -79,8 +79,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	            stringstream bloom_name;
 	            bloom_name << p.first->get_name() << "_" << cond->get_column()->get_name();
                 (*ofs) << "\tif (!is_" << bloom_name.str() <<
-                          "_bloom(" << cond->get_column()->get_name() << ")) {\n"
-                          "\t\tprintf(\"kokokoke  " << cond->get_column()->get_name() << "\\n\");\n"
+                          "_bloom(iter->service.handle, " << cond->get_column()->get_name() << ")) {\n"
                           "\t\treturn;\n"
                           "\t}\n";
 	        }
