@@ -10,24 +10,31 @@
 
 class Procedure {
 public:
-	enum Mode {READ, WRITE};
+    enum Mode {
+        READ, WRITE
+    };
 
-	Procedure(std::string name, Mode mode, std::vector<Parameter*> params);
-	~Procedure();
-	std::string get_name();
-	Mode get_mode();
+    Procedure(std::string name, Mode mode, std::vector<Parameter *> params);
 
-	void add_parameter(Parameter* param);
-	Parameter* find_parameter(std::string search_name);
+    ~Procedure();
 
-	void add_statement(Statement* statement);
+    std::string get_name();
 
-	void print(std::ofstream* ofs, std::ofstream* ofl);
+    Mode get_mode();
+
+    void add_parameter(Parameter *param);
+
+    Parameter *find_parameter(std::string search_name);
+
+    void add_statement(Statement *statement);
+
+    void print(std::ofstream *ofs, std::ofstream *ofl);
+
 private:
-	std::string name;
-	Mode mode;
-	std::vector<Parameter*> params;
-	std::vector<Statement*> statements;
+    std::string name;
+    Mode mode;
+    std::vector<Parameter *> params;
+    std::vector<Statement *> statements;
 };
 
 

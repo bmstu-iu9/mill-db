@@ -5,27 +5,39 @@
 
 class ConditionTreeNode {
 public:
-	enum Multiple {AND, OR, NONE};
-	ConditionTreeNode(Multiple mult, ConditionTreeNode* left, ConditionTreeNode* right);
-	ConditionTreeNode(Condition* value);
-	~ConditionTreeNode();
-	void walk();
-	ConditionTreeNode* left();
-	ConditionTreeNode* right();
-	Condition* get_value();
-	void set_value(Condition* c); 
+    enum Multiple {
+        AND, OR, NONE
+    };
 
-	bool disabled;
-	Multiple get_mode();
-	void set_mode(Multiple m);
+    ConditionTreeNode(Multiple mult, ConditionTreeNode *left, ConditionTreeNode *right);
 
-	std::string print();
+    ConditionTreeNode(Condition *value);
+
+    ~ConditionTreeNode();
+
+    void walk();
+
+    ConditionTreeNode *left();
+
+    ConditionTreeNode *right();
+
+    Condition *get_value();
+
+    void set_value(Condition *c);
+
+    bool disabled;
+
+    Multiple get_mode();
+
+    void set_mode(Multiple m);
+
+    std::string print();
 
 private:
-	Multiple			  mult;
-	ConditionTreeNode*    left_cond;
-	ConditionTreeNode*    right_cond;
-	Condition* 			  value;
+    Multiple mult;
+    ConditionTreeNode *left_cond;
+    ConditionTreeNode *right_cond;
+    Condition *value;
 };
 
 

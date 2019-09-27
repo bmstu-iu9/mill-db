@@ -8,7 +8,7 @@
 
 using namespace std;
 
- #define DEBUG
+#define DEBUG
 
 string error_msg(string s);
 Table* find_table(string table_name);
@@ -35,8 +35,6 @@ extern "C" {
 struct statement {
 	int				 type;
 	Table*			  table;
-//	vector<pair<Table*, vector<struct joined_condition*> > >* tables;
-//	vector<pair<Table*, vector<struct condition*> > >* tables;
 	vector<Table*>* tables;
 	vector<pair<string, Argument::Type> >*  arg_str_vec;
 	vector<pair<string, string> >* selections;
@@ -83,26 +81,19 @@ struct condition_tree_node {
 	DataType*           dtype;
 	Parameter::Mode     pmode;
 	Condition::Operator operator_;
-
-	//vector<pair<Table*, vector<struct joined_condition*> > > join_tables_vec;
-	vector<Table*>* table_vec;
-
-	vector<Parameter*>* param_vec;
-
-	pair<string, Argument::Type>* arg_str;
-	vector<pair<string, Argument::Type> >* arg_str_vec;
-
-	pair <string, string> * str_str;
-	vector< pair<string, string> > * str_str_vec;
-
-	struct statement*		   stmt;
+	vector<Table*>*     table_vec;
+	
+	vector<Parameter*>*                  param_vec;
+	pair<string, Argument::Type>*        arg_str;
+	vector<pair<string,Argument::Type>>* arg_str_vec;
+	pair<string,string>*                 str_str;
+	vector< pair<string,string>>*        str_str_vec;
+	
+	struct statement*		    stmt;
 	vector<struct statement*>*  stmt_vec;
-
-	struct condition*       cond;
+	struct condition*           cond;
 	vector<struct condition*>*  cond_vec;
-	
 	struct condition_tree_node* condition_tree_root;
-	
 }
 
 %start program
@@ -126,33 +117,32 @@ struct condition_tree_node {
 %token BAD_CHARACTER
 
 %type <char_arr> IDENTIFIER PARAMETER INTEGER
-%type <str> table_name parameter_name column_name procedure_name sequence_name
-%type <dtype> data_type
-%type <pmode> parameter_mode
+%type <str>      table_name parameter_name column_name procedure_name sequence_name
+%type <dtype>    data_type
+%type <pmode>    parameter_mode
 
-%type <str_str> selection
+%type <str_str>     selection
 %type <str_str_vec> selection_list
 
-%type <table> table_declaration
-%type <col> column_declaration
-%type <col_vec> column_declaration_list
-
+%type <table>    table_declaration
+%type <col>      column_declaration
+%type <col_vec>  column_declaration_list
 %type <sequence> sequence_declaration
 
-%type <arg_str> argument
+%type <arg_str>     argument
 %type <arg_str_vec> argument_list
 
-%type <stmt> statement insert_statement select_statement
+%type <stmt>     statement insert_statement select_statement
 %type <stmt_vec> statement_list
 
-%type <proc> procedure_declaration
-%type <param> parameter_declaration
+%type <proc>      procedure_declaration
+%type <param>     parameter_declaration
 %type <param_vec> parameter_declaration_list
 
-%type <operator_> operator
+%type <operator_>           operator
 %type <condition_tree_root> condition_list search_cond_not
-%type <cond> condition_simple
-%type <table_vec> table_lst
+%type <cond>                condition_simple
+%type <table_vec>           table_lst
 
 %%
 
@@ -483,7 +473,6 @@ selection: column_name SET_KEYWORD parameter_name {
 		}
 	;
 	
-/**********/
 condition_list: search_cond_not {
 			debug("condition_list 1 BEGIN");
 			
@@ -580,9 +569,7 @@ condition_simple: column_name operator parameter_name {
 			debug("condition 2 END");
 		}
 	;
-	
-/**********/
-	
+
 operator: EQ {
 			$$ = Condition::EQ;
 		}

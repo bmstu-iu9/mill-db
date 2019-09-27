@@ -5,15 +5,18 @@
 #include "Argument.h"
 #include "Parameter.h"
 
-class ArgParameter: public Argument {
+class ArgParameter : public Argument {
 public:
-	Argument::Type type=Argument::PARAMETER;
-	ArgParameter(Parameter* param);
-	std::string print();
-	std::string signature();
+    Argument::Type type = Argument::PARAMETER;
+
+    ArgParameter(Parameter *param);
+
+    std::string print();
+
+    std::string signature();
 
 private:
-	Parameter* param;
+    Parameter *param;
 };
 
 

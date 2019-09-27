@@ -8,17 +8,20 @@
 
 class Column {
 public:
-	Column(std::string name, DataType* type, bool pk);
-	~Column();
+    Column(std::string name, DataType *type, bool pk);
 
-	std::string get_name();
-	DataType* get_type();
-	bool get_pk();
+    ~Column();
+
+    std::string get_name();
+
+    DataType *get_type();
+
+    bool get_pk();
 
 private:
-	std::string name;
-	DataType* type;
-	bool pk;
+    std::string name;
+    DataType *type;
+    bool pk;
 };
 
 

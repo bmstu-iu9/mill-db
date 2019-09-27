@@ -315,6 +315,100 @@ int get_people_either_age_next(struct get_people_either_age_out* iter) {
 	return 0;
 }
 
+void get_people_less_than_id_add(struct get_people_less_than_id_out* iter, struct get_people_less_than_id_out_data* selected) {
+	struct get_people_less_than_id_out_service* service = &(iter->service);
+	if (service->set == NULL) {
+		service->size = MILLDB_BUFFER_INIT_SIZE;
+		service->set = calloc(service->size, sizeof(struct get_people_less_than_id_out));
+	}
+	if (service->length >= service->size) {
+		service->size = service->size * 2;
+		service->set = realloc(service->set, service->size * sizeof(struct get_people_less_than_id_out));
+	}
+	memcpy(&(service->set[service->length++]), selected, sizeof(struct get_people_less_than_id_out_data));
+}
+
+void get_people_less_than_id_1(struct get_people_less_than_id_out* iter, int32_t id) {
+//table person	cond: id < @id
+	struct test_logic_handle* handle = iter->service.handle;
+	struct get_people_less_than_id_out_data* inserted = malloc(sizeof(struct get_people_less_than_id_out_data));
+//TABLE person
+	uint64_t offset = 0;
+
+	struct person_node* node = handle->person_root;
+	uint64_t i = 0;
+	while (1) {
+		if (node->data.key == id || node->childs == NULL) {
+			offset = node->data.offset;
+			break;
+		}
+		if (node->childs[i]->data.key > id && i > 0) {
+			node = node->childs[i-1];
+			i = 0;
+			continue;
+		}
+		if (i == node->n-1) {
+			node = node->childs[i];
+			i = 0;
+			continue;
+		}
+		i++;
+	}
+
+	offset += handle->header->data_offset[person_header_count];
+	
+	while (1) {
+		fseek(handle->file, offset, SEEK_SET);
+		union person_page page;
+		uint64_t size = fread(&page, sizeof(struct person), person_CHILDREN, handle->file);  if (size == 0) return;
+
+		for (uint64_t i = 0; i < person_CHILDREN; i++) {
+			const char* p_name= page.items[i].name;
+			int32_t c_id= page.items[i].id;
+			int32_t c_age= page.items[i].age;
+			const char* c_name= page.items[i].name;
+			if (c_id > id || offset + i * sizeof(struct person) >= handle->header->index_offset[person_header_count]) {
+				free(inserted);
+				return;
+			}
+			if (c_id == id) {
+				memcpy(inserted->name, c_name, 100); inserted->name[100] = '\0';
+				get_people_less_than_id_add(iter, inserted);
+			}
+		}
+		offset += person_CHILDREN * sizeof(struct person);
+	}
+
+}
+
+void get_people_less_than_id_init(struct get_people_less_than_id_out* iter, struct test_logic_handle* handle, int32_t id) {
+	memset(iter, 0, sizeof(*iter));
+	iter->service.handle = handle;
+	iter->service.set = NULL;
+	iter->service.size = 0;
+	iter->service.count = 0;
+	iter->service.length = 0;
+
+	get_people_less_than_id_1(iter, id);
+}
+
+int get_people_less_than_id_next(struct get_people_less_than_id_out* iter) {
+	if (iter == NULL)
+		return 0;
+
+	struct get_people_less_than_id_out_service* service = &(iter->service);
+
+	if (service->set != NULL && service->count < service->length) {
+		memcpy(&iter->data, &(service->set[service->count]), sizeof(struct get_people_less_than_id_out_data));
+		service->count++;
+		return 1;
+	} else {
+		free(service->set);
+	}
+
+	return 0;
+}
+
 void get_people_not_equal_age_1_add(struct get_people_not_equal_age_1_out* iter, struct get_people_not_equal_age_1_out_data* selected) {
 	struct get_people_not_equal_age_1_out_service* service = &(iter->service);
 	if (service->set == NULL) {

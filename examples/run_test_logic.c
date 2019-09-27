@@ -14,7 +14,7 @@ int main() {
 	test_logic_close_write();
 	struct test_logic_handle* handle = test_logic_open_read("FILE_TEST");
 	// Test '<'
-	printf("age < 20:\n");
+	printf("age < 20\n");
 	struct get_people_younger_than_age_out iter1;
 	get_people_younger_than_age_init(&iter1, handle, 20);
     while (get_people_younger_than_age_next(&iter1)) {
@@ -68,6 +68,15 @@ int main() {
     while (get_people_either_age_next(&iter7)) {
 		printf("%s\n", iter7.data.name);
 	}
+	printf("\n");
+	// Test 'PK <'
+	printf("id < 3:\n");
+	struct get_people_less_than_id_out iter8;
+	get_people_less_than_id_init(&iter8, handle, 3);
+    while (get_people_less_than_id_next(&iter8)) {
+		printf("%s\n", iter8.data.name);
+	}
+	printf("\n");
 	test_logic_close_read(handle);
 	return 0;
 }

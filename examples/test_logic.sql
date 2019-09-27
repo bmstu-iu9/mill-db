@@ -43,3 +43,8 @@ CREATE PROCEDURE get_people_either_age(@age1 int in, @age2 int in, @name char(10
 BEGIN
 	SELECT name SET @name FROM person WHERE (age = @age1 OR age = @age2) AND (NOT age <= @age1);
 END;
+
+CREATE PROCEDURE get_people_less_than_id(@id int in, @name char(100) out)
+BEGIN
+	SELECT name SET @name FROM person WHERE id < @id;
+END;
