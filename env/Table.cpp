@@ -289,9 +289,13 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\tuint64_t page_size = " << name << "_CHILDREN, ind_items = 0;" << endl <<
 		       "\twhile (page_size < " << name << "_buffer_info.count) {" << endl <<
 		       "\t\tfor (uint64_t i = 0; i < " << name << "_buffer_info.count; i += page_size) {" << endl <<
-		       "\t\t\tstruct " << name << "_tree_item *item = " << name << "_tree_item_new();" << endl <<
-		       "\t\t\titem->key = " << name << "_buffer[i]->" << this->pk->get_name() << ";" << endl <<
-		       "\t\t\titem->offset = i * sizeof(struct " << name << ");" << endl <<
+		       "\t\t\tstruct " << name << "_tree_item *item = " << name << "_tree_item_new();" << endl;
+        if (this->pk->get_type()->get_typecode() == DataType::CHAR) {
+            (*ofs) << "\t\t\tstrncpy(item->key, " << name << "_buffer[i]->" << this->pk->get_name() << ", " << this->pk->get_type()->get_length() << ");" << endl;
+        } else {
+            (*ofs) << "\t\t\titem->key = " << name << "_buffer[i]->" << this->pk->get_name() << ";" << endl;
+        }
+        (*ofs) << "\t\t\titem->offset = i * sizeof(struct " << name << ");" << endl <<
 		       "\t\t\tfwrite(item, sizeof(struct " << name << "_tree_item), 1, file);" << endl <<
 		       "\t\t\tind_items++;" << endl <<
 		       "\t\t\t" << name << "_tree_item_free(item);" << endl <<
@@ -299,9 +303,13 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\t\tpage_size *= " << name << "_CHILDREN;" << endl <<
 		       "\t}" << endl <<
 		       "" << endl <<
-		       "\tstruct " << name << "_tree_item *item = " << name << "_tree_item_new();" << endl <<
-		       "\titem->key = " << name << "_buffer[0]->" << this->pk->get_name() <<";" << endl <<
-		       "\titem->offset = 0;" << endl <<
+		       "\tstruct " << name << "_tree_item *item = " << name << "_tree_item_new();" << endl;
+        if (this->pk->get_type()->get_typecode() == DataType::CHAR) {
+            (*ofs) << "\tstrncpy(item->key, " << name << "_buffer[0]->" << this->pk->get_name() << ", " << this->pk->get_type()->get_length() << ");" << endl;
+        } else {
+            (*ofs) << "\titem->key = " << name << "_buffer[0]->" << this->pk->get_name() << ";" << endl;
+        }
+        (*ofs) << "\titem->offset = 0;" << endl <<
 		       "\tfwrite(item, sizeof(struct " << name << "_tree_item), 1, file);" << endl <<
 		       "\t" << name << "_tree_item_free(item);" << endl <<
 			   "\tind_items++;" << endl <<

@@ -114,6 +114,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
         }
     }
     if (is_ind) {
+        auto cs = this->tables[0].second;
         
         (*ofs) << "\tuint64_t info_offset;\n"
                   "\n"
@@ -192,14 +193,32 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
                   "\t\tstruct " << tabl->get_name() << " *item = malloc(sizeof(struct " << tabl->get_name() << "));\n"
                   "\t\tfseek(handle->file, offsets[i], SEEK_SET);\n"
                   "\t\tfread(item, sizeof(struct " << tabl->get_name() << "), 1, handle->file);\n"
-                  "\n"
-                  "\t\tif (item->name != name) {\n"
-                  "\t\t\tfree(item);\n"
-                  "\t\t\tcontinue;\n"
-                  "\t\t}\n"
-                  "\n"
-                  "\t\tinserted->id = item->id;\n"
-                  "\t\tget_" << tabl->get_name() << "_add(iter, inserted);\n"
+                  "\n";
+        for (Condition *c : cs) {
+            if (c->get_column()->get_name() == indexed_col->get_name()) {
+                continue;
+            }
+            if (c->get_column()->get_type()->get_typecode() == DataType::CHAR) {
+                (*ofs) << "\t\tif (strncmp(item->" << c->get_column()->get_name() << ", " << c->get_column()->get_name() << ", " << c->get_column()->get_type()->get_length() << ")) {\n";
+            } else {
+                (*ofs) << "\t\tif (item->" << c->get_column()->get_name() << " != " << c->get_column()->get_name() << ") {\n";
+            }
+            (*ofs) << "\t\t\tfree(item);\n"
+                      "\t\t\tcontinue;\n"
+                      "\t\t}\n"
+                      "\n";
+        }
+
+        for (Selection *s : this->selections) {
+            (*ofs) << "\t\t" <<
+                s->get_column()->get_type()->str_column_for_select(s->get_column()->get_name()) <<
+                " = item->" << s->get_column()->get_name() << ";" << endl;
+        }
+
+        for (Selection *s : this->selections) {
+            (*ofs) << "\t\t" << s->print(ofs, ofl) << "\n";
+        }
+        (*ofs) << "\t\t" << func_name << "_add(iter, inserted);\n"
                   "\t}\n"
                   "\n"
                   "\tfree(inserted);";
