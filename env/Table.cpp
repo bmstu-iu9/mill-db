@@ -108,13 +108,13 @@ void Table::print_tree_node(ofstream* ofs, ofstream* ofl) {
     for (Column *c : this->cols) {
         if (c->get_mod() == COLUMN_INDEXED) {
             (*ofs) << "struct " << name << "_" << c->get_name() << "_index_item {\n"
-                      "\t" << this->pk->get_type()->str("key") << ";\n"
+                      "\t" << c->get_type()->str("key") << ";\n"
                       "\tuint64_t count;\n"
                       "\tuint64_t offset;\n"
                       "};\n\n";
 
             (*ofs) << "struct " << name << "_" << c->get_name() << "_index_tree_item {\n"
-                      "\t" << this->pk->get_type()->str("key") << ";\n"
+                      "\t" << c->get_type()->str("key") << ";\n"
                       "\tuint64_t offset;\n"
                       "};\n\n";
 
@@ -149,7 +149,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
                 (*ofs) << "struct " << name << "_1 {\n"
                           "\tstruct " << name << " *item;\n"
                           "\tuint64_t offset;\n"
-                          "};\n\n"
+                          "};\n\n";
 
                 break;
 		    }
@@ -168,21 +168,21 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 
         for (Column *c : this->cols) {
             if (c->get_mod() == COLUMN_INDEXED) {
-                (*ofs) << "struct " << name << "_" << c->get_name << "_index_tree_item* " << name << "_" << c->get_name << "_tree_item_new() {\n"
-                          "\tstruct " << name << "_" << c->get_name << "_index_tree_item* new = malloc(sizeof(struct " << name << "_" << c->get_name << "_index_tree_item));\n"
+                (*ofs) << "struct " << name << "_" << c->get_name() << "_index_tree_item* " << name << "_" << c->get_name() << "_tree_item_new() {\n"
+                          "\tstruct " << name << "_" << c->get_name() << "_index_tree_item* new = malloc(sizeof(struct " << name << "_" << c->get_name() << "_index_tree_item));\n"
                           "\tmemset(new, 0, sizeof(*new));\n"
                           "\treturn new;\n"
                           "}\n"
                           "\n"
-                          "void " << name << "_" << c->get_name << "_tree_item_free(struct " << name << "_" << c->get_name << "_index_tree_item* deleted) {\n"
+                          "void " << name << "_" << c->get_name() << "_tree_item_free(struct " << name << "_" << c->get_name() << "_index_tree_item* deleted) {\n"
                           "\tfree(deleted);\n"
                           "\treturn;\n"
-                          "}\n\n" << "#define " << name << "_" << c->get_name << "_CHILDREN (PAGE_SIZE / sizeof(struct " << name << "_" << c->get_name << "_index_tree_item))\n\n";
+                          "}\n\n" << "#define " << name << "_" << c->get_name() << "_CHILDREN (PAGE_SIZE / sizeof(struct " << name << "_" << c->get_name() << "_index_tree_item))\n\n";
 
                 break;
             }
         }
-		       "" << endl <<
+        (*ofs) << endl <<
 		       "#define " << name << "_CHILDREN (PAGE_SIZE / sizeof(struct " << name << "_tree_item))" << endl <<
 		       "" << endl <<
 		       "union " << name << "_page {" << endl <<
@@ -202,12 +202,12 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		}
 
 		(*ofs) << "\treturn 0;" << endl <<
-		       "}\n" << endl <<;
+		       "}\n" << endl;
 
         for (Column *c : this->cols) {
             if (c->get_mod() == COLUMN_INDEXED) {
-                (*ofs) << "int " << name << "_" << c->get_name << "_compare(struct " << name << "* s1, struct " << name << "* s2) {\n";
-                (*ofs) << "if (" << c->get_type()->compare_greater_expr("s1", c->get_name(), "s2", c->get_name()) << ")\n"
+                (*ofs) << "int " << name << "_" << c->get_name() << "_compare(struct " << name << "* s1, struct " << name << "* s2) {\n";
+                (*ofs) << "\tif (" << c->get_type()->compare_greater_expr("s1", c->get_name(), "s2", c->get_name()) << ")\n"
                           "\t\treturn 1;\n"
                           "\telse if (" << c->get_type()->compare_less_expr("s1", c->get_name(), "s2", c->get_name()) << ")\n"
                           "\t\treturn -1;\n\n";
@@ -217,7 +217,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
                         continue;
                     }
 
-                    (*ofs) << "if (" << col->get_type()->compare_greater_expr("s1", col->get_name(), "s2", col->get_name()) << ")\n" <<
+                    (*ofs) << "\tif (" << col->get_type()->compare_greater_expr("s1", col->get_name(), "s2", col->get_name()) << ")\n" <<
                     "\t\treturn 1;\n" <<
                     "\telse if (" << col->get_type()->compare_less_expr("s1", col->get_name(), "s2", col->get_name()) << ")\n" <<
                     "\t\treturn -1;\n\n";
@@ -276,7 +276,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
             if (c->get_mod() == COLUMN_INDEXED) {
                 (*ofs) << "int " << name << "_" << c->get_name() << "_sort_compare(const void* a, const void* b) {\n"
                           "\treturn " << name << "_" << c->get_name() << "_compare(((struct " << name << "_1*)a)->item, ((struct " << name << "_1*)b)->item);\n"
-                          "}";
+                          "}\n\n";
             }
         }
 
@@ -397,7 +397,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
                 } else {
                     (*ofs) << "\tit_" << c->get_name() << "->key = " << c->get_name() << "_items[0].key;\n";
                 }
-               "\tit_" << c->get_name() << "->offset = header->add_index_offset[" << name << "_" << c->get_name() << "_index_count];\n"
+                (*ofs) << "\tit_" << c->get_name() << "->offset = header->add_index_offset[" << name << "_" << c->get_name() << "_index_count];\n"
                "\tfwrite(it_" << c->get_name() << ", sizeof(struct " << name << "_" << c->get_name() << "_index_tree_item), 1, file);\n"
                "\t" << name << "_" << c->get_name() << "_tree_item_free(it_" << c->get_name() << ");\n"
                "\tind_items_" << c->get_name() << "++;\n"

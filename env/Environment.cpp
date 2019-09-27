@@ -183,12 +183,12 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 
     (*ofs) << endl;
 
-	indexes_c = 0;
+	int indexes_c = 0;
     for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
         Table* table = it->second;
         for (Column *c : table->cols) {
             if (c->get_mod() == COLUMN_INDEXED) {
-                (*ofs) << "#define " << table->get_name() << "_" << c->get_name() << "_header_count " << to_string(indexes_c++) << endl;
+                (*ofs) << "#define " << table->get_name() << "_" << c->get_name() << "_index_count " << to_string(indexes_c++) << endl;
             }
         }
     }
@@ -201,7 +201,7 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 			"\tuint64_t count[" << to_string(tables_total) << "];\n"
 			       "\tuint64_t data_offset[" << to_string(tables_total) <<"];\n"
 			       "\tuint64_t index_offset[" << to_string(tables_total) <<"];\n" <<
-			       "uint64_t add_count[" << indexes_c << "];\n"
+			       "\n\tuint64_t add_count[" << indexes_c << "];\n"
                    "\tuint64_t add_index_offset[" << indexes_c << "];\n"
                    "\tuint64_t add_index_tree_offset[" << indexes_c << "];"
                    "};\n"
@@ -364,7 +364,7 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 
 		for (Column *c : table->cols) {
 		    if (c->get_mod() == COLUMN_INDEXED) {
-                (*ofs) << table->get_name() << "_" << c->get_name() << "_index_load(handle);\n";
+                (*ofs)  << "\n" << table->get_name() << "_" << c->get_name() << "_index_load(handle);\n";
 		    }
 		}
 	}
@@ -392,7 +392,7 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 
         for (Column *c : table->cols) {
             if (c->get_mod() == COLUMN_INDEXED) {
-                (*ofs) << "if (handle->" << table->get_name() << "_" << c->get_name() << "_root)\n"
+                (*ofs) << "\tif (handle->" << table->get_name() << "_" << c->get_name() << "_root)\n"
                           "\t\t" << table->get_name() << "_" << c->get_name() << "_index_clean(handle->" << table->get_name() << "_" << c->get_name() << "_root);";
 //                (*ofs) << table->get_name() << "_" << c->get_name() << "_index_load(handle);\n";
             }

@@ -91,8 +91,119 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	string tab="";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    if (1) {
+    bool is_ind = false;
+    Column *indexed_col;
+    Table *tabl;
+    if (this->tables.size() == 1) {
+        auto cs = this->tables[0].second;
 
+        for (Condition *c : cs) {
+            if (c->get_column()->get_mod() == COLUMN_INDEXED) {
+                is_ind = true;
+                indexed_col = c->get_column();
+                tabl = this->tables[0].first;
+                break;
+            }
+        }
+
+        for (Condition *c : cs) {
+            if (c->get_column()->get_mod() == COLUMN_PRIMARY) {
+                is_ind = false;
+                break;
+            }
+        }
+    }
+    if (is_ind) {
+        
+        (*ofs) << "\tuint64_t info_offset;\n"
+                  "\n"
+                  "\tstruct " << tabl->get_name() << "_" << indexed_col->get_name() << "_node* node = handle->" << tabl->get_name() << "_" << indexed_col->get_name() << "_root;\n"
+                  "\tuint64_t i = 0;\n"
+                  "\twhile (1) {\n";
+        if (indexed_col->get_type()->get_typecode() == DataType::CHAR) {
+            (*ofs) << "\t\tif (!strncmp(node->data.key, " << indexed_col->get_name() << ", " << indexed_col->get_type()->get_length() << ") || node->childs == NULL) {\n";
+        } else {
+            (*ofs) << "\t\tif (node->data.key == " << indexed_col->get_name() << " || node->childs == NULL) {\n";
+        }
+        (*ofs) << "\t\t\tinfo_offset = node->data.offset;\n"
+                  "\t\t\tbreak;\n"
+                  "\t\t}\n";
+        if (indexed_col->get_type()->get_typecode() == DataType::CHAR) {
+            (*ofs) << "\t\tif (strncmp(node->childs[i]->data.key, " << indexed_col->get_name() << ", " << indexed_col->get_type()->get_length() << ") > 0 && i > 0) {\n";
+        } else {
+            (*ofs) << "\t\tif (node->childs[i]->data.key == " << indexed_col->get_name() << " > 0 && i > 0) {\n";
+        }
+        (*ofs) << "\t\t\tnode = node->childs[i-1];\n"
+                  "\t\t\ti = 0;\n"
+                  "\t\t\tcontinue;\n"
+                  "\t\t}\n"
+                  "\t\tif (i == node->n-1) {\n"
+                  "\t\t\tnode = node->childs[i];\n"
+                  "\t\t\ti = 0;\n"
+                  "\t\t\tcontinue;\n"
+                  "\t\t}\n"
+                  "\t\ti++;\n"
+                  "\t}\n"
+                  "\n"
+                  "\tuint64_t *offsets;\n"
+                  "\tuint64_t off_count = 0;\n"
+                  "\n"
+                  "\tint break_flag = 0;\n"
+                  "\twhile (1) {\n"
+                  "\t\tfseek(handle->file, info_offset, SEEK_SET);\n"
+                  "\t\tstruct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item items[" << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN];\n"
+                  "\t\tuint64_t size = fread(items, sizeof(struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item), " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN, handle->file); if (size == 0) return;\n"
+                  "\n"
+                  "\t\tfor (uint64_t i = 0; i < " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN; i++) {\n";
+        if (indexed_col->get_type()->get_typecode() == DataType::CHAR) {
+            (*ofs) << "\t\t\tif (strncmp(items[i].key, " << indexed_col->get_name() << ", " << indexed_col->get_type()->get_length() << ") > 0 || info_offset + i * sizeof(struct " << tabl->get_name()
+                   << "_" << indexed_col->get_name() << "_index_item) >= handle->header->add_index_tree_offset["
+                   << tabl->get_name() << "_" << indexed_col->get_name() << "_index_count]) {\n";
+        } else {
+            (*ofs) << "\t\t\tif (items[i].key > " << indexed_col->get_name() << " || info_offset + i * sizeof(struct " << tabl->get_name()
+                   << "_" << indexed_col->get_name() << "_index_item) >= handle->header->add_index_tree_offset["
+                   << tabl->get_name() << "_" << indexed_col->get_name() << "_index_count]) {\n";
+        }
+        (*ofs) << "\t\t\t\tfree(inserted);\n"
+                  "\t\t\t\treturn;\n"
+                  "\t\t\t}\n";
+        if (indexed_col->get_type()->get_typecode() == DataType::CHAR) {
+            (*ofs) << "\t\t\tif (!strncmp(items[i].key, " << indexed_col->get_name() << ", " << indexed_col->get_type()->get_length() << ")) {\n";
+        } else {
+            (*ofs) << "\t\t\tif (items[i].key == " << indexed_col->get_name() << ") {\n";
+        }
+        (*ofs) << "\t\t\t\toff_count = items[i].count;\n"
+                  "\t\t\t\toffsets = malloc(sizeof(uint64_t) * off_count);\n"
+                  "\n"
+                  "\t\t\t\tfseek(handle->file, items[i].offset, SEEK_SET);\n"
+                  "\t\t\t\tfread(offsets, sizeof(uint64_t), off_count, handle->file);\n"
+                  "\n"
+                  "\t\t\t\tbreak_flag = 1;\n"
+                  "\t\t\t\tbreak;\n"
+                  "\t\t\t}\n"
+                  "\t\t}\n"
+                  "\t\tif (break_flag) {\n"
+                  "\t\t\tbreak;\n"
+                  "\t\t}\n"
+                  "\t\tinfo_offset += " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN * sizeof(struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item);\n"
+                  "\t}\n"
+                  "\n"
+                  "\tfor (uint64_t i = 0; i < off_count; i++) {\n"
+                  "\t\tstruct " << tabl->get_name() << " *item = malloc(sizeof(struct " << tabl->get_name() << "));\n"
+                  "\t\tfseek(handle->file, offsets[i], SEEK_SET);\n"
+                  "\t\tfread(item, sizeof(struct " << tabl->get_name() << "), 1, handle->file);\n"
+                  "\n"
+                  "\t\tif (item->name != name) {\n"
+                  "\t\t\tfree(item);\n"
+                  "\t\t\tcontinue;\n"
+                  "\t\t}\n"
+                  "\n"
+                  "\t\tinserted->id = item->id;\n"
+                  "\t\tget_" << tabl->get_name() << "_add(iter, inserted);\n"
+                  "\t}\n"
+                  "\n"
+                  "\tfree(inserted);";
+        
     } else {
         for (int index = 0; index < this->tb_ind.size(); index++, tab.append("\t\t\t")) {
             Table *table = this->tables[index].first;
