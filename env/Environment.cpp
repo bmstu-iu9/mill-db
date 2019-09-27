@@ -181,6 +181,18 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 		(*ofs) << "#define " << table->get_name() << "_header_count " << to_string(i) << endl;
 	}
 
+    (*ofs) << endl;
+
+	indexes_c = 0;
+    for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+        Table* table = it->second;
+        for (Column *c : table->cols) {
+            if (c->get_mod() == COLUMN_INDEXED) {
+                (*ofs) << "#define " << table->get_name() << "_" << c->get_name() << "_header_count " << to_string(indexes_c++) << endl;
+            }
+        }
+    }
+
 	(*ofs) << endl;
 
 	int tables_total = this->tables.size();
@@ -188,8 +200,11 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	(*ofs) << "struct MILLDB_header {\n"
 			"\tuint64_t count[" << to_string(tables_total) << "];\n"
 			       "\tuint64_t data_offset[" << to_string(tables_total) <<"];\n"
-			       "\tuint64_t index_offset[" << to_string(tables_total) <<"];\n"
-			       "};\n"
+			       "\tuint64_t index_offset[" << to_string(tables_total) <<"];\n" <<
+			       "uint64_t add_count[" << indexes_c << "];\n"
+                   "\tuint64_t add_index_offset[" << indexes_c << "];\n"
+                   "\tuint64_t add_index_tree_offset[" << indexes_c << "];"
+                   "};\n"
 			       "\n"
 			       "#define MILLDB_HEADER_SIZE (sizeof(struct MILLDB_header))" << endl
 	       << endl;
@@ -212,6 +227,12 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
 		Table* table = it->second;
 		(*ofs) << "\tstruct " << table->get_name() << "_node* " << table->get_name() << "_root;" << endl;
+
+        for (Column *c : table->cols) {
+            if (c->get_mod() == COLUMN_INDEXED) {
+                (*ofs) << "\tstruct " << table->get_name() << "_" << c->get_name() << "_node* " << table->get_name() << "_" << c->get_name() << "_root;\n";
+            }
+        }
 	}
 
     for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
@@ -269,26 +290,26 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 	       "\t\tfseek(handle->file, MILLDB_HEADER_SIZE, SEEK_SET);" << endl <<
 	       endl;
 
+    (*ofs) << "\t\tuint64_t offset = MILLDB_HEADER_SIZE;" << endl <<
+           endl;
+
 	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
 		Table* table = it->second;
 		(*ofs) << "\t\tuint64_t " << table->get_name() << "_index_count = 0;" << endl <<
 		       "\t\tif (" << table->get_name() << "_buffer_info.count > 0)" << endl <<
-		       "\t\t\t" << table->get_name() << "_index_count = " << table->get_name() << "_write(handle->file);" << endl
+		       "\t\t\t" << table->get_name() << "_write(handle->file, header, &offset);" << endl
 				<< endl;
 	}
 
-	(*ofs) << "\t\tuint64_t offset = MILLDB_HEADER_SIZE;" << endl <<
-	       endl;
-
-	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-		Table* table = it->second;
-		(*ofs) << "\t\theader->count[" << table->get_name() << "_header_count] = " << table->get_name() << "_buffer_info.count;" << endl <<
-		       "\t\theader->data_offset[" << table->get_name() << "_header_count] = offset;" << endl <<
-		       "\t\toffset += " << table->get_name() << "_buffer_info.count * sizeof(struct " << table->get_name() << ");" << endl <<
-		       "\t\theader->index_offset[" << table->get_name() << "_header_count] = offset;" << endl <<
-		       "\t\toffset += " << table->get_name() << "_index_count * sizeof(struct " << table->get_name() << "_tree_item);" << endl
-		       << endl;
-	}
+//	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+//		Table* table = it->second;
+//		(*ofs) << "\t\theader->count[" << table->get_name() << "_header_count] = " << table->get_name() << "_buffer_info.count;" << endl <<
+//		       "\t\theader->data_offset[" << table->get_name() << "_header_count] = offset;" << endl <<
+//		       "\t\toffset += " << table->get_name() << "_buffer_info.count * sizeof(struct " << table->get_name() << ");" << endl <<
+//		       "\t\theader->index_offset[" << table->get_name() << "_header_count] = offset;" << endl <<
+//		       "\t\toffset += " << table->get_name() << "_index_count * sizeof(struct " << table->get_name() << "_tree_item);" << endl
+//		       << endl;
+//	}
 
 	(*ofs) << endl <<
 	       "\t\tfseek(handle->file, 0, SEEK_SET);" << endl <<
@@ -340,6 +361,12 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 		Table* table = it->second;
 		(*ofs) << "\t" << table->get_name() << "_bloom_load(handle);\n"
             "\t" << table->get_name() << "_index_load(handle);" << endl;
+
+		for (Column *c : table->cols) {
+		    if (c->get_mod() == COLUMN_INDEXED) {
+                (*ofs) << table->get_name() << "_" << c->get_name() << "_index_load(handle);\n";
+		    }
+		}
 	}
 
 	(*ofs) << endl <<
@@ -362,6 +389,14 @@ void Environment::print(std::ofstream* ofs, std::ofstream* ofl) {
 		(*ofs) << "\tif (handle->" << table->get_name() << "_root)" << endl <<
 				"\t\t" << table->get_name() << "_index_clean(handle->" << table->get_name() << "_root);\n\t"
 		       << table->get_name() << "_bloom_delete(handle);\n";
+
+        for (Column *c : table->cols) {
+            if (c->get_mod() == COLUMN_INDEXED) {
+                (*ofs) << "if (handle->" << table->get_name() << "_" << c->get_name() << "_root)\n"
+                          "\t\t" << table->get_name() << "_" << c->get_name() << "_index_clean(handle->" << table->get_name() << "_" << c->get_name() << "_root);";
+//                (*ofs) << table->get_name() << "_" << c->get_name() << "_index_load(handle);\n";
+            }
+        }
 	}
 
 	(*ofs) << endl <<

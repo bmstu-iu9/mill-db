@@ -91,158 +91,171 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 	string tab="";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	for (int index=0;index<this->tb_ind.size();index++,tab.append("\t\t\t")){
-		Table *table=this->tables[index].first;
-		(*ofs)<<"//TABLE "<<table->get_name()<<endl;
-		vector<Condition*> *conds=&(this->tables[index].second);
-		this->check_table_pk(table->get_name());
+    if (1) {
 
-		(*ofs)<<tab<< "\tuint64_t offset = 0;" << endl <<tab<<
-		       "" << endl;
+    } else {
+        for (int index = 0; index < this->tb_ind.size(); index++, tab.append("\t\t\t")) {
+            Table *table = this->tables[index].first;
+            (*ofs) << "//TABLE " << table->get_name() << endl;
+            vector < Condition * > *conds = &(this->tables[index].second);
+            this->check_table_pk(table->get_name());
 
-		if (this->has_pk_cond[table->get_name()]) {
-			string rhs;
-			if ((*conds)[0]->get_mode()==(*conds)[0]->Mode::JOIN) {
-				rhs="c_"+(*conds)[0]->get_column_right()->get_name();
-			} else {rhs=(*conds)[0]->get_parameter()->get_name();}
+            (*ofs) << tab << "\tuint64_t offset = 0;" << endl << tab <<
+                   "" << endl;
 
-			(*ofs)<<tab << "\tstruct " << table->get_name() << "_node* node = handle->" << table->get_name()
-			       << "_root;" << endl<<tab <<
-			       "\tuint64_t i = 0;" << endl<<tab <<
-			       "\twhile (1) {" << endl<<tab <<
-			       "\t\tif (node->data.key == " << rhs
-			       << " || node->childs == NULL) {" << endl <<tab<<
-			       "\t\t\toffset = node->data.offset;" << endl<<tab <<
-			       "\t\t\tbreak;" << endl<<tab <<
-			       "\t\t}" << endl<<tab <<
-			       "\t\tif (node->childs[i]->data.key > " << rhs << " && i > 0) {"
-			       << endl <<tab<<
-			       "\t\t\tnode = node->childs[i-1];" << endl <<tab<<
-			       "\t\t\ti = 0;" << endl <<tab<<
-			       "\t\t\tcontinue;" << endl <<tab<<
-			       "\t\t}" << endl <<tab<<
-			       "\t\tif (i == node->n-1) {" << endl<<tab <<
-			       "\t\t\tnode = node->childs[i];" << endl<<tab <<
-			       "\t\t\ti = 0;" << endl <<tab<<
-			       "\t\t\tcontinue;" << endl<<tab <<
-			       "\t\t}" << endl<<tab <<
-			       "\t\ti++;" << endl<<tab <<
-			       "\t}" << endl <<tab<<
-			       endl;
+            if (this->has_pk_cond[table->get_name()]) {
+                string rhs;
+                if ((*conds)[0]->get_mode() == (*conds)[0]->Mode::JOIN) {
+                    rhs = "c_" + (*conds)[0]->get_column_right()->get_name();
+                } else { rhs = (*conds)[0]->get_parameter()->get_name(); }
 
-		}
+                (*ofs) << tab << "\tstruct " << table->get_name() << "_node* node = handle->" << table->get_name()
+                       << "_root;" << endl << tab <<
+                       "\tuint64_t i = 0;" << endl << tab <<
+                       "\twhile (1) {" << endl << tab <<
+                       "\t\tif (node->data.key == " << rhs
+                       << " || node->childs == NULL) {" << endl << tab <<
+                       "\t\t\toffset = node->data.offset;" << endl << tab <<
+                       "\t\t\tbreak;" << endl << tab <<
+                       "\t\t}" << endl << tab <<
+                       "\t\tif (node->childs[i]->data.key > " << rhs << " && i > 0) {"
+                       << endl << tab <<
+                       "\t\t\tnode = node->childs[i-1];" << endl << tab <<
+                       "\t\t\ti = 0;" << endl << tab <<
+                       "\t\t\tcontinue;" << endl << tab <<
+                       "\t\t}" << endl << tab <<
+                       "\t\tif (i == node->n-1) {" << endl << tab <<
+                       "\t\t\tnode = node->childs[i];" << endl << tab <<
+                       "\t\t\ti = 0;" << endl << tab <<
+                       "\t\t\tcontinue;" << endl << tab <<
+                       "\t\t}" << endl << tab <<
+                       "\t\ti++;" << endl << tab <<
+                       "\t}" << endl << tab <<
+                       endl;
 
-		(*ofs) <<tab<< "\toffset += handle->header->data_offset[" << table->get_name() << "_header_count];" << endl;
+            }
 
-			(*ofs)<<tab <<
-		       "\t" << endl<<tab <<
-		       "\twhile (1) {" << endl <<tab<<
-		       "\t\tfseek(handle->file, offset, SEEK_SET);" << endl<<tab <<
-		       "\t\tunion " << table->get_name() << "_page page;" << endl <<tab<<
-		       "\t\tuint64_t size = fread(&page, sizeof(struct " << table->get_name() << "), " << table->get_name() << "_CHILDREN, handle->file);  if (size == 0) return;" << endl<<tab <<
-		       "" << endl<<tab <<
-		       "\t\tfor (uint64_t i = 0; i < " << table->get_name() << "_CHILDREN; i++) {" << endl;
+            (*ofs) << tab << "\toffset += handle->header->data_offset[" << table->get_name() << "_header_count];"
+                   << endl;
 
-		auto table_name = table->get_name();
+            (*ofs) << tab <<
+                   "\t" << endl << tab <<
+                   "\twhile (1) {" << endl << tab <<
+                   "\t\tfseek(handle->file, offset, SEEK_SET);" << endl << tab <<
+                   "\t\tunion " << table->get_name() << "_page page;" << endl << tab <<
+                   "\t\tuint64_t size = fread(&page, sizeof(struct " << table->get_name() << "), " << table->get_name()
+                   << "_CHILDREN, handle->file);  if (size == 0) return;" << endl << tab <<
+                   "" << endl << tab <<
+                   "\t\tfor (uint64_t i = 0; i < " << table->get_name() << "_CHILDREN; i++) {" << endl;
 
-		for (Selection* sel:this->selects[tb_ind[table_name]].second){
-			(*ofs)<<tab<<"\t\t\t"<<sel->get_column()->get_type()->str_param_for_select(sel->get_column()->get_name())<<
-			    "="<<" page.items[i]."<<sel->get_column()->get_name()<<";"<<endl;
-		}
-		for (Column* col: table->cols){
-			string s=col->get_type()->str_column_for_select(col->get_name());
-			(*ofs)<<tab<<"\t\t\t"<<s<<"="<<" page.items[i]."<<col->get_name()<<";"<<endl;
-		}
+            auto table_name = table->get_name();
 
-		if (this->has_pk_cond[table_name]) {
-			string rhs;
-			if ((*conds)[0]->get_mode()==(*conds)[0]->Mode::JOIN) {
-				rhs="c_"+(*conds)[0]->get_column_right()->get_name();
-			} else {rhs=(*conds)[0]->get_parameter()->get_name();}
+            for (Selection *sel:this->selects[tb_ind[table_name]].second) {
+                (*ofs) << tab << "\t\t\t"
+                       << sel->get_column()->get_type()->str_param_for_select(sel->get_column()->get_name()) <<
+                       "=" << " page.items[i]." << sel->get_column()->get_name() << ";" << endl;
+            }
+            for (Column *col: table->cols) {
+                string s = col->get_type()->str_column_for_select(col->get_name());
+                (*ofs) << tab << "\t\t\t" << s << "=" << " page.items[i]." << col->get_name() << ";" << endl;
+            }
 
-			(*ofs) <<tab<< "\t\t\tif (c_" << (*conds)[0]->get_column()->get_name() << " > "
-			       << rhs << " || offset + i * sizeof(struct "
-			       << table_name << ") >= handle->header->index_offset["
-			       << table_name << "_header_count]) {" << endl <<tab<<
-			       "\t\t\t\tfree(inserted);" << endl <<tab<<
-			       "\t\t\t\treturn;" << endl <<tab<<
-			       "\t\t\t}" << endl <<tab<<
-			       "\t\t\tif (c_" << (*conds)[0]->get_column()->get_name() << " == "
-			       << rhs << ") {" << endl;
-		} else {
-			(*ofs)<<tab << "\t\t\tif (offset + i * sizeof(struct "
-			       << table_name << ") >= handle->header->index_offset["
-			       << table_name << "_header_count]) {" << endl<<tab <<
-			       "\t\t\t\tfree(inserted);" << endl<<tab <<
-			       "\t\t\t\treturn;" << endl<<tab <<
-			       "\t\t\t}" << endl<<tab <<
-			       "\t\t\tif (1) {" << endl;
-		}
+            if (this->has_pk_cond[table_name]) {
+                string rhs;
+                if ((*conds)[0]->get_mode() == (*conds)[0]->Mode::JOIN) {
+                    rhs = "c_" + (*conds)[0]->get_column_right()->get_name();
+                } else { rhs = (*conds)[0]->get_parameter()->get_name(); }
 
-		if (this->has_pk_cond[table_name] && (*conds).size() > 1 || !this->has_pk_cond[table_name] && (*conds).size() > 0) {
+                (*ofs) << tab << "\t\t\tif (c_" << (*conds)[0]->get_column()->get_name() << " > "
+                       << rhs << " || offset + i * sizeof(struct "
+                       << table_name << ") >= handle->header->index_offset["
+                       << table_name << "_header_count]) {" << endl << tab <<
+                       "\t\t\t\tfree(inserted);" << endl << tab <<
+                       "\t\t\t\treturn;" << endl << tab <<
+                       "\t\t\t}" << endl << tab <<
+                       "\t\t\tif (c_" << (*conds)[0]->get_column()->get_name() << " == "
+                       << rhs << ") {" << endl;
+            } else {
+                (*ofs) << tab << "\t\t\tif (offset + i * sizeof(struct "
+                       << table_name << ") >= handle->header->index_offset["
+                       << table_name << "_header_count]) {" << endl << tab <<
+                       "\t\t\t\tfree(inserted);" << endl << tab <<
+                       "\t\t\t\treturn;" << endl << tab <<
+                       "\t\t\t}" << endl << tab <<
+                       "\t\t\tif (1) {" << endl;
+            }
+
+            if (this->has_pk_cond[table_name] && (*conds).size() > 1 ||
+                !this->has_pk_cond[table_name] && (*conds).size() > 0) {
 
 
-			int i = 0;
+                int i = 0;
 
-			for (auto it = (*conds).begin(); it != (*conds).end(); it++, i++) {
-				bool corr=false;
-				if ((*it)->get_mode()==(*it)->Mode::JOIN){
-					string joined_table_name;
-					for (auto t: this->tables){
-						if (t.first->find_column((*it)->get_column_right()->get_name())!=nullptr) {
-							joined_table_name=t.first->get_name();
-							corr=true;
-							if (this->tb_ind[table_name]<this->tb_ind[joined_table_name]){
-								this->tables[this->tb_ind[joined_table_name]].second.push_back(new Condition((*it)->get_column_right(),(*it)->get_column()));
-								corr=false;
-							}
+                for (auto it = (*conds).begin(); it != (*conds).end(); it++, i++) {
+                    bool corr = false;
+                    if ((*it)->get_mode() == (*it)->Mode::JOIN) {
+                        string joined_table_name;
+                        for (auto t: this->tables) {
+                            if (t.first->find_column((*it)->get_column_right()->get_name()) != nullptr) {
+                                joined_table_name = t.first->get_name();
+                                corr = true;
+                                if (this->tb_ind[table_name] < this->tb_ind[joined_table_name]) {
+                                    this->tables[this->tb_ind[joined_table_name]].second.push_back(
+                                            new Condition((*it)->get_column_right(), (*it)->get_column()));
+                                    corr = false;
+                                }
 
-							break;
-						}
-					}
-				}
+                                break;
+                            }
+                        }
+                    }
 
-				string rhs;
-				if ((*it)->get_mode()==(*it)->Mode::JOIN) {
-					rhs="c_"+(*it)->get_column_right()->get_name();
-				} else {rhs=(*it)->get_parameter()->get_name();corr=true;}
+                    string rhs;
+                    if ((*it)->get_mode() == (*it)->Mode::JOIN) {
+                        rhs = "c_" + (*it)->get_column_right()->get_name();
+                    } else {
+                        rhs = (*it)->get_parameter()->get_name();
+                        corr = true;
+                    }
 
-				if ((*it)->disabled)
-					continue;
-				if (this->has_pk_cond[table_name] && i == 0)
-					continue;
+                    if ((*it)->disabled)
+                        continue;
+                    if (this->has_pk_cond[table_name] && i == 0)
+                        continue;
 
-				if (corr) {
-					if ((*it)->get_column()->get_type()->get_typecode()!=DataType::CHAR){
-						(*ofs) <<tab<< "\t\t\t\tif (!(c_" << (*it)->get_column()->get_name() << " == "
-						       << rhs<< "))" << endl<<tab <<
-						       "\t\t\t\t\tcontinue;" << endl << endl;
-					} else {
-						(*ofs) <<tab<< "\t\t\t\tif (strcmp(c_" << (*it)->get_column()->get_name() << " , "
-						       << rhs<< ")!=0)" << endl<<tab <<
-						       "\t\t\t\t\tcontinue;" << endl << endl;
-					}
-				}
-			}
-		}
+                    if (corr) {
+                        if ((*it)->get_column()->get_type()->get_typecode() != DataType::CHAR) {
+                            (*ofs) << tab << "\t\t\t\tif (!(c_" << (*it)->get_column()->get_name() << " == "
+                                   << rhs << "))" << endl << tab <<
+                                   "\t\t\t\t\tcontinue;" << endl << endl;
+                        } else {
+                            (*ofs) << tab << "\t\t\t\tif (strcmp(c_" << (*it)->get_column()->get_name() << " , "
+                                   << rhs << ")!=0)" << endl << tab <<
+                                   "\t\t\t\t\tcontinue;" << endl << endl;
+                        }
+                    }
+                }
+            }
 
-		if (index==this->tb_ind.size()-1){
-			for (auto it = this->selections.begin(); it != this->selections.end(); it++) {
-				Selection *s = *it;
-				(*ofs)<<tab << "\t\t\t\t" << s->print(ofs, ofl) << endl;
-				(*ofs)<<tab << "\t\t\t\t" << func_name << "_add(iter, inserted);" << endl;
-			}
-		} //else рекурсия
-	}
-	tab=tab.substr(0,tab.length()-3);
-	for (int index=this->tb_ind.size()-1;index>=0;index--,tab=tab.substr(0,tab.length()-3)){
-		Table *table=this->tables[index].first;
-		(*ofs)<<tab <<"\t\t\t}" << endl<<tab <<
-		       "\t\t}" << endl<<tab <<
-		       "\t\toffset += " << table->get_name() << "_CHILDREN * sizeof(struct " << table->get_name() << ");" << endl<<tab <<
-		       "\t}" << endl<<tab
-		       << endl;
-	}
+            if (index == this->tb_ind.size() - 1) {
+                for (auto it = this->selections.begin(); it != this->selections.end(); it++) {
+                    Selection *s = *it;
+                    (*ofs) << tab << "\t\t\t\t" << s->print(ofs, ofl) << endl;
+                    (*ofs) << tab << "\t\t\t\t" << func_name << "_add(iter, inserted);" << endl;
+                }
+            } //else рекурсия
+        }
+        tab = tab.substr(0, tab.length() - 3);
+        for (int index = this->tb_ind.size() - 1; index >= 0; index--, tab = tab.substr(0, tab.length() - 3)) {
+            Table *table = this->tables[index].first;
+            (*ofs) << tab << "\t\t\t}" << endl << tab <<
+                   "\t\t}" << endl << tab <<
+                   "\t\toffset += " << table->get_name() << "_CHILDREN * sizeof(struct " << table->get_name() << ");"
+                   << endl << tab <<
+                   "\t}" << endl << tab
+                   << endl;
+        }
+    }
 }
 
 
