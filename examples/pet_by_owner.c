@@ -426,100 +426,72 @@ void add_owner_pet(int32_t oid, const char* oname, const char* pname) {
 	add_owner_pet_2(pname);
 }
 
-void get_pet_by_owner_add(struct get_pet_by_owner_out* iter, struct get_pet_by_owner_out_data* selected) {
-	struct get_pet_by_owner_out_service* service = &(iter->service);
+void get_pet_by_pid_add(struct get_pet_by_pid_out* iter, struct get_pet_by_pid_out_data* selected) {
+	struct get_pet_by_pid_out_service* service = &(iter->service);
 	if (service->set == NULL) {
 		service->size = MILLDB_BUFFER_INIT_SIZE;
-		service->set = calloc(service->size, sizeof(struct get_pet_by_owner_out));
+		service->set = calloc(service->size, sizeof(struct get_pet_by_pid_out));
 	}
 	if (service->length >= service->size) {
 		service->size = service->size * 2;
-		service->set = realloc(service->set, service->size * sizeof(struct get_pet_by_owner_out));
+		service->set = realloc(service->set, service->size * sizeof(struct get_pet_by_pid_out));
 	}
-	memcpy(&(service->set[service->length++]), selected, sizeof(struct get_pet_by_owner_out_data));
+	memcpy(&(service->set[service->length++]), selected, sizeof(struct get_pet_by_pid_out_data));
 }
 
-void get_pet_by_owner_1(struct get_pet_by_owner_out* iter, const char* oname) {
-//table owner	cond: oname = @oname
-//table owner	cond: pet_id = pid
+void get_pet_by_pid_1(struct get_pet_by_pid_out* iter, int32_t id) {
+//table pet	cond: pid = @id
 	struct pet_by_owner_handle* handle = iter->service.handle;
-	struct get_pet_by_owner_out_data* inserted = malloc(sizeof(struct get_pet_by_owner_out_data));
-//TABLE owner
+	struct get_pet_by_pid_out_data* inserted = malloc(sizeof(struct get_pet_by_pid_out_data));
+//TABLE pet
 	uint64_t offset = 0;
 
-	offset += handle->header->data_offset[owner_header_count];
+	struct pet_node* node = handle->pet_root;
+	uint64_t i = 0;
+	while (1) {
+		if (node->data.key == id || node->childs == NULL) {
+			offset = node->data.offset;
+			break;
+		}
+		if (node->childs[i]->data.key > id && i > 0) {
+			node = node->childs[i-1];
+			i = 0;
+			continue;
+		}
+		if (i == node->n-1) {
+			node = node->childs[i];
+			i = 0;
+			continue;
+		}
+		i++;
+	}
+
+	offset += handle->header->data_offset[pet_header_count];
 	
 	while (1) {
 		fseek(handle->file, offset, SEEK_SET);
-		union owner_page page;
-		uint64_t size = fread(&page, sizeof(struct owner), owner_CHILDREN, handle->file);  if (size == 0) return;
+		union pet_page page;
+		uint64_t size = fread(&page, sizeof(struct pet), pet_CHILDREN, handle->file);  if (size == 0) return;
 
-		for (uint64_t i = 0; i < owner_CHILDREN; i++) {
-			int32_t c_oid= page.items[i].oid;
-			const char* c_oname= page.items[i].oname;
-			int32_t c_pet_id= page.items[i].pet_id;
-			if (offset + i * sizeof(struct owner) >= handle->header->index_offset[owner_header_count]) {
+		for (uint64_t i = 0; i < pet_CHILDREN; i++) {
+			const char* p_pname= page.items[i].pname;
+			int32_t c_pid= page.items[i].pid;
+			const char* c_pname= page.items[i].pname;
+			if (c_pid > id || offset + i * sizeof(struct pet) >= handle->header->index_offset[pet_header_count]) {
 				free(inserted);
 				return;
 			}
-			if (1) {
-				if (strcmp(c_oname , oname)!=0)
-					continue;
-
-//TABLE pet
-				uint64_t offset = 0;
-			
-				struct pet_node* node = handle->pet_root;
-				uint64_t i = 0;
-				while (1) {
-					if (node->data.key == c_pet_id || node->childs == NULL) {
-						offset = node->data.offset;
-						break;
-					}
-					if (node->childs[i]->data.key > c_pet_id && i > 0) {
-						node = node->childs[i-1];
-						i = 0;
-						continue;
-					}
-					if (i == node->n-1) {
-						node = node->childs[i];
-						i = 0;
-						continue;
-					}
-					i++;
-				}
-			
-				offset += handle->header->data_offset[pet_header_count];
-				
-				while (1) {
-					fseek(handle->file, offset, SEEK_SET);
-					union pet_page page;
-					uint64_t size = fread(&page, sizeof(struct pet), pet_CHILDREN, handle->file);  if (size == 0) return;
-			
-					for (uint64_t i = 0; i < pet_CHILDREN; i++) {
-						const char* p_pname= page.items[i].pname;
-						int32_t c_pid= page.items[i].pid;
-						const char* c_pname= page.items[i].pname;
-						if (c_pid > c_pet_id || offset + i * sizeof(struct pet) >= handle->header->index_offset[pet_header_count]) {
-							free(inserted);
-							return;
-						}
-						if (c_pid == c_pet_id) {
-							memcpy(inserted->pname, c_pname, 6); inserted->pname[6] = '\0';
-							get_pet_by_owner_add(iter, inserted);
-						}
-					}
-					offset += pet_CHILDREN * sizeof(struct pet);
-				}
-			
+			if (c_pid == id) {
+				memcpy(inserted->pname, c_pname, 6); inserted->pname[6] = '\0';
+				get_pet_by_pid_add(iter, inserted);
 			}
 		}
-		offset += owner_CHILDREN * sizeof(struct owner);
+		offset += pet_CHILDREN * sizeof(struct pet);
 	}
 
 }
 
-void get_pet_by_owner_init(struct get_pet_by_owner_out* iter, struct pet_by_owner_handle* handle, const char* oname) {
+void get_pet_by_pid_init(struct get_pet_by_pid_out* iter, struct pet_by_owner_handle* handle, int32_t id) {
 	memset(iter, 0, sizeof(*iter));
 	iter->service.handle = handle;
 	iter->service.set = NULL;
@@ -527,17 +499,17 @@ void get_pet_by_owner_init(struct get_pet_by_owner_out* iter, struct pet_by_owne
 	iter->service.count = 0;
 	iter->service.length = 0;
 
-	get_pet_by_owner_1(iter, oname);
+	get_pet_by_pid_1(iter, id);
 }
 
-int get_pet_by_owner_next(struct get_pet_by_owner_out* iter) {
+int get_pet_by_pid_next(struct get_pet_by_pid_out* iter) {
 	if (iter == NULL)
 		return 0;
 
-	struct get_pet_by_owner_out_service* service = &(iter->service);
+	struct get_pet_by_pid_out_service* service = &(iter->service);
 
 	if (service->set != NULL && service->count < service->length) {
-		memcpy(&iter->data, &(service->set[service->count]), sizeof(struct get_pet_by_owner_out_data));
+		memcpy(&iter->data, &(service->set[service->count]), sizeof(struct get_pet_by_pid_out_data));
 		service->count++;
 		return 1;
 	} else {
