@@ -33,7 +33,7 @@ extern "C" {
 #define SELECT_STATEMENT 2
 
 struct statement {
-	int				 type;
+	int			  type;
 	Table*			  table;
 	vector<Table*>* tables;
 	vector<pair<string, Argument::Type> >*  arg_str_vec;
@@ -43,18 +43,17 @@ struct statement {
 
 struct condition {
 	string*     			col;
-	string*					param;
-	string*					col_r;
+	string*				param;
+	string*				col_r;
 	Condition::Operator		operator_;
 	bool	    			on;
-	bool 					has_not;
+	bool 				has_not;
 };
 
 struct condition_tree_node {
-	Condition::Multiple     mult;
-	condition_tree_node*    left_cond;
-	condition_tree_node*    right_cond;
-	condition* 				value;
+	Condition::Multiple     mode;
+	std::vector<condition_tree_node*>    children;
+	condition* 		value;
 };
 
 %}
@@ -482,21 +481,31 @@ condition_list: search_cond_not {
 		}
 	| search_cond_not AND_KEYWORD condition_list {
 			debug("condition_list 2 BEGIN");
-			
-			$$ = new condition_tree_node();
-			$$->mult = Condition::AND;
-			$$->left_cond = $1;
-			$$->right_cond = $3;
+
+			if ($3->mode == Condition::AND) {
+				$3->children.insert($3->children.begin(), $1);
+				$$ = $3;
+			} else {
+				$$ = new condition_tree_node();
+				$$->mode = Condition::AND;
+				$$->children.push_back($1);
+				$$->children.push_back($3);
+			}
 			
 			debug("condition_list 2 END");
 		}
 	| search_cond_not OR_KEYWORD condition_list {
 			debug("condition_list 3 BEGIN");
 			
-			$$ = new condition_tree_node();
-			$$->mult = Condition::OR;
-			$$->left_cond = $1;
-			$$->right_cond = $3;
+			if ($3->mode == Condition::OR) {
+                        	$3->children.insert($3->children.begin(), $1);
+                        	$$ = $3;
+                        } else {
+                        	$$ = new condition_tree_node();
+                        	$$->mode = Condition::OR;
+                        	$$->children.push_back($1);
+                        	$$->children.push_back($3);
+                        }
 			
 			debug("condition_list 3 END");
 		}
@@ -510,20 +519,54 @@ condition_list: search_cond_not {
 	| LPAREN condition_list RPAREN AND_KEYWORD condition_list {
 			debug("condition_list 5 BEGIN");
 			
-			$$ = new condition_tree_node();
-			$$->mult = Condition::AND;
-			$$->left_cond = $2;
-			$$->right_cond = $5;
+			if ($2->mode == Condition::AND) {
+                                $$ = $2;
+				if ($5->mode == Condition::AND) {
+					debug("condition_list 5.1");
+					$$->children.insert($5->children.begin(), $5->children.end(), $$->children.end());
+                                        delete $5;
+				} else {
+					debug("condition_list 5.2");
+					$$->children.push_back($5);
+				}
+			} else if ($5->mode == Condition::AND) {
+				debug("condition_list 5.3");
+                                $$ = $5;
+                             	$$->children.insert($$->children.begin(), $2);
+			} else {
+				debug("condition_list 5.4");
+				$$ = new condition_tree_node();
+				$$->mode = Condition::AND;
+				$$->children.push_back($2);
+				$$->children.push_back($5);
+			}
 			
 			debug("condition_list 5 END");
 		}
 	| LPAREN condition_list RPAREN OR_KEYWORD condition_list {
 			debug("condition_list 6 BEGIN");
 			
-			$$ = new condition_tree_node();
-			$$->mult = Condition::OR;
-			$$->left_cond = $2;
-			$$->right_cond = $5;
+			if ($2->mode == Condition::OR) {
+                                $$ = $2;
+				if ($5->mode == Condition::OR) {
+					debug("condition_list 6.1");
+					$$->children.insert($5->children.begin(), $5->children.end(), $$->children.end());
+                                        delete $5;
+				} else {
+					debug("condition_list 6.2");
+					$$->children.push_back($5);
+				}
+			} else if ($5->mode == Condition::OR) {
+				debug("condition_list 6.3");
+                                $$ = $5;
+                             	$$->children.insert($$->children.begin(), $2);
+			} else {
+				debug("condition_list 6.4");
+				$$ = new condition_tree_node();
+				$$->mode = Condition::OR;
+				$$->children.push_back($2);
+				$$->children.push_back($5);
+			}
 			
 			debug("condition_list 6 END");
 		}
@@ -532,7 +575,7 @@ condition_list: search_cond_not {
 search_cond_not: condition_simple {
 	
 			$$ = new condition_tree_node();
-			$$->mult = Condition::NONE;
+			$$->mode = Condition::NONE;
 			$$->value = $1;
 			$$->value->has_not = false;
 		}
@@ -540,7 +583,7 @@ search_cond_not: condition_simple {
 			debug("NOT condition");
 			
 			$$ = new condition_tree_node();
-			$$->mult = Condition::NONE;
+			$$->mode = Condition::NONE;
 			$$->value = $2;
 			$$->value->has_not = true;
 		}
@@ -835,18 +878,23 @@ int check_mode(Parameter* param, Parameter::Mode mode) {
 }
 
 ConditionTreeNode* condition_tree_walk(struct condition_tree_node* node, vector<Table*>* tables, std::__cxx11::string* table_name, SelectStatement* statement, Procedure* procedure) {
-	ConditionTreeNode *left, *right;
-	switch (node->mult) {
+	ConditionTreeNode* cond;
+	std::vector<ConditionTreeNode*> children;
+	switch (node->mode) {
 	case Condition::AND :
 		debug("tree_walk AND");
-		left = condition_tree_walk(node->left_cond, tables, table_name, statement, procedure);
-		right = condition_tree_walk(node->right_cond, tables, table_name, statement, procedure);
-		return new ConditionTreeNode(ConditionTreeNode::AND, left, right);
+		for (condition_tree_node* c : node->children) {
+			cond = condition_tree_walk(c, tables, table_name, statement, procedure);
+			children.push_back(cond);
+		}
+		return new ConditionTreeNode(ConditionTreeNode::AND, children);
 	case Condition::OR :
 		debug("tree_walk OR");
-		left = condition_tree_walk(node->left_cond, tables, table_name, statement, procedure);
-		right = condition_tree_walk(node->right_cond, tables, table_name, statement, procedure);
-		return new ConditionTreeNode(ConditionTreeNode::OR, left, right);
+		for (condition_tree_node* c : node->children) {
+			ConditionTreeNode* cond = condition_tree_walk(c, tables, table_name, statement, procedure);
+			children.push_back(cond);
+		}
+		return new ConditionTreeNode(ConditionTreeNode::OR, children);
 	case Condition::NONE :
 		debug("tree_walk");
 		Column* col = find_column1(tables, *(node->value->col), table_name);

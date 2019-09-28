@@ -1,82 +1,47 @@
 #include <stdio.h>
 #include <time.h>
 #include "test_logic.h"
-#include "test_logic.c"
+
+#define FILE_NAME "FILE_TEST"
 
 int main() {
-	// Write sample people with their name and ages to file.
-	char people[4][100] = {"Ivan", "Sergey", "Nikolas", "Daniel"};
-	test_logic_open_write("FILE_TEST");
-	add_person(1, people[0], 18);
-	add_person(2, people[1], 19);
-	add_person(3, people[2], 20);
-	add_person(4, people[3], 18);
-	test_logic_close_write();
-	struct test_logic_handle* handle = test_logic_open_read("FILE_TEST");
-	// Test '<'
-	printf("age < 20\n");
-	struct get_people_younger_than_age_out iter1;
-	get_people_younger_than_age_init(&iter1, handle, 20);
-    while (get_people_younger_than_age_next(&iter1)) {
-		printf("%s\n", iter1.data.name);
-	}
-	printf("\n");
-	// Test '>'
-	printf("age > 20:\n");
-	struct get_people_older_than_age_out iter2;
-	get_people_older_than_age_init(&iter2, handle, 20);
-    while (get_people_older_than_age_next(&iter2)) {
-		printf("%s\n", iter2.data.name);
-	}
-	printf("\n");
-	// Test '<='
-	printf("age <= 20:\n");
-	struct get_people_younger_or_same_age_out iter3;
-	get_people_younger_or_same_age_init(&iter3, handle, 20);
-    while (get_people_younger_or_same_age_next(&iter3)) {
-		printf("%s\n", iter3.data.name);
-	}
-	printf("\n");
-	// Test '>='
-	printf("age >= 20:\n");
-	struct get_people_older_or_same_age_out iter4;
-	get_people_older_or_same_age_init(&iter4, handle, 20);
-    while (get_people_older_or_same_age_next(&iter4)) {
-		printf("%s\n", iter4.data.name);
-	}
-	printf("\n");
-	// Test '<>'
-	printf("age <> 20:\n");
-	struct get_people_not_equal_age_1_out iter5;
-	get_people_not_equal_age_1_init(&iter5, handle, 20);
-    while (get_people_not_equal_age_1_next(&iter5)) {
-		printf("%s\n", iter5.data.name);
-	}
-	printf("\n");
-	// Test 'NOT'
-	printf("NOT age = 20:\n");
-	struct get_people_not_equal_age_2_out iter6;
-	get_people_not_equal_age_2_init(&iter6, handle, 20);
-    while (get_people_not_equal_age_2_next(&iter6)) {
-		printf("%s\n", iter6.data.name);
-	}
-	printf("\n");
-	// Test 'OR'
-	printf("(age = 19 or age = 20) and (not age <= 19):\n");
-	struct get_people_either_age_out iter7;
-	get_people_either_age_init(&iter7, handle, 19, 20);
-    while (get_people_either_age_next(&iter7)) {
-		printf("%s\n", iter7.data.name);
-	}
-	printf("\n");
-	// Test 'PK <'
-	printf("id < 3:\n");
-	struct get_people_less_than_id_out iter8;
-	get_people_less_than_id_init(&iter8, handle, 3);
-    while (get_people_less_than_id_next(&iter8)) {
-		printf("%s\n", iter8.data.name);
-	}
-	printf("\n");
-	test_logic_close_read(handle);
-	return 0;
+    // Write sample people with their name and ages to file.
+    char people[4][100] = {"Ivan", "Sergey", "Nikolas", "Daniel"};
+    test_logic_open_write(FILE_NAME);
+    add_person(0, people[0], 18);
+    add_person(1, people[1], 19);
+    add_person(2, people[2], 20);
+    add_person(3, people[3], 18);
+    test_logic_close_write();
+    struct test_logic_handle *handle = test_logic_open_read(FILE_NAME);
+
+    // Test '>'
+    printf("age > 18:\n");
+    struct get_people_name_older_than_age_out iter1;
+    get_people_name_older_than_age_init(&iter1, handle, 18);
+    while (get_people_name_older_than_age_next(&iter1)) {
+        printf("%s\n", iter1.data.name);
+    }
+    printf("\n");
+
+    // Test 'id'
+    printf("id >= 0 and id < 3 and id > 0 and id <= 3:\n");
+    struct get_people_name_with_id_out iter2;
+    get_people_name_with_id_init(&iter2, handle, 0, 3, 0, 3);
+    while (get_people_name_with_id_next(&iter2)) {
+        printf("%s\n", iter2.data.name);
+    }
+    printf("\n");
+
+    // Test 'id'
+    printf("id <= 2:\n");
+    struct get_people_name_with_id_2_out iter3;
+    get_people_name_with_id_2_init(&iter3, handle, 2);
+    while (get_people_name_with_id_2_next(&iter3)) {
+        printf("%s\n", iter3.data.name);
+    }
+    printf("\n");
+
+    test_logic_close_read(handle);
+    return 0;
 }

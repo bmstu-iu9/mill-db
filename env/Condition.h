@@ -28,6 +28,8 @@ public:
 
     Operator get_operator();
 
+    std::string get_operator_as_string();
+
     bool has_keyword_not();
 
     bool disabled;
@@ -35,6 +37,8 @@ public:
     Mode get_mode();
 
     std::string print();
+
+    std::string print_c();
 
 private:
     Column *col;

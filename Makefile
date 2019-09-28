@@ -19,7 +19,7 @@ exec: lexer parser
 
 test:
 	./$(PROJECT_NAME) examples/$(TEST_NAME).sql
-	cd examples/ && gcc run_$(TEST_NAME).c -lm -o $(TEST_NAME) && ./$(TEST_NAME)
+	cd examples/ && gcc run_$(TEST_NAME).c $(TEST_NAME).c -lm -o $(TEST_NAME) && ./$(TEST_NAME)
 
 clear clean:
 	rm -f *.tab.? *.lex.? milldb milldb.exe

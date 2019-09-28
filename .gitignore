@@ -1,3 +1,5 @@
 .idea
 *___jb_old___
+CMakeLists.txt
+cmake-build-debug
 milldb*

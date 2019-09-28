@@ -19,7 +19,6 @@ public:
 
     void add_selection(Selection *selection);
 
-    void add_condition(Condition *cond); // DEPRECATED: use add_condition_tree
     void add_condition_tree(ConditionTreeNode *tree);
 
     void remove_join_conditions(ConditionTreeNode *node, std::string &table_name, int *i);
@@ -45,12 +44,11 @@ public:
 private:
     std::map<std::string, int> tb_ind;
     std::map<std::string, bool> has_pk_cond;
-    std::vector <std::pair<Table *, std::vector < Condition * >> >
+    std::vector <std::pair<Table *, std::vector < Condition * >>>
     tables;
-    std::vector <std::pair<Table *, std::vector < Selection * >> >
+    std::vector <std::pair<Table *, std::vector < Selection * >>>
     selects;
     std::vector<Selection *> selections;
-    std::vector<Condition *> conds;
     ConditionTreeNode *condition_tree;
 };
 

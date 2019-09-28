@@ -1,15 +1,16 @@
-#ifndef PROJECT_CONDITION_TRRE_NODE_H
-#define PROJECT_CONDITION_TRRE_NODE_H
+#ifndef PROJECT_CONDITION_TREE_NODE_H
+#define PROJECT_CONDITION_TREE_NODE_H
 
+#include <vector>
 #include "Condition.h"
 
 class ConditionTreeNode {
 public:
-    enum Multiple {
+    enum Mode {
         AND, OR, NONE
     };
 
-    ConditionTreeNode(Multiple mult, ConditionTreeNode *left, ConditionTreeNode *right);
+    ConditionTreeNode(Mode mode, std::vector<ConditionTreeNode *> children);
 
     ConditionTreeNode(Condition *value);
 
@@ -17,9 +18,9 @@ public:
 
     void walk();
 
-    ConditionTreeNode *left();
+    void add_child(ConditionTreeNode *child);
 
-    ConditionTreeNode *right();
+    std::vector<ConditionTreeNode *> get_children();
 
     Condition *get_value();
 
@@ -27,18 +28,19 @@ public:
 
     bool disabled;
 
-    Multiple get_mode();
+    Mode get_mode();
 
-    void set_mode(Multiple m);
+    void set_mode(Mode m);
+
+    std::pair<std::string,std::string> calculate_pk_bounds();
 
     std::string print();
 
 private:
-    Multiple mult;
-    ConditionTreeNode *left_cond;
-    ConditionTreeNode *right_cond;
+    Mode mode;
+    std::vector<ConditionTreeNode *> children;
     Condition *value;
 };
 
 
-#endif //PROJECT_CONDITION_TRRE_NODE_H
+#endif //PROJECT_CONDITION_TREE_NODE_H

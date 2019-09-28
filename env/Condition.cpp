@@ -40,6 +40,25 @@ Condition::Operator Condition::get_operator() {
     return operator_;
 }
 
+std::string Condition::get_operator_as_string() {
+    switch (this->operator_) {
+        case EQ:
+            return " = ";
+        case LESS:
+            return " < ";
+        case MORE:
+            return " > ";
+        case NOT_EQ:
+            return " != ";
+        case LESS_OR_EQ:
+            return " <= ";
+        case MORE_OR_EQ:
+            return " >= ";
+        default:
+            return "???";
+    }
+}
+
 bool Condition::has_keyword_not() {
     return has_not;
 }
@@ -75,5 +94,39 @@ std::string Condition::print() {
         return not_kw + this->col->get_name() + op + this->col_r->get_name();
     } else {
         return not_kw + this->col->get_name() + op + "@" + this->param->get_name();
+    }
+}
+
+std::string Condition::print_c() {
+    std::string op, not_kw;
+    switch (operator_) {
+        case EQ:
+            op = " = ";
+            break;
+        case LESS:
+            op = " < ";
+            break;
+        case MORE:
+            op = " > ";
+            break;
+        case NOT_EQ:
+            op = " != ";
+            break;
+        case LESS_OR_EQ:
+            op = " <= ";
+            break;
+        case MORE_OR_EQ:
+            op = " >= ";
+            break;
+        default:
+            op = "???";
+    }
+    if (has_not) {
+        not_kw = "! ";
+    }
+    if (this->mode == Mode::JOIN) {
+        return not_kw + this->col->get_name() + op + this->col_r->get_name();
+    } else {
+        return not_kw + this->col->get_name() + op + this->param->get_name();
     }
 }

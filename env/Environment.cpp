@@ -72,6 +72,10 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
     (*ofl) << "#include <stdint.h>" << endl
            << endl;
 
+    (*ofl) << "#define MAX(x, y) (((x) > (y)) ? (x) : (y))" << endl
+           << "#define MIN(x, y) (((x) < (y)) ? (x) : (y))" << endl
+           << endl;
+
     (*ofs) << "#include <stdlib.h>" << endl
            << "#include <stdio.h>" << endl
            << "#include <stdint.h>" << endl
