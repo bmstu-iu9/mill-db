@@ -19,22 +19,22 @@ SelectStatement::SelectStatement(vector<Table*>* tables) {
 }
 
 SelectStatement::~SelectStatement() {
-	for (auto p : this->tables){
-		delete p.first;
-		for (auto it = p.second.begin(); it != p.second.end(); it++)
-			delete *it;
-	}
-	for (auto p : this->selects){
-		delete p.first;
-		for (auto it = p.second.begin(); it != p.second.end(); it++)
-			delete *it;
-	}
-
-	for (auto it = this->conds.begin(); it != this->conds.end(); it++)
-		delete *it;
-
-	for (auto it = this->selections.begin(); it != this->selections.end(); it++)
-		delete *it;
+//	for (auto p : this->tables){
+//		delete p.first;
+//		for (auto it = p.second.begin(); it != p.second.end(); it++)
+//			delete *it;
+//	}
+//	for (auto p : this->selects){
+//		delete p.first;
+//		for (auto it = p.second.begin(); it != p.second.end(); it++)
+//			delete *it;
+//	}
+//
+//	for (auto it = this->conds.begin(); it != this->conds.end(); it++)
+//		delete *it;
+//
+//	for (auto it = this->selections.begin(); it != this->selections.end(); it++)
+//		delete *it;
 }
 
 
