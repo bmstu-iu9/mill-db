@@ -64,9 +64,17 @@ struct pet_by_owner_handle {
 
 struct owner {
 	int32_t oid;
-	char oname[6];
+	char* oname;
 	int32_t pet_id;
 };
+
+struct owner_for_storage {
+	int32_t oid;
+	uint16_t oname_len;
+	int32_t pet_id;
+};
+
+size_t owner_buffer_full_size = 0;
 
 struct owner_tree_item* owner_tree_item_new() {
 	struct owner_tree_item* new = malloc(sizeof(struct owner_tree_item));
@@ -81,20 +89,15 @@ void owner_tree_item_free(struct owner_tree_item* deleted) {
 
 #define owner_CHILDREN (PAGE_SIZE / sizeof(struct owner_tree_item))
 
-union owner_page {
-	struct owner items[owner_CHILDREN];
-	uint8_t as_bytes[PAGE_SIZE];
-};
-
 int owner_compare(struct owner* s1, struct owner* s2) {
 	if ((s1->oid > s2->oid))
 		return 1;
 	else if ((s1->oid < s2->oid))
 		return -1;
 
-	if (strncmp(s1->oname, s2->oname, 6) > 0)
+	if (strcmp(s1->oname, s2->oname) > 0)
 		return 1;
-	else if (strncmp(s1->oname, s2->oname, 6) < 0)
+	else if (strcmp(s1->oname, s2->oname) < 0)
 		return -1;
 
 	if ((s1->pet_id > s2->pet_id))
@@ -112,6 +115,7 @@ struct owner* owner_new() {
 }
 
 void owner_free(struct owner* deleted) {
+	if (deleted->oname) free(deleted->oname);
 	free(deleted);
 	return;
 }
@@ -150,7 +154,14 @@ int owner_sort_compare(const void* a, const void* b) {
 uint64_t owner_write(FILE* file) {
 	qsort(owner_buffer, owner_buffer_info.count, sizeof(struct owner*), owner_sort_compare);
 	for (uint64_t i = 0; i < owner_buffer_info.count; i++) {
-		fwrite(owner_buffer[i], sizeof(struct owner), 1, file);
+		struct owner_for_storage s_owner = {
+			owner_buffer[i]->oid,
+			strlen(owner_buffer[i]->oname),
+			owner_buffer[i]->pet_id 
+		};
+
+		fwrite(&s_owner, sizeof(struct owner_for_storage), 1, file);
+		fwrite(owner_buffer[i]->oname, sizeof(char), s_owner.oname_len, file);
 	}
 
 	uint64_t page_size = owner_CHILDREN, items = 0;
@@ -237,11 +248,14 @@ void owner_index_load(struct pet_by_owner_handle* handle) {
 	free(current_level);
 }
 
-void add_owner_pet_1(int32_t oid, const char* oname) {
+void add_owner_pet_1(int32_t oid, const char* name) {
 	struct owner* inserted = owner_new();
 	inserted->oid = oid;
-	memcpy(inserted->oname, oname, 6);
+	size_t oname_len = strlen(name);
+	inserted->oname = calloc(oname_len + 1, sizeof(char));
+	strcpy(inserted->oname, name);
 	inserted->pet_id = ++Pet_sequence;
+	owner_buffer_full_size += sizeof(struct owner_for_storage) + oname_len;
 	owner_buffer_add(inserted);
 }
 
@@ -262,11 +276,6 @@ void pet_tree_item_free(struct pet_tree_item* deleted) {
 }
 
 #define pet_CHILDREN (PAGE_SIZE / sizeof(struct pet_tree_item))
-
-union pet_page {
-	struct pet items[pet_CHILDREN];
-	uint8_t as_bytes[PAGE_SIZE];
-};
 
 int pet_compare(struct pet* s1, struct pet* s2) {
 	if ((s1->pid > s2->pid))
@@ -421,8 +430,8 @@ void add_owner_pet_2(const char* pname) {
 	pet_buffer_add(inserted);
 }
 
-void add_owner_pet(int32_t oid, const char* oname, const char* pname) {
-	add_owner_pet_1(oid, oname);
+void add_owner_pet(int32_t oid, const char* name, const char* pname) {
+	add_owner_pet_1(oid, name);
 	add_owner_pet_2(pname);
 }
 
@@ -440,13 +449,13 @@ void get_pet_by_pid_add(struct get_pet_by_pid_out* iter, struct get_pet_by_pid_o
 }
 
 void get_pet_by_pid_1(struct get_pet_by_pid_out* iter, int32_t id) {
-//table pet	cond: pid = @id
+	//table owner	cond: oid = @id
 	struct pet_by_owner_handle* handle = iter->service.handle;
 	struct get_pet_by_pid_out_data* inserted = malloc(sizeof(struct get_pet_by_pid_out_data));
-//TABLE pet
+	//TABLE owner
 	uint64_t offset = 0;
 
-	struct pet_node* node = handle->pet_root;
+	struct owner_node* node = handle->owner_root;
 	uint64_t i = 0;
 	while (1) {
 		if (node->data.key == id || node->childs == NULL) {
@@ -466,27 +475,35 @@ void get_pet_by_pid_1(struct get_pet_by_pid_out* iter, int32_t id) {
 		i++;
 	}
 
-	offset += handle->header->data_offset[pet_header_count];
-	
-	while (1) {
-		fseek(handle->file, offset, SEEK_SET);
-		union pet_page page;
-		uint64_t size = fread(&page, sizeof(struct pet), pet_CHILDREN, handle->file);  if (size == 0) return;
+	offset += handle->header->data_offset[owner_header_count];
+	fseek(handle->file, offset, SEEK_SET);
 
-		for (uint64_t i = 0; i < pet_CHILDREN; i++) {
-			const char* p_pname= page.items[i].pname;
-			int32_t c_pid= page.items[i].pid;
-			const char* c_pname= page.items[i].pname;
-			if (c_pid > id || offset + i * sizeof(struct pet) >= handle->header->index_offset[pet_header_count]) {
+	for (int i = 0;; i++) {
+			struct owner_for_storage buffer_item;
+			uint64_t size = fread(&buffer_item, sizeof(struct owner_for_storage), 1, handle->file);
+			if (size == 0) return;
+
+			struct owner item = {
+				buffer_item.oid,
+				calloc(buffer_item.oname_len + 1, sizeof(char)),
+				buffer_item.pet_id 
+			};
+
+			size = fread(item.oname, sizeof(char), buffer_item.oname_len, handle->file);
+			if (size == 0) return;
+
+			const char* p_oname= item.oname;
+			int32_t c_oid= item.oid;
+			const char* c_oname= item.oname;
+			int32_t c_pet_id= item.pet_id;
+			if (c_oid > id || ftell(handle->file) > handle->header->index_offset[owner_header_count]) {
 				free(inserted);
 				return;
 			}
-			if (c_pid == id) {
-				memcpy(inserted->pname, c_pname, 6); inserted->pname[6] = '\0';
+			if (c_oid == id) {
+				inserted->out = calloc(strlen(c_oname), sizeof(char)); strcpy(inserted->out, c_oname);
 				get_pet_by_pid_add(iter, inserted);
 			}
-		}
-		offset += pet_CHILDREN * sizeof(struct pet);
 	}
 
 }
@@ -551,7 +568,7 @@ int pet_by_owner_save(struct pet_by_owner_handle* handle) {
 
 		header->count[owner_header_count] = owner_buffer_info.count;
 		header->data_offset[owner_header_count] = offset;
-		offset += owner_buffer_info.count * sizeof(struct owner);
+		offset += owner_buffer_full_size;
 		header->index_offset[owner_header_count] = offset;
 		offset += owner_index_count * sizeof(struct owner_tree_item);
 

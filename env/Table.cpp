@@ -7,6 +7,7 @@ Table::Table(string name) {
 	this->printed = false;
 	this->name = name;
 	this->pk = nullptr;
+	this->have_text_field = false;
 }
 
 Table::~Table() {
@@ -23,6 +24,10 @@ int Table::add_column(Column* col) {
 		return 0;
 
 	this->cols.push_back(col);
+
+	if (col->get_type()->get_typecode() == DataType::TEXT) {
+	    this->have_text_field = true;
+	}
 
 	if (col->get_pk())
 		this->pk = col;
@@ -118,8 +123,20 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 			(*ofs) << "\t" << column->get_type()->str(column->get_name())<<";"  << endl;
 		}
 
-		(*ofs) << "};" << endl <<
-		       endl;
+		(*ofs) << "};" << endl << endl;
+
+		if (this->have_text_field) {
+            (*ofs) << "struct " << name << "_for_storage {\n";
+
+            for (auto it = cols.begin(); it != cols.end(); it++) {
+                Column* column = *it;
+                (*ofs) << "\t" << column->get_type()->print_field_for_storage_struct(column->get_name()) << ";\n";
+            }
+
+            (*ofs) << "};\n\n";
+
+            (*ofs) << "size_t " << name << "_buffer_full_size = 0;\n\n";
+		}
 
 		(*ofs) << "struct " << name << "_tree_item* " << name << "_tree_item_new() {" << endl <<
 		       "\tstruct " << name << "_tree_item* new = malloc(sizeof(struct " << name << "_tree_item));" << endl <<
@@ -132,13 +149,7 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\treturn;" << endl <<
 		       "}" << endl <<
 		       "" << endl <<
-		       "#define " << name << "_CHILDREN (PAGE_SIZE / sizeof(struct " << name << "_tree_item))" << endl <<
-		       "" << endl <<
-		       "union " << name << "_page {" << endl <<
-		       "\tstruct " << name << " items[" << name << "_CHILDREN];" << endl <<
-		       "\tuint8_t as_bytes[PAGE_SIZE];" << endl <<
-		       "};" << endl <<
-		       "" << endl <<
+		       "#define " << name << "_CHILDREN (PAGE_SIZE / sizeof(struct " << name << "_tree_item))" << endl << endl <<
 		       "int " << name << "_compare(struct " << name << "* s1, struct " << name << "* s2) {" << endl;
 
 		for (auto it = cols.begin(); it != cols.end(); it++) {
@@ -159,8 +170,18 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 		       "\treturn new;" << endl <<
 		       "}" << endl <<
 		       "" << endl <<
-		       "void " << name << "_free(struct " << name << "* deleted) {" << endl <<
-		       "\tfree(deleted);" << endl <<
+		       "void " << name << "_free(struct " << name << "* deleted) {" << endl;
+
+		if (this->have_text_field) {
+            for (auto it = cols.begin(); it != cols.end(); it++) {
+                Column* column = *it;
+                if (column->get_type()->get_typecode() == DataType::TEXT) {
+                    (*ofs) << "\tif (deleted->" << column->get_name() << ") free(deleted->" << column->get_name() << ");\n";
+                }
+            }
+		}
+
+        (*ofs) << "\tfree(deleted);" << endl <<
 		       "\treturn;" << endl <<
 		       "}" << endl <<
 		       "" << endl <<
@@ -198,10 +219,36 @@ void Table::print(ofstream* ofs, ofstream* ofl) {
 
 		(*ofs) << "uint64_t " << name << "_write(FILE* file) {" << endl <<
 		       "\tqsort(" << name << "_buffer, " << name << "_buffer_info.count, sizeof(struct " << name << "*), " << name << "_sort_compare);" << endl <<
-		       "\tfor (uint64_t i = 0; i < " << name << "_buffer_info.count; i++) {" << endl <<
-		       "\t\tfwrite(" << name << "_buffer[i], sizeof(struct " << name << "), 1, file);" << endl <<
-		       "\t}" << endl <<
-		       "" << endl <<
+		       "\tfor (uint64_t i = 0; i < " << name << "_buffer_info.count; i++) {" << endl;
+
+		if (this->have_text_field) {
+            (*ofs) << "\t\tstruct " << name << "_for_storage s_" << name << " = {\n";
+            for (auto it = cols.begin(); it != cols.end(); it++) {
+                Column *column = *it;
+                char comma_or_nothing = it + 1 == cols.end() ? ' ' : ',';
+                if (column->get_type()->get_typecode() == DataType::TEXT) {
+                    (*ofs) << "\t\t\tstrlen(" << name << "_buffer[i]->" << column->get_name() << ")"
+                        << comma_or_nothing << "\n";
+                } else {
+                    (*ofs) << "\t\t\t" << name << "_buffer[i]->" << column->get_name() << comma_or_nothing << "\n";
+                }
+            }
+            (*ofs) << "\t\t};\n\n";
+
+            (*ofs) << "\t\tfwrite(&s_" << name << ", sizeof(struct " << name << "_for_storage), 1, file);\n";
+
+            for (auto it = cols.begin(); it != cols.end(); it++) {
+                Column *column = *it;
+                if (column->get_type()->get_typecode() == DataType::TEXT) {
+                    (*ofs) << "\t\tfwrite(" << name << "_buffer[i]->"
+                        << column->get_name() << ", sizeof(char), s_" << name << "." << column->get_name() << "_len, file);\n";
+                }
+            }
+		} else {
+            (*ofs) << "\t\tfwrite(" << name << "_buffer[i], sizeof(struct " << name << "), 1, file);\n";
+		}
+
+        (*ofs) << "\t}\n\n" <<
 		       "\tuint64_t page_size = " << name << "_CHILDREN, items = 0;" << endl <<
 		       "\twhile (page_size < " << name << "_buffer_info.count) {" << endl <<
 		       "\t\tfor (uint64_t i = 0; i < " << name << "_buffer_info.count; i += page_size) {" << endl <<

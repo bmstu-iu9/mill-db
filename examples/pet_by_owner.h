@@ -6,10 +6,10 @@
 struct pet_by_owner_handle;
 
 uint64_t Pet_sequence = 0 ;
-void add_owner_pet(int32_t oid, const char* oname, const char* pname);
+void add_owner_pet(int32_t oid, const char* name, const char* pname);
 
 struct get_pet_by_pid_out_data {
-	char pname[7];
+	char* out;
 };
 
 struct get_pet_by_pid_out_service {

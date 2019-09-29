@@ -147,19 +147,22 @@ void Procedure::print(ofstream* ofs, ofstream* ofl) {
 		       "\titer->service.set = NULL;" << endl <<
 		       "\titer->service.size = 0;" << endl <<
 		       "\titer->service.count = 0;" << endl <<
-		       "\titer->service.length = 0;" << endl <<
-		       "" << endl <<
-		       "\t" << name << "_1(iter";
+		       "\titer->service.length = 0;" << endl << endl;
 
-		for (auto it = this->params.begin(); it != this->params.end(); it++) {
-			if ((*it)->get_mode() == Parameter::IN) {
-				(*ofs) << ", " << (*it)->get_name();
-			}
+		int j = 1;
+		for (auto it = this->statements.begin(); it != this->statements.end(); it++, j++) {
+            (*ofs) << "\t" << name << "_" << j << "(iter";
+
+            for (auto it = this->params.begin(); it != this->params.end(); it++) {
+                if ((*it)->get_mode() == Parameter::IN) {
+                    (*ofs) << ", " << (*it)->get_name();
+                }
+            }
+
+            (*ofs) << ");\n";
 		}
 
-		(*ofs) << ");" << endl <<
-		       "}" << endl <<
-		       "" << endl;
+		(*ofs) << "}" << endl << endl;
 
 		(*ofl) << "int " << name << "_next(struct " << name << "_out* iter);" << endl << endl;
 		(*ofs) << "int " << name << "_next(struct " << name << "_out* iter) {" << endl <<

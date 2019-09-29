@@ -74,7 +74,18 @@ int DataType::equals(DataType *that) {
 	if (this->get_typecode() == DataType::CHAR)
 		return this->get_length() == that->get_length();
 
+	if (this->get_typecode() == DataType::TEXT)
+	    return 1;
+
 	return 0;
+}
+
+string DataType::print_field_for_storage_struct(std::string name) {
+    if (this->get_typecode() == DataType::TEXT) {
+        return "uint16_t " + name + "_len";
+    }
+
+    return this->str(name);
 }
 
 string DataType::str(string name) {
@@ -86,6 +97,9 @@ string DataType::str(string name) {
 
 	if (this->get_typecode() == DataType::FLOAT)
 		return "float " + name;
+
+	if (this->get_typecode() == DataType::TEXT)
+	    return "char* " + name;
 
 	if (this->get_typecode() == DataType::CHAR) {
 		string s("char " + name + "[" + to_string(this->get_length()) + "]");
@@ -105,6 +119,9 @@ string DataType::str_param_for_select(string name) {
 	if (this->get_typecode() == DataType::FLOAT)
 		return "float p_" + name;
 
+	if (this->get_typecode() == DataType::TEXT)
+	    return "const char* p_" + name;
+
 	if (this->get_typecode() == DataType::CHAR) {
 		string s("const char* p_" + name );//+ "[" + to_string(this->get_length()) + "]");
 		return s;
@@ -122,6 +139,9 @@ string DataType::str_column_for_select(string name) {
 
 	if (this->get_typecode() == DataType::FLOAT)
 		return "float c_" + name;
+
+	if (this->get_typecode() == DataType::TEXT)
+	    return "const char* c_" + name;
 
 	if (this->get_typecode() == DataType::CHAR) {
 		string s("const char* c_" + name );//[" + to_string(this->get_length()) + "]");
@@ -142,6 +162,9 @@ string DataType::str_out(string name) {
 	if (this->get_typecode() == DataType::FLOAT)
 		return "float " + name;
 
+	if (this->get_typecode() == DataType::TEXT)
+	    return "char* " + name;
+
 	if (this->get_typecode() == DataType::CHAR) {
 		string s("char " + name + "[" + to_string(this->get_length()+1) + "]");
 		return s;
@@ -159,6 +182,9 @@ string DataType::signature(string name) {
 
 	if (this->get_typecode() == DataType::FLOAT)
 		return "float " + name;
+
+	if (this->get_typecode() == DataType::TEXT)
+	    return "const char* " + name;
 
 	if (this->get_typecode() == DataType::CHAR) {
 		return "const char* " + name;
@@ -228,6 +254,10 @@ string DataType::select_expr(std::string param, std::string column) {
 	if (this->get_typecode() == DataType::FLOAT)
 		return "inserted->" + param + " = c_" + column + ";";
 
+	if (this->get_typecode() == DataType::TEXT) {
+	    return "inserted->" + column + " = calloc(strlen(c_" + param + "), sizeof(char)); strcpy(inserted->" + column + ", c_" + param + ");";
+	}
+
 	if (this->get_typecode() == DataType::CHAR) {
 		return "memcpy(inserted->" + column + ", c_" + param + ", " + to_string(this->get_length()) +
 				"); inserted->" + column + "[" + to_string(this->get_length()) + "] = '\\0';";
@@ -246,6 +276,10 @@ string DataType::compare_less_expr(string s1, string col1, string s2, string col
 	if (this->get_typecode() == DataType::FLOAT)
 		return "(" + s1 + "->" + col1 + " < " + s2 + "->" + col2 + ")";
 
+    if (this->get_typecode() == DataType::TEXT) {
+        return "strcmp(" + s1 + "->" + col1 + ", " + s2 + "->" + col2 + ") < 0";
+    }
+
 	if (this->get_typecode() == DataType::CHAR) {
 		return "strncmp(" + s1 + "->" + col1 + ", " + s2 + "->" + col2 + ", " + to_string(this->get_length()) + ") < 0";
 	}
@@ -262,6 +296,10 @@ string DataType::compare_greater_expr(string s1, string col1, string s2, string 
 
 	if (this->get_typecode() == DataType::FLOAT)
 		return "(" + s1 + "->" + col1 + " > " + s2 + "->" + col2 + ")";
+
+	if (this->get_typecode() == DataType::TEXT) {
+        return "strcmp(" + s1 + "->" + col1 + ", " + s2 + "->" + col2 + ") > 0";
+    }
 
 	if (this->get_typecode() == DataType::CHAR) {
 		return "strncmp(" + s1 + "->" + col1 + ", " + s2 + "->" + col2 + ", " + to_string(this->get_length()) + ") > 0";

@@ -53,6 +53,7 @@ INT_KEYWORD			?i:"int"
 FLOAT_KEYWORD		?i:"float"
 DOUBLE_KEYWORD		?i:"double"
 CHAR_KEYWORD		?i:"char"
+TEXT_KEYWORD        ?i:"text"
 
 IDENTIFIER			{IDENTIFIER_START}{IDENTIFIER_PART}*
 IDENTIFIER_START	[[:alpha:]]
@@ -110,6 +111,7 @@ WHITESPACE			[ \t\n]+
 <INITIAL>{FLOAT_KEYWORD}	{ debugl("FLOAT_KEYWORD"); return FLOAT_KEYWORD; }
 <INITIAL>{DOUBLE_KEYWORD}	{ debugl("DOUBLE_KEYWORD"); return DOUBLE_KEYWORD; }
 <INITIAL>{CHAR_KEYWORD}     { debugl("CHAR_KEYWORD"); return CHAR_KEYWORD; }
+<INITIAL>{TEXT_KEYWORD}     { debugl("TEXT_KEYWORD"); return TEXT_KEYWORD; }
 
 <INITIAL>{IDENTIFIER}	{ yylval.char_arr = yytext; debugl("IDENTIFIER"); return IDENTIFIER; }
 <INITIAL>{PARAMETER}	{ yylval.char_arr = yytext + sizeof(char); debugl("PARAMETER"); return PARAMETER; }

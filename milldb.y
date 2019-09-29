@@ -108,7 +108,7 @@ struct condition {
 %token INSERT_KEYWORD VALUES_KEYWORD
 %token PROCEDURE_KEYWORD BEGIN_KEYWORD END_KEYWORD IN_KEYWORD OUT_KEYWORD SET_KEYWORD
 %token ON_KEYWORD AND_KEYWORD
-%token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD CHAR_KEYWORD
+%token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD CHAR_KEYWORD TEXT_KEYWORD
 %token IDENTIFIER PARAMETER INTEGER
 %token BAD_CHARACTER
 
@@ -152,10 +152,10 @@ program_element: table_declaration {
 			Table* table = Environment::get_instance()->find_table($1->get_name());
 			if (table != nullptr) {
 				string msg("table ");
-                msg += $1->get_name();
-                msg += " already exists";
-                delete $1;
-                throw logic_error(error_msg(msg));
+				msg += $1->get_name();
+				msg += " already exists";
+				delete $1;
+				throw logic_error(error_msg(msg));
 			}
 
 			Environment::get_instance()->add_table($1);
@@ -566,8 +566,12 @@ column_declaration: column_name data_type {
 	| column_name data_type PK_KEYWORD {
 			debug("column_declaration 2 BEGIN");
 
-      	    $$ = new Column(*$1, $2, true);
-      	    delete $1;
+			if ($2->get_typecode() == DataType::TEXT) {
+				throw logic_error(error_msg("type 'text' can't be primary key"));
+			}
+
+			$$ = new Column(*$1, $2, true);
+		    	delete $1;
 
 			debug("column_declaration 2 END");
       	}
@@ -655,6 +659,7 @@ data_type:	INT_KEYWORD {
 		}
 	| FLOAT_KEYWORD { $$ = new DataType(DataType::FLOAT); }
 	| DOUBLE_KEYWORD { $$ = new DataType(DataType::DOUBLE); }
+	| TEXT_KEYWORD { $$ = new DataType(DataType::TEXT); }
 	| CHAR_KEYWORD LPAREN INTEGER RPAREN {
 			int length = atoi($3);
 			if (length > 255) {

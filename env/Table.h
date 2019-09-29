@@ -30,6 +30,7 @@ public:
 
 	void check_pk();
 	std::vector<Column*> cols;
+    bool have_text_field;
 private:
 	std::string name;
 

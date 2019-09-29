@@ -7,7 +7,7 @@
 
 class DataType {
 public:
-	enum Type {INT, FLOAT, DOUBLE, CHAR, Sequence};
+	enum Type {INT, FLOAT, DOUBLE, TEXT, CHAR, Sequence};
 
 	DataType(Type type);
 	DataType(Type type, int length);
@@ -19,6 +19,7 @@ public:
 	int get_length();
 	std::string get_format_specifier();
 
+	std::string print_field_for_storage_struct(std::string name);
 	std::string str(std::string name);
 	std::string str_param_for_select(std::string name);
 	std::string str_column_for_select(std::string name);
