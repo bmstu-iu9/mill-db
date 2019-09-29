@@ -334,7 +334,6 @@ void get_people_name_with_id_1(struct get_people_name_with_id_out* iter, int32_t
 //table person	cond: id < @id2
 //table person	cond: id > @id3
 //table person	cond: id <= @id4
-//table person	cond: age > @id1
 	struct test_logic_handle* handle = iter->service.handle;
 	struct get_people_name_with_id_out_data* inserted = malloc(sizeof(struct get_people_name_with_id_out_data));
 //TABLE person
@@ -362,7 +361,7 @@ void get_people_name_with_id_1(struct get_people_name_with_id_out* iter, int32_t
 
 	offset += handle->header->data_offset[person_header_count];
 	int32_t id_bound_l = MAX(id1,id3+1);
-	int32_t id_bound_u = id2-1;
+	int32_t id_bound_u = MIN(id2-1,id4);
 	offset += id_bound_l * sizeof(struct person);
 	
 	while (1) {
@@ -380,7 +379,7 @@ void get_people_name_with_id_1(struct get_people_name_with_id_out* iter, int32_t
 				return;
 			}
 			if (1) {
-				if(!(((c_id >= id1) && (c_id < id2) && (c_id > id3) && ((c_id <= id4) || (c_age > id1)))))
+				if(!(((c_id >= id1) && (c_id < id2) && (c_id > id3) && (c_id <= id4))))
 					continue;
 
 				memcpy(inserted->name, c_name, 100); inserted->name[100] = '\0';
@@ -511,6 +510,108 @@ int get_people_name_with_id_2_next(struct get_people_name_with_id_2_out* iter) {
 
 	if (service->set != NULL && service->count < service->length) {
 		memcpy(&iter->data, &(service->set[service->count]), sizeof(struct get_people_name_with_id_2_out_data));
+		service->count++;
+		return 1;
+	} else {
+		free(service->set);
+	}
+
+	return 0;
+}
+
+void get_people_name_with_id_3_add(struct get_people_name_with_id_3_out* iter, struct get_people_name_with_id_3_out_data* selected) {
+	struct get_people_name_with_id_3_out_service* service = &(iter->service);
+	if (service->set == NULL) {
+		service->size = MILLDB_BUFFER_INIT_SIZE;
+		service->set = calloc(service->size, sizeof(struct get_people_name_with_id_3_out));
+	}
+	if (service->length >= service->size) {
+		service->size = service->size * 2;
+		service->set = realloc(service->set, service->size * sizeof(struct get_people_name_with_id_3_out));
+	}
+	memcpy(&(service->set[service->length++]), selected, sizeof(struct get_people_name_with_id_3_out_data));
+}
+
+void get_people_name_with_id_3_1(struct get_people_name_with_id_3_out* iter, int32_t id) {
+//table person	cond: NOT id >= @id
+//table person	cond: id = @id
+//table person	cond: id >= @id
+	struct test_logic_handle* handle = iter->service.handle;
+	struct get_people_name_with_id_3_out_data* inserted = malloc(sizeof(struct get_people_name_with_id_3_out_data));
+//TABLE person
+	uint64_t offset = 0;
+
+	struct person_node* node = handle->person_root;
+	uint64_t i = 0;
+	while (1) {
+		if (node->data.key == id || node->childs == NULL) {
+			offset = node->data.offset;
+			break;
+		}
+		if (node->childs[i]->data.key > id && i > 0) {
+			node = node->childs[i-1];
+			i = 0;
+			continue;
+		}
+		if (i == node->n-1) {
+			node = node->childs[i];
+			i = 0;
+			continue;
+		}
+		i++;
+	}
+
+	offset += handle->header->data_offset[person_header_count];
+	int32_t id_bound_l = 0;
+	int32_t id_bound_u = 2147483647;
+	offset += id_bound_l * sizeof(struct person);
+	
+	while (1) {
+		fseek(handle->file, offset, SEEK_SET);
+		union person_page page;
+		uint64_t size = fread(&page, sizeof(struct person), person_CHILDREN, handle->file);  if (size == 0) return;
+
+		for (uint64_t i = 0; i < person_CHILDREN; i++) {
+			const char* p_name= page.items[i].name;
+			int32_t c_id= page.items[i].id;
+			int32_t c_age= page.items[i].age;
+			const char* c_name= page.items[i].name;
+			if (offset + i * sizeof(struct person) >= handle->header->index_offset[person_header_count]) {
+				free(inserted);
+				return;
+			}
+			if (1) {
+				if(!((!(c_id >= id) || ((c_id == id) && (c_id >= id)))))
+					continue;
+
+				memcpy(inserted->name, c_name, 100); inserted->name[100] = '\0';
+				get_people_name_with_id_3_add(iter, inserted);
+			}
+		}
+		offset += person_CHILDREN * sizeof(struct person);
+	}
+
+}
+
+void get_people_name_with_id_3_init(struct get_people_name_with_id_3_out* iter, struct test_logic_handle* handle, int32_t id) {
+	memset(iter, 0, sizeof(*iter));
+	iter->service.handle = handle;
+	iter->service.set = NULL;
+	iter->service.size = 0;
+	iter->service.count = 0;
+	iter->service.length = 0;
+
+	get_people_name_with_id_3_1(iter, id);
+}
+
+int get_people_name_with_id_3_next(struct get_people_name_with_id_3_out* iter) {
+	if (iter == NULL)
+		return 0;
+
+	struct get_people_name_with_id_3_out_service* service = &(iter->service);
+
+	if (service->set != NULL && service->count < service->length) {
+		memcpy(&iter->data, &(service->set[service->count]), sizeof(struct get_people_name_with_id_3_out_data));
 		service->count++;
 		return 1;
 	} else {

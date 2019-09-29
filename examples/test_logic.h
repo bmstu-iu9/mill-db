@@ -70,6 +70,26 @@ struct get_people_name_with_id_2_out {
 void get_people_name_with_id_2_init(struct get_people_name_with_id_2_out* iter, struct test_logic_handle* handle, int32_t id);
 int get_people_name_with_id_2_next(struct get_people_name_with_id_2_out* iter);
 
+struct get_people_name_with_id_3_out_data {
+	char name[101];
+};
+
+struct get_people_name_with_id_3_out_service {
+	struct test_logic_handle* handle;
+	struct get_people_name_with_id_3_out_data* set;
+	int size;
+	int length;
+	int count;
+};
+
+struct get_people_name_with_id_3_out {
+	struct get_people_name_with_id_3_out_service service;
+	struct get_people_name_with_id_3_out_data data;
+};
+
+void get_people_name_with_id_3_init(struct get_people_name_with_id_3_out* iter, struct test_logic_handle* handle, int32_t id);
+int get_people_name_with_id_3_next(struct get_people_name_with_id_3_out* iter);
+
 void test_logic_open_write(const char* filename);
 void test_logic_close_write(void);
 

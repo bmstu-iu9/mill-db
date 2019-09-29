@@ -15,7 +15,7 @@ int main() {
     test_logic_close_write();
     struct test_logic_handle *handle = test_logic_open_read(FILE_NAME);
 
-    // Test '>'
+    // Test
     printf("age > 18:\n");
     struct get_people_name_older_than_age_out iter1;
     get_people_name_older_than_age_init(&iter1, handle, 18);
@@ -24,7 +24,7 @@ int main() {
     }
     printf("\n");
 
-    // Test 'id'
+    // Test
     printf("id >= 0 and id < 3 and id > 0 and id <= 3:\n");
     struct get_people_name_with_id_out iter2;
     get_people_name_with_id_init(&iter2, handle, 0, 3, 0, 3);
@@ -33,12 +33,21 @@ int main() {
     }
     printf("\n");
 
-    // Test 'id'
+    // Test
     printf("id <= 2:\n");
     struct get_people_name_with_id_2_out iter3;
     get_people_name_with_id_2_init(&iter3, handle, 2);
     while (get_people_name_with_id_2_next(&iter3)) {
         printf("%s\n", iter3.data.name);
+    }
+    printf("\n");
+
+    // Test
+    printf("not id >= 1 or (id = 1 and id >= 1):\n");
+    struct get_people_name_with_id_3_out iter4;
+    get_people_name_with_id_3_init(&iter4, handle, 1);
+    while (get_people_name_with_id_3_next(&iter4)) {
+        printf("%s\n", iter4.data.name);
     }
     printf("\n");
 
