@@ -261,8 +261,15 @@ void add_owner_pet_1(int32_t oid, const char* name) {
 
 struct pet {
 	int32_t pid;
-	char pname[6];
+	char* pname;
 };
+
+struct pet_for_storage {
+	int32_t pid;
+	uint16_t pname_len;
+};
+
+size_t pet_buffer_full_size = 0;
 
 struct pet_tree_item* pet_tree_item_new() {
 	struct pet_tree_item* new = malloc(sizeof(struct pet_tree_item));
@@ -283,9 +290,9 @@ int pet_compare(struct pet* s1, struct pet* s2) {
 	else if ((s1->pid < s2->pid))
 		return -1;
 
-	if (strncmp(s1->pname, s2->pname, 6) > 0)
+	if (strcmp(s1->pname, s2->pname) > 0)
 		return 1;
-	else if (strncmp(s1->pname, s2->pname, 6) < 0)
+	else if (strcmp(s1->pname, s2->pname) < 0)
 		return -1;
 
 	return 0;
@@ -298,6 +305,7 @@ struct pet* pet_new() {
 }
 
 void pet_free(struct pet* deleted) {
+	if (deleted->pname) free(deleted->pname);
 	free(deleted);
 	return;
 }
@@ -336,7 +344,13 @@ int pet_sort_compare(const void* a, const void* b) {
 uint64_t pet_write(FILE* file) {
 	qsort(pet_buffer, pet_buffer_info.count, sizeof(struct pet*), pet_sort_compare);
 	for (uint64_t i = 0; i < pet_buffer_info.count; i++) {
-		fwrite(pet_buffer[i], sizeof(struct pet), 1, file);
+		struct pet_for_storage s_pet = {
+			pet_buffer[i]->pid,
+			strlen(pet_buffer[i]->pname) 
+		};
+
+		fwrite(&s_pet, sizeof(struct pet_for_storage), 1, file);
+		fwrite(pet_buffer[i]->pname, sizeof(char), s_pet.pname_len, file);
 	}
 
 	uint64_t page_size = pet_CHILDREN, items = 0;
@@ -426,7 +440,10 @@ void pet_index_load(struct pet_by_owner_handle* handle) {
 void add_owner_pet_2(const char* pname) {
 	struct pet* inserted = pet_new();
 	inserted->pid = Pet_sequence;
-	memcpy(inserted->pname, pname, 6);
+	size_t pname_len = strlen(pname);
+	inserted->pname = calloc(pname_len + 1, sizeof(char));
+	strcpy(inserted->pname, pname);
+	pet_buffer_full_size += sizeof(struct pet_for_storage) + pname_len;
 	pet_buffer_add(inserted);
 }
 
@@ -508,6 +525,64 @@ void get_pet_by_pid_1(struct get_pet_by_pid_out* iter, int32_t id) {
 
 }
 
+void get_pet_by_pid_2(struct get_pet_by_pid_out* iter, int32_t id) {
+	//table pet	cond: pid = @id
+	struct pet_by_owner_handle* handle = iter->service.handle;
+	struct get_pet_by_pid_out_data* inserted = malloc(sizeof(struct get_pet_by_pid_out_data));
+	//TABLE pet
+	uint64_t offset = 0;
+
+	struct pet_node* node = handle->pet_root;
+	uint64_t i = 0;
+	while (1) {
+		if (node->data.key == id || node->childs == NULL) {
+			offset = node->data.offset;
+			break;
+		}
+		if (node->childs[i]->data.key > id && i > 0) {
+			node = node->childs[i-1];
+			i = 0;
+			continue;
+		}
+		if (i == node->n-1) {
+			node = node->childs[i];
+			i = 0;
+			continue;
+		}
+		i++;
+	}
+
+	offset += handle->header->data_offset[pet_header_count];
+	fseek(handle->file, offset, SEEK_SET);
+
+	for (int i = 0;; i++) {
+			struct pet_for_storage buffer_item;
+			uint64_t size = fread(&buffer_item, sizeof(struct pet_for_storage), 1, handle->file);
+			if (size == 0) return;
+
+			struct pet item = {
+				buffer_item.pid,
+				calloc(buffer_item.pname_len + 1, sizeof(char)) 
+			};
+
+			size = fread(item.pname, sizeof(char), buffer_item.pname_len, handle->file);
+			if (size == 0) return;
+
+			const char* p_pname= item.pname;
+			int32_t c_pid= item.pid;
+			const char* c_pname= item.pname;
+			if (c_pid > id || ftell(handle->file) > handle->header->index_offset[pet_header_count]) {
+				free(inserted);
+				return;
+			}
+			if (c_pid == id) {
+				inserted->out = calloc(strlen(c_pname), sizeof(char)); strcpy(inserted->out, c_pname);
+				get_pet_by_pid_add(iter, inserted);
+			}
+	}
+
+}
+
 void get_pet_by_pid_init(struct get_pet_by_pid_out* iter, struct pet_by_owner_handle* handle, int32_t id) {
 	memset(iter, 0, sizeof(*iter));
 	iter->service.handle = handle;
@@ -517,6 +592,7 @@ void get_pet_by_pid_init(struct get_pet_by_pid_out* iter, struct pet_by_owner_ha
 	iter->service.length = 0;
 
 	get_pet_by_pid_1(iter, id);
+	get_pet_by_pid_2(iter, id);
 }
 
 int get_pet_by_pid_next(struct get_pet_by_pid_out* iter) {
@@ -574,7 +650,7 @@ int pet_by_owner_save(struct pet_by_owner_handle* handle) {
 
 		header->count[pet_header_count] = pet_buffer_info.count;
 		header->data_offset[pet_header_count] = offset;
-		offset += pet_buffer_info.count * sizeof(struct pet);
+		offset += pet_buffer_full_size;
 		header->index_offset[pet_header_count] = offset;
 		offset += pet_index_count * sizeof(struct pet_tree_item);
 

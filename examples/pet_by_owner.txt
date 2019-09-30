@@ -8,10 +8,10 @@ CREATE TABLE owner (
 
 CREATE TABLE pet (
 	pid int pk,
-	pname char(6)
+	pname text
 );
 
-CREATE PROCEDURE add_owner_pet(@oid int in, @name text in, @pname char(6) in)
+CREATE PROCEDURE add_owner_pet(@oid int in, @name text in, @pname text in)
 BEGIN
 	INSERT TABLE owner VALUES (@oid, @name, NEXTVAL(Pet_sequence));
 	INSERT TABLE pet VALUES (CURRVAL(Pet_sequence),@pname);
@@ -20,4 +20,5 @@ END;
 CREATE PROCEDURE get_pet_by_pid(@id int in, @out text out)
 BEGIN
     SELECT oname SET @out FROM owner WHERE oid=@id;
+    SELECT pname SET @out FROM pet WHERE pid=@id;
 END;
