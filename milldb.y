@@ -322,7 +322,7 @@ procedure_declaration: CREATE_KEYWORD PROCEDURE_KEYWORD procedure_name LPAREN pa
                         Parameter* param = find_parameter($$, stmt->selections->at(i).second);
                         debug("procedure_declaration 4");
                         // Check if this parameter have mode OUT
-                                    check_mode(param, Parameter::OUT);
+                        check_mode(param, Parameter::OUT);
 
                         // Check if parameters's type matches to column's type
                         check_type(param, col);
@@ -403,14 +403,14 @@ select_statement: SELECT_KEYWORD selection_list FROM_KEYWORD table_lst WHERE_KEY
     ;
 
 table_lst: table_lst JOIN_KEYWORD table_name {
-        $$=$1;
-        Table* table = find_table(*$3);
-        $$->push_back(table);
+            $$=$1;
+            Table* table = find_table(*$3);
+            $$->push_back(table);
         }
     | table_name{
-        $$=new vector<Table*>();
-        Table* table = find_table(*$1);
-        $$->push_back(table);
+            $$=new vector<Table*>();
+            Table* table = find_table(*$1);
+            $$->push_back(table);
         }
     ;
 
@@ -549,7 +549,7 @@ condition_list: search_cond_not {
             debug("condition_list 6 BEGIN");
 
             if ($2->mode == Condition::OR) {
-                                $$ = $2;
+                $$ = $2;
                 if ($5->mode == Condition::OR) {
                     debug("condition_list 6.1");
                     $$->children.insert($5->children.begin(), $5->children.end(), $$->children.end());
