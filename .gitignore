@@ -2,4 +2,6 @@
 *___jb_old___
 CMakeLists.txt
 cmake-build-debug
-milldb*
+*.lex.*
+*.tab.*
+milldb
