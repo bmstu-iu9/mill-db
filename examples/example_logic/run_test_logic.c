@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <time.h>
+#include "test_logic.c"
 #include "test_logic.h"
 
 #define FILE_NAME "FILE_TEST"

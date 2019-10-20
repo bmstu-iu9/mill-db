@@ -17,9 +17,5 @@ FLAGS=-lboost_system -lboost_filesystem -std=c++0x -Wno-write-strings -g
 exec: lexer parser
 	g++ -o ${PROJECT_NAME} main.cpp $(PROJECT_NAME).lex.c $(PROJECT_NAME).tab.c $(CLASS_SOURCES) $(FLAGS)
 
-test:
-	./$(PROJECT_NAME) examples/$(TEST_NAME).sql
-	cd examples/ && gcc run_$(TEST_NAME).c $(TEST_NAME).c -lm -o $(TEST_NAME) && ./$(TEST_NAME)
-
 clear clean:
 	rm -f *.tab.? *.lex.? milldb milldb.exe
