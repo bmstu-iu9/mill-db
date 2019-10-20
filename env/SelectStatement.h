@@ -44,10 +44,10 @@ public:
 private:
     std::map<std::string, int> tb_ind;
     std::map<std::string, bool> has_pk_cond;
-    std::vector <std::pair<Table *, std::vector < Condition * >>>
-    tables;
-    std::vector <std::pair<Table *, std::vector < Selection * >>>
-    selects;
+    std::vector<std::pair<Table *, std::vector<Condition * >>>
+            tables;
+    std::vector<std::pair<Table *, std::vector<Selection * >>>
+            selects;
     std::vector<Selection *> selections;
     ConditionTreeNode *condition_tree;
 };

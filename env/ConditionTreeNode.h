@@ -32,7 +32,7 @@ public:
 
     void set_mode(Mode m);
 
-    std::pair<std::string,std::string> calculate_pk_bounds();
+    std::pair<std::string, std::string> calculate_pk_bounds();
 
     std::string print();
 

@@ -186,9 +186,8 @@ void Procedure::print(ofstream *ofs, ofstream *ofl) {
         (*ofs) << "void " << this->get_name() << "(";
         (*ofl) << "void " << this->get_name() << "(";
 
-        vector <string> sig_arr;
+        vector<string> sig_arr;
         for (auto it = this->params.begin(); it != this->params.end(); it++) {
-            ////////////////
 
             string param_sig = (*it)->signature();
             if (!param_sig.empty()) {

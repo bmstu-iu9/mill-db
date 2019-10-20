@@ -31,14 +31,14 @@ Table *InsertStatement::get_table() {
 }
 
 void InsertStatement::print_arguments(std::ofstream *ofs, std::ofstream *ofl) {
-    vector <string> sig_arr;
+    vector<string> sig_arr;
     for (auto it = this->args.begin(); it != this->args.end(); it++) {
-        //if ((*it)->type!=Argument::SEQUENCE){
+//      if ((*it)->type!=Argument::SEQUENCE){
         string arg_sig = (*it)->print();
         if (!arg_sig.empty()) {
             sig_arr.push_back(arg_sig);
         }
-        //}
+//      }
     }
 
     if (sig_arr.size() > 0) {
@@ -50,16 +50,15 @@ void InsertStatement::print_arguments(std::ofstream *ofs, std::ofstream *ofl) {
 }
 
 void InsertStatement::print_full_signature(std::ofstream *ofs, std::ofstream *ofl, string proc_name) {
-    vector <string> sig_arr;
+    vector<string> sig_arr;
     for (auto it = this->args.begin(); it != this->args.end(); it++) {
-        ///////////////
-        //if ((*it)->type!=Argument::SEQUENCE){
+//      if ((*it)->type!=Argument::SEQUENCE){
 
         string arg_sig = (*it)->signature();
         if (!arg_sig.empty()) {
             sig_arr.push_back(arg_sig);
         }
-//}
+//      }
     }
 
     if (sig_arr.size() > 0) {

@@ -131,9 +131,9 @@ void ConditionTreeNode::set_mode(ConditionTreeNode::Mode m) {
     this->mode = m;
 }
 
-std::pair <std::string, std::string> ConditionTreeNode::calculate_pk_bounds() {
-    std::pair <std::string, std::string> res;
-    std::vector <std::string> lower_bound, upper_bound;
+std::pair<std::string, std::string> ConditionTreeNode::calculate_pk_bounds() {
+    std::pair<std::string, std::string> res;
+    std::vector<std::string> lower_bound, upper_bound;
     switch (this->mode) {
         case AND:
             for (ConditionTreeNode *c : this->children) {

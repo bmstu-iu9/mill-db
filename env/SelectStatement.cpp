@@ -133,11 +133,10 @@ void SelectStatement::print(ofstream *ofs, ofstream *ofl, string func_name) {
            << endl;
     string tab = "";
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
     for (int index = 0; index < this->tb_ind.size(); index++, tab.append("\t\t\t")) {
         Table *table = this->tables[index].first;
         (*ofs) << "//TABLE " << table->get_name() << endl;
-        vector < Condition * > *conds = &(this->tables[index].second);
+        vector<Condition *> *conds = &(this->tables[index].second);
         this->check_table_pk(table->get_name());
 
         (*ofs) << tab << "\tuint64_t offset = 0;" << endl << tab <<
@@ -178,7 +177,7 @@ void SelectStatement::print(ofstream *ofs, ofstream *ofl, string func_name) {
         (*ofs) << tab << "\toffset += handle->header->data_offset[" << table->get_name() << "_header_count];" << endl;
 
         // check PK bounds
-        std::pair <std::string, std::string> bounds = this->condition_tree->calculate_pk_bounds();
+        std::pair<std::string, std::string> bounds = this->condition_tree->calculate_pk_bounds();
         if (bounds.first.empty()) {
             (*ofs) << tab << "\tint32_t id_bound_l = 0;" << endl;
         } else {
