@@ -306,18 +306,18 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
 				<< endl;
 	}
 
-    for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-        Table *table = it->second;
-        (*ofs) << "\t\theader->count[" << table->get_name() << "_header_count] = " << table->get_name()
-               << "_buffer_info.count;" << endl <<
-               "\t\theader->data_offset[" << table->get_name() << "_header_count] = offset;" << endl <<
-               "\t\toffset += " << table->get_name() << "_buffer_info.count * sizeof(struct " << table->get_name()
-               << ");" << endl <<
-               "\t\theader->index_offset[" << table->get_name() << "_header_count] = offset;" << endl <<
-               "\t\toffset += " << table->get_name() << "_index_count * sizeof(struct " << table->get_name()
-               << "_tree_item);" << endl
-               << endl;
-    }
+//    for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+//        Table *table = it->second;
+//        (*ofs) << "\t\theader->count[" << table->get_name() << "_header_count] = " << table->get_name()
+//               << "_buffer_info.count;" << endl <<
+//               "\t\theader->data_offset[" << table->get_name() << "_header_count] = offset;" << endl <<
+//               "\t\toffset += " << table->get_name() << "_buffer_info.count * sizeof(struct " << table->get_name()
+//               << ");" << endl <<
+//               "\t\theader->index_offset[" << table->get_name() << "_header_count] = offset;" << endl <<
+//               "\t\toffset += " << table->get_name() << "_index_count * sizeof(struct " << table->get_name()
+//               << "_tree_item);" << endl
+//               << endl;
+//    }
 
     (*ofs) << endl <<
            "\t\tfseek(handle->file, 0, SEEK_SET);" << endl <<
