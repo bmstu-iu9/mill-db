@@ -140,7 +140,7 @@ std::pair<std::string, std::string> ConditionTreeNode::calculate_pk_bounds() {
                 if (c->get_mode() != ConditionTreeNode::NONE) {
                     continue;
                 }
-                if (c->get_value()->get_column()->get_pk()) {
+                if (c->get_value()->get_column()->get_mod() == COLUMN_PRIMARY) {
                     Parameter *p = c->get_value()->get_parameter();
                     switch (c->get_value()->get_operator()) {
                         case Condition::EQ:
@@ -208,7 +208,7 @@ std::pair<std::string, std::string> ConditionTreeNode::calculate_pk_bounds() {
             }
             break;
         case NONE:
-            if (this->value->get_column()->get_pk()) {
+            if (this->value->get_column()->get_mod() == COLUMN_PRIMARY) {
                 Parameter *p = this->value->get_parameter();
                 switch (this->value->get_operator()) {
                     case Condition::EQ:
