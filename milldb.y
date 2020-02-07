@@ -20,7 +20,7 @@ int check_type(Parameter* param, Column* col);
 int check_type_col(Column* col1, Column* col2);
 int check_mode(Parameter* param, Parameter::Mode mode);
 int check_procedure(string procedure_name);
-ConditionTreeNode* condition_tree_walk(struct condition_tree_node* node, vector<Table*>* tables, std::__cxx11::string* table_name, SelectStatement* statement, Procedure* procedure);
+ConditionTreeNode* condition_tree_walk(struct condition_tree_node* node, vector<Table*>* tables, std::string* table_name, SelectStatement* statement, Procedure* procedure);
 
 void debug(const char* message);
 void debugf(const float f);
@@ -927,7 +927,7 @@ int check_mode(Parameter* param, Parameter::Mode mode) {
     return 0;
 }
 
-ConditionTreeNode* condition_tree_walk(struct condition_tree_node* node, vector<Table*>* tables, std::__cxx11::string* table_name, SelectStatement* statement, Procedure* procedure) {
+ConditionTreeNode* condition_tree_walk(struct condition_tree_node* node, vector<Table*>* tables, std::string* table_name, SelectStatement* statement, Procedure* procedure) {
     ConditionTreeNode* cond;
     std::vector<ConditionTreeNode*> children;
     switch (node->mode) {
