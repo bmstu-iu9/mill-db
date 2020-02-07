@@ -134,9 +134,9 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
         for (auto cond : p.second) {
             if (cond->get_column()->get_mod() >= COLUMN_BLOOM) {
                 stringstream bloom_name;
-                bloom_name << p.first->get_name() << "_" << cond->get_parameter()->get_name();
+                bloom_name << p.first->get_name() << "_" << cond->get_column()->get_name();
                 (*ofs) << "\tif (!is_" << bloom_name.str() <<
-                          "_bloom(iter->service.handle, " << cond->get_column()->get_name() << ")) {\n"
+                          "_bloom(iter->service.handle, " << cond->get_parameter()->get_name() << ")) {\n"
                           "\t\treturn;\n"
                           "\t}\n";
             }
