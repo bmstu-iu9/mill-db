@@ -437,18 +437,18 @@ void Table::print(ofstream *ofs, ofstream *ofl) {
                 add_bf << "\t\tadd_" << bloom_name << "_bloom(handle, current_item->" << f->get_name() << ");\n";
                 delete_bf << "\tdelete_bf(handle->" << bloom_name << "_bloom);\n";
 
-                (*ofs) << "void add_" << bloom_name << "_bloom(struct my_base_handle* handle, " << param_type << ") {\n"
+                (*ofs) << "void add_" << bloom_name << "_bloom(struct " << Environment::get_instance()->get_name() << "_handle* handle, " << param_type << ") {\n"
                           "\tadd_bf(handle->" << bloom_name << "_bloom, (char *)(" << pointer << "), " << size << ");\n"
                           "}\n"
                           "\n"
-                          "int is_" << bloom_name << "_bloom(struct my_base_handle* handle, " << param_type << ") {\n"
+                          "int is_" << bloom_name << "_bloom(struct " << Environment::get_instance()->get_name() << "_handle* handle, " << param_type << ") {\n"
                           "\treturn check_bf(handle->" << bloom_name << "_bloom, (char *)(" << pointer << "), " << size << ");\n"
                           "}\n\n";
 
             }
         }
 
-        (*ofs) << "void " << this->name << "_bloom_load(struct my_base_handle* handle) {\n"
+        (*ofs) << "void " << this->name << "_bloom_load(struct " << Environment::get_instance()->get_name() << "_handle* handle) {\n"
                   "\tuint64_t count = handle->header->count[" << this->name << "_header_count];\n"
                   "\n";
         (*ofs) << new_bf.str();
@@ -465,7 +465,7 @@ void Table::print(ofstream *ofs, ofstream *ofl) {
                   "\t}\n"
                   "}\n"
                   "\n"
-                  "void " << this->name << "_bloom_delete(struct my_base_handle* handle) {\n";
+                  "void " << this->name << "_bloom_delete(struct " << Environment::get_instance()->get_name() << "_handle* handle) {\n";
         (*ofs) << delete_bf.str();
         (*ofs) << "}\n\n";
 
@@ -551,7 +551,7 @@ void Table::print(ofstream *ofs, ofstream *ofl) {
 
         for (Column *c : this->cols) {
             if (c->get_mod() == COLUMN_INDEXED) {
-                (*ofs) << "void " << name << "_" << c->get_name() << "_index_load(struct my_base_handle* handle) {\n"
+                (*ofs) << "void " << name << "_" << c->get_name() << "_index_load(struct " << Environment::get_instance()->get_name() << "_handle* handle) {\n"
                           "\tif (handle->header->count[" << name << "_header_count] == 0) {\n"
                           "\t\thandle->" << name << "_root = NULL;\n"
                           "\t\treturn;\n"
