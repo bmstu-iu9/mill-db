@@ -78,11 +78,12 @@ void InsertStatement::print(ofstream *ofs, ofstream *ofl, string proc_name) {
            << this->get_table()->get_name() << "_new();" << endl;
 
     for (int i = 0, j = 0; i < this->get_table()->cols_size(); i++) {
-        if (this->get_table()->cols_at(i)->get_type()->get_typecode() == DataType::CHAR)
+        if (this->get_table()->cols_at(i)->get_type()->get_typecode() == DataType::CHAR) {
             (*ofs) << "\t" << "memcpy(inserted->" << this->get_table()->cols_at(i)->get_name() << ", "
                    << this->args[j]->print() << ", "
                    << to_string(this->get_table()->cols_at(i)->get_type()->get_length()) << ");" << endl;
-        else {
+            j++;
+        } else {
             string arg;
             if (std::find(this->seq_curr_pos.begin(), this->seq_curr_pos.end(), i) != this->seq_curr_pos.end()) {
                 arg = this->currVal_ind[i];

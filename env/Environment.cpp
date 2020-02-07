@@ -84,17 +84,100 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
            << "#include \"" << this->get_name() << ".h\"" << endl
            << endl;
 
-    (*ofs) << "#ifndef PAGE_SIZE\n"
-              "\t#define PAGE_SIZE 4096\n"
-              "#endif\n"
+	(*ofs) << "#ifndef PAGE_SIZE\n"
+			"\t#define PAGE_SIZE 4096\n"
+			"#endif\n"
+            "\n"
+            "struct bloom_filter {\n"
+              "\tchar *cell;\n"
+              "\tsize_t cell_size;\n"
               "\n"
-              "#define MILLDB_BUFFER_INIT_SIZE 32\n"
-              "\n"
-              "struct MILLDB_buffer_info {\n"
-              "\tuint64_t size;\n"
-              "\tuint64_t count;\n"
+              "\tsize_t *seeds;\n"
+              "\tsize_t seeds_size;\n"
               "};\n"
-              "\n";
+              "\n"
+              "int _get_bool(const char *cell, size_t n) {\n"
+              "\treturn (int)cell[n/8] & (int)(1 << n%8);\n"
+              "}\n"
+              "\n"
+              "void _set_bool(char *cell, size_t n) {\n"
+              "\tcell[n/8] = cell[n/8] | ((char)1 << n%8);\n"
+              "}\n"
+              "\n"
+              "size_t _hash_str(size_t seed1, size_t seed2, size_t mod, const char *str, size_t str_size) {\n"
+              "\tunsigned int res = 1;\n"
+              "\tfor (int i = 0; i < (int)str_size; i++) {\n"
+              "\t\tres = (seed1 * res + seed2 * str[i]) % mod;\n"
+              "\t}\n"
+              "\treturn res;\n"
+              "}\n"
+              "\n"
+              "size_t _generate_seed_str(char *str, size_t str_size) {\n"
+              "\treturn _hash_str(37, 1, 64, str, str_size); // random numbers\n"
+              "}\n"
+              "\n"
+              "struct bloom_filter *new_bf(size_t set_size, double fail_share) {\n"
+              "\tfail_share = fail_share < 0.01 ? 0.01 :\n"
+              "\t\t\t\t fail_share > 0.99 ? 0.99 : fail_share;\n"
+              "\n"
+              "\tsize_t cell_size = (-1.0 * (double)set_size * log(fail_share)) / pow(log(2),2);\n"
+              "\tcell_size = cell_size < 1 ? 1 : cell_size;\n"
+              "\tsize_t hashes_size = log(2) * (double)cell_size / set_size;\n"
+              "\thashes_size = hashes_size < 1 ? 1 : hashes_size;\n"
+              "\n"
+              "\tstruct bloom_filter *bf = calloc(1, sizeof(struct bloom_filter));\n"
+              "\n"
+              "\tsize_t buf_size = cell_size/8;\n"
+              "\tif (cell_size%8 != 0) {\n"
+              "\t\tbuf_size++;\n"
+              "\t}\n"
+              "\n"
+              "\tbf->cell = calloc(buf_size, sizeof(char));\n"
+              "\tbf->cell_size = cell_size;\n"
+              "\n"
+              "\tbf->seeds = calloc(hashes_size, sizeof(size_t));\n"
+              "\tbf->seeds_size = hashes_size;\n"
+              "\n"
+              "\tfor (int i = 0; i < (int)hashes_size; i++) {\n"
+              "\t\tbf->seeds[i] = i * 2.5 + cell_size / 10;\n"
+              "\t}\n"
+              "\n"
+              "\treturn bf;\n"
+              "}\n"
+              "\n"
+              "void delete_bf(struct bloom_filter *bf) {\n"
+              "\tfree(bf->cell);\n"
+              "\tfree(bf->seeds);\n"
+              "\tfree(bf);\n"
+              "}\n"
+              "\n"
+              "void add_bf(struct bloom_filter *bf, void *item, size_t item_size) {\n"
+              "\tsize_t seed_str = _generate_seed_str(item, item_size);\n"
+              "\n"
+              "\tfor (int i = 0; i < bf->seeds_size; i++) {\n"
+              "\t\t_set_bool(bf->cell, _hash_str(bf->seeds[i], seed_str, bf->cell_size, item, item_size));\n"
+              "\t}\n"
+              "}\n"
+              "\n"
+              "int check_bf(struct bloom_filter *bf, void *item, size_t item_size) {\n"
+              "\tsize_t seed_str = _generate_seed_str(item, item_size);\n"
+              "\n"
+              "\tfor (int i = 0; i < bf->seeds_size; i++) {\n"
+              "\t\tif (!_get_bool(bf->cell, _hash_str(bf->seeds[i], seed_str, bf->cell_size, item, item_size))) {\n"
+              "\t\t\treturn 0;\n"
+              "\t\t}\n"
+              "\t}\n"
+              "\n"
+              "\treturn 1;\n"
+              "}\n"
+			"\n"
+			"#define MILLDB_BUFFER_INIT_SIZE 32\n"
+			"\n"
+			"struct MILLDB_buffer_info {\n"
+			"\tuint64_t size;\n"
+			"\tuint64_t count;\n"
+			"};\n"
+			"\n";
 
     i = 0;
     for (auto it = this->tables.begin(); it != this->tables.end(); it++, i++) {
@@ -104,18 +187,31 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
 
     (*ofs) << endl;
 
-    int tables_total = this->tables.size();
+	int indexes_c = 0;
+    for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+        Table* table = it->second;
+        for (Column *c : table->cols) {
+            if (c->get_mod() == COLUMN_INDEXED) {
+                (*ofs) << "#define " << table->get_name() << "_" << c->get_name() << "_index_count " << to_string(indexes_c++) << endl;
+            }
+        }
+    }
 
-    (*ofs) << "struct MILLDB_header {\n"
-              "\tuint64_t count[" << to_string(tables_total) << "];\n"
-                                                                "\tuint64_t data_offset[" << to_string(tables_total)
-           << "];\n"
-              "\tuint64_t index_offset[" << to_string(tables_total) << "];\n"
-                                                                       "};\n"
-                                                                       "\n"
-                                                                       "#define MILLDB_HEADER_SIZE (sizeof(struct MILLDB_header))"
-           << endl
-           << endl;
+	(*ofs) << endl;
+
+	int tables_total = this->tables.size();
+
+	(*ofs) << "struct MILLDB_header {\n"
+			"\tuint64_t count[" << to_string(tables_total) << "];\n"
+			       "\tuint64_t data_offset[" << to_string(tables_total) <<"];\n"
+			       "\tuint64_t index_offset[" << to_string(tables_total) <<"];\n" <<
+			       "\n\tuint64_t add_count[" << indexes_c << "];\n"
+                   "\tuint64_t add_index_offset[" << indexes_c << "];\n"
+                   "\tuint64_t add_index_tree_offset[" << indexes_c << "];"
+                   "};\n"
+			       "\n"
+			       "#define MILLDB_HEADER_SIZE (sizeof(struct MILLDB_header))" << endl
+	       << endl;
 
     for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
         Table *table = it->second;
@@ -132,9 +228,24 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
            "\tstruct MILLDB_header* header;" << endl <<
            endl;
 
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		(*ofs) << "\tstruct " << table->get_name() << "_node* " << table->get_name() << "_root;" << endl;
+
+        for (Column *c : table->cols) {
+            if (c->get_mod() == COLUMN_INDEXED) {
+                (*ofs) << "\tstruct " << table->get_name() << "_" << c->get_name() << "_node* " << table->get_name() << "_" << c->get_name() << "_root;\n";
+            }
+        }
+	}
+
     for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-        Table *table = it->second;
-        (*ofs) << "\tstruct " << table->get_name() << "_node* " << table->get_name() << "_root;" << endl;
+        Table* table = it->second;
+        for (Column *f : table->cols) {
+            if (f->get_mod() >= COLUMN_BLOOM) {
+                (*ofs) << "\tstruct bloom_filter *" << table->get_name() << "_" << f->get_name() << "_bloom;\n";
+            }
+        }
     }
 
     (*ofs) << "};" << endl <<
@@ -184,17 +295,16 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
            "\t\tfseek(handle->file, MILLDB_HEADER_SIZE, SEEK_SET);" << endl <<
            endl;
 
-    for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-        Table *table = it->second;
-        (*ofs) << "\t\tuint64_t " << table->get_name() << "_index_count = 0;" << endl <<
-               "\t\tif (" << table->get_name() << "_buffer_info.count > 0)" << endl <<
-               "\t\t\t" << table->get_name() << "_index_count = " << table->get_name() << "_write(handle->file);"
-               << endl
-               << endl;
-    }
+	(*ofs) << "\t\tuint64_t offset = MILLDB_HEADER_SIZE;" << endl <<
+	       endl;
 
-    (*ofs) << "\t\tuint64_t offset = MILLDB_HEADER_SIZE;" << endl <<
-           endl;
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		(*ofs) << "\t\tuint64_t " << table->get_name() << "_index_count = 0;" << endl <<
+		       "\t\tif (" << table->get_name() << "_buffer_info.count > 0)" << endl <<
+		       "\t\t\t" << table->get_name() << "_write(handle->file, header, &offset);" << endl
+				<< endl;
+	}
 
     for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
         Table *table = it->second;
@@ -259,10 +369,17 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
            "\thandle->header = header;" << endl <<
            endl;
 
-    for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-        Table *table = it->second;
-        (*ofs) << "\t" << table->get_name() << "_index_load(handle);" << endl;
-    }
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		(*ofs) << "\t" << table->get_name() << "_bloom_load(handle);\n"
+            "\t" << table->get_name() << "_index_load(handle);" << endl;
+
+		for (Column *c : table->cols) {
+		    if (c->get_mod() == COLUMN_INDEXED) {
+                (*ofs)  << "\n" << table->get_name() << "_" << c->get_name() << "_index_load(handle);\n";
+		    }
+		}
+	}
 
     (*ofs) << endl <<
            "\treturn handle;" << endl <<
@@ -280,12 +397,20 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
            "\tfclose(handle->file);" << endl <<
            endl;
 
-    for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-        Table *table = it->second;
-        (*ofs) << "\tif (handle->" << table->get_name() << "_root)" << endl <<
-               "\t\t" << table->get_name() << "_index_clean(handle->" << table->get_name() << "_root);" << endl
-               << endl;
-    }
+	for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+		Table* table = it->second;
+		(*ofs) << "\tif (handle->" << table->get_name() << "_root)" << endl <<
+				"\t\t" << table->get_name() << "_index_clean(handle->" << table->get_name() << "_root);\n\t"
+		       << table->get_name() << "_bloom_delete(handle);\n";
+
+        for (Column *c : table->cols) {
+            if (c->get_mod() == COLUMN_INDEXED) {
+                (*ofs) << "\tif (handle->" << table->get_name() << "_" << c->get_name() << "_root)\n"
+                          "\t\t" << table->get_name() << "_" << c->get_name() << "_index_clean(handle->" << table->get_name() << "_" << c->get_name() << "_root);";
+//                (*ofs) << table->get_name() << "_" << c->get_name() << "_index_load(handle);\n";
+            }
+        }
+	}
 
     (*ofs) << endl <<
            "\tfree(handle->header);" << endl <<

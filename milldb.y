@@ -23,6 +23,7 @@ int check_procedure(string procedure_name);
 ConditionTreeNode* condition_tree_walk(struct condition_tree_node* node, vector<Table*>* tables, std::__cxx11::string* table_name, SelectStatement* statement, Procedure* procedure);
 
 void debug(const char* message);
+void debugf(const float f);
 
 extern "C" {
     void yyerror(char* s);
@@ -103,19 +104,19 @@ struct condition_tree_node {
 %token SEQUENCE_KEYWORD
 %token NEXTVAL_KEYWORD
 %token CURRVAL_KEYWORD
-%token CREATE_KEYWORD PK_KEYWORD
+%token CREATE_KEYWORD PK_KEYWORD INDEXED_KEYWORD BLOOM_KEYWORD
 %token SELECT_KEYWORD FROM_KEYWORD WHERE_KEYWORD
 %token INSERT_KEYWORD VALUES_KEYWORD
 %token PROCEDURE_KEYWORD BEGIN_KEYWORD END_KEYWORD IN_KEYWORD OUT_KEYWORD SET_KEYWORD
-%token ON_KEYWORD 
+%token ON_KEYWORD
 %token OR_KEYWORD
 %token AND_KEYWORD
 %token NOT_KEYWORD
 %token INT_KEYWORD FLOAT_KEYWORD DOUBLE_KEYWORD CHAR_KEYWORD
-%token IDENTIFIER PARAMETER INTEGER
+%token IDENTIFIER PARAMETER INTEGER FLOAT
 %token BAD_CHARACTER
 
-%type <char_arr> IDENTIFIER PARAMETER INTEGER
+%type <char_arr> IDENTIFIER PARAMETER INTEGER FLOAT
 %type <str>      table_name parameter_name column_name procedure_name sequence_name
 %type <dtype>    data_type
 %type <pmode>    parameter_mode
@@ -213,7 +214,7 @@ table_declaration: CREATE_KEYWORD TABLE_KEYWORD table_name
 
             // Populate table by its columns
             for (Column* const& col: *$5) {
-                pk_exists |= col->get_pk();
+                pk_exists |= col->get_mod() == COLUMN_PRIMARY;
                 pk_already |= $$->add_column(col);
             }
 
@@ -650,20 +651,67 @@ column_declaration_list: column_declaration {
     ;
 
 column_declaration: column_name data_type {
-            debug("column_declaration 1 BEGIN");
+            debug("column_declaration COLUMN_COMMON BEGIN");
 
-            $$ = new Column(*$1, $2, false);
+            $$ = new Column(*$1, $2, COLUMN_COMMON, 0.0);
             delete $1;
 
-            debug("column_declaration 1 END");
+            debug("column_declaration COLUMN_COMMON END");
+            debugf($$->get_fail_share());
+        }
+    | column_name data_type PK_KEYWORD FLOAT {
+            debug("column_declaration COLUMN_PRIMARY BEGIN");
+
+            $$ = new Column(*$1, $2, COLUMN_PRIMARY, atof($4));
+            delete $1;
+
+            debug("column_declaration COLUMN_PRIMARY END");
+            debugf($$->get_fail_share());
         }
     | column_name data_type PK_KEYWORD {
-            debug("column_declaration 2 BEGIN");
+            debug("column_declaration COLUMN_PRIMARY BEGIN");
 
-            $$ = new Column(*$1, $2, true);
+            $$ = new Column(*$1, $2, COLUMN_PRIMARY, DEFAULT_FAIL_SHARE);
             delete $1;
 
-            debug("column_declaration 2 END");
+            debug("column_declaration COLUMN_PRIMARY END");
+            debugf($$->get_fail_share());
+        }
+    | column_name data_type INDEXED_KEYWORD FLOAT {
+            debug("column_declaration COLUMN_INDEXED BEGIN");
+
+            $$ = new Column(*$1, $2, COLUMN_INDEXED, atof($4));
+            delete $1;
+
+            debug("column_declaration COLUMN_INDEXED END");
+            debugf($$->get_fail_share());
+        }
+    | column_name data_type INDEXED_KEYWORD {
+            debug("column_declaration COLUMN_INDEXED BEGIN");
+
+            $$ = new Column(*$1, $2, COLUMN_INDEXED, DEFAULT_FAIL_SHARE);
+            delete $1;
+
+            debug("column_declaration COLUMN_INDEXED END");
+            debugf($$->get_fail_share());
+        }
+    | column_name data_type BLOOM_KEYWORD FLOAT {
+            debug("column_declaration COLUMN_BLOOM BEGIN");
+
+            $$ = new Column(*$1, $2, COLUMN_BLOOM, atof($4));
+            delete $1;
+
+            debug("column_declaration COLUMN_BLOOM END");
+            debugf($$->get_fail_share());
+        }
+    | column_name data_type BLOOM_KEYWORD {
+            debug("column_declaration COLUMN_BLOOM BEGIN");
+
+            $$ = new Column(*$1, $2, COLUMN_BLOOM, DEFAULT_FAIL_SHARE);
+            delete $1;
+
+            debug("column_declaration COLUMN_BLOOM END");
+            debugf($$->get_fail_share());
         }
     ;
 
@@ -925,4 +973,10 @@ void debug(const char* message) {
     #ifdef DEBUG
         std::cout << message << std::endl;
     #endif
+}
+
+void debugf(const float f) {
+#ifdef DEBUG
+    std::cout << f << std::endl;
+#endif
 }
