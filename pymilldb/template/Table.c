@@ -62,7 +62,7 @@ int {{ table.name }}_{{ column_name }}_compare(struct {{ table.name }}* s1, stru
         return 1;
     else if ({{ column.kind.compare_less_expr('s1', column.name, 's2', column.name) }})
         return -1;
-    {%- for column_2 in table.columns.values() if column_2 != column }
+    {%- for column_2 in table.columns.values() if column_2 != column %}
 
     if ({{ column.kind.compare_greater_expr('s1', column_2.name, 's2', column_2.name) }})
         return 1;
@@ -146,7 +146,7 @@ void {{ table.name }}_write(FILE* file, struct MILLDB_header* header, uint64_t *
     }
 
     struct {{ table.name }}_tree_item* item = {{ table.name }}_tree_item_new();
-    {%- id isinstance(table.pk_column.kind, context.Char) %}
+    {%- if isinstance(table.pk_column.kind, context.Char) %}
     strncpy(item->key, {{ table.name }}_buffer[0], {{ table.pk_column.name }}, {{ table.pk_column.kind.size }});
     {%- else %}
     item->key = {{ table.name }}_buffer[0]->{{ table.pk_column.name }};
@@ -248,10 +248,10 @@ void {{ table.name }}_write(FILE* file, struct MILLDB_header* header, uint64_t *
     free(ind_buf);
     {%- endif %}
 }
-{%- for column in table.columns if column.mod >= column.COLUMN_BLOOM %}
+{%- for column in table.columns.values() if column.mod >= column.COLUMN_BLOOM %}
 
 {% set pointer = column.name if isinstance(column, context.Char) else '&' ~ column.name -%}
-{% set size = 'sizeof(char)*' if isinstance(column, context.Char) else 'sizeof(' ~ column.name ~ ')'}
+{% set size = 'sizeof(char)*' if isinstance(column, context.Char) else 'sizeof(' ~ column.name ~ ')' -%}
 void add_{{ table.name }}_{{ column.name }}_bloom(struct {{ context.NAME }}_handle* handle, {{ column.kind.signature(column.name) }}) {
     add_bf(handle->{{ table.name }}_{{ column.name }}_bloom, (char *)({{ pointer }}), {{ size }});
 }
@@ -263,7 +263,8 @@ int is_{{ table.name }}_{{ column.name }}_bloom(struct {{ context.NAME }}_handle
 
 void {{ table.name }}_bloom_load(struct {{ context.NAME }}_handle* handle) {
     uint64_t count = handle->header->count[{{ table.name }}_header_count];
-    {%- for column in table.columns if column.mod >= column.COLUMN_BLOOM %}
+    {%- for column in table.columns.values() if column.mod >= column.COLUMN_BLOOM %}
+
     handle->{{ table.name }}_{{ column.name }}_bloom = new_bf(count, {{ column.fail_share }});
     {%- endfor %}
 
@@ -273,7 +274,7 @@ void {{ table.name }}_bloom_load(struct {{ context.NAME }}_handle* handle) {
     while (offset < handle->header->index_offset[{{ table.name }}_header_count]) {
         struct {{ table.name }} *current_item = malloc(sizeof(struct {{ table.name }}));
         fread(current_item, sizeof(struct {{ table.name }}), 1, handle->file);
-        {%- for column in table.columns if column.mod >= column.COLUMN_BLOOM %}
+        {%- for column in table.columns.values() if column.mod >= column.COLUMN_BLOOM %}
         add_{{ table.name }}_{{ column.name }}_bloom(handle, current_item->{{ column.name }});
         {%- endfor %}
         free(current_item);
@@ -282,7 +283,7 @@ void {{ table.name }}_bloom_load(struct {{ context.NAME }}_handle* handle) {
 }
 
 void {{ table.name }}_bloom_delete(struct {{ context.NAME }}_handle* handle) {
-    {%- for column in table.columns if column.mod >= column.COLUMN_BLOOM %}
+    {%- for column in table.columns.values() if column.mod >= column.COLUMN_BLOOM %}
     delete_bf(handle->{{ table.name }}_{{ column.name }}_bloom);
     {%- endfor %}
 }
@@ -298,7 +299,7 @@ void {{ table.name }}_index_clean(struct {{ table.name }}_node* node) {
         free(node->childs);
     free(node);
 }
-{%- for column in table.columns if column.is_indexed %}
+{%- for column in table.columns.values() if column.is_indexed %}
 
 void " << this->name << "_{{ column.name }}_index_clean(struct " << this->name << "_{{ column.name }}_node* node) {
     if (node == NULL)
@@ -365,7 +366,7 @@ void {{ table.name }}_index_load(struct {{ context.NAME  }}_handle* handle) {
     handle->{{ table.name }}_root = current_level[0];
     free(current_level);
 }
-{%- for column in table.columns if column.is_indexed %}
+{%- for column in table.columns.values() if column.is_indexed %}
 
 void {{ table.name }}_{{ column.name }}_index_load(struct {{ context.NAME }}_handle* handle) {
     if (handle->header->count[{{ table.name }}_header_count] == 0) {

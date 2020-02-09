@@ -1,6 +1,4 @@
-{%- for statement in procedure.statements %}
 {% include 'InsertStatement.c' %}
-{%- endfor %}
 
 void {{ procedure.name }}(
     {%- set comma = joiner(', ') -%}

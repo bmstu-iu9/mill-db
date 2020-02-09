@@ -12,6 +12,7 @@
 struct bloom_filter {
     char *cell;
     size_t cell_size;
+
     size_t *seeds;
     size_t seeds_size;
 };
@@ -39,19 +40,25 @@ size_t _generate_seed_str(char *str, size_t str_size) {
 struct bloom_filter *new_bf(size_t set_size, double fail_share) {
     fail_share = fail_share < 0.01 ? 0.01 :
                  fail_share > 0.99 ? 0.99 : fail_share;
+
     size_t cell_size = (-1.0 * (double)set_size * log(fail_share)) / pow(log(2),2);
     cell_size = cell_size < 1 ? 1 : cell_size;
     size_t hashes_size = log(2) * (double)cell_size / set_size;
     hashes_size = hashes_size < 1 ? 1 : hashes_size;
+
     struct bloom_filter *bf = calloc(1, sizeof(struct bloom_filter));
+
     size_t buf_size = cell_size/8;
     if (cell_size%8 != 0) {
         buf_size++;
     }
+
     bf->cell = calloc(buf_size, sizeof(char));
     bf->cell_size = cell_size;
+
     bf->seeds = calloc(hashes_size, sizeof(size_t));
     bf->seeds_size = hashes_size;
+
     for (int i = 0; i < (int)hashes_size; i++) {
         bf->seeds[i] = i * 2.5 + cell_size / 10;
     }
@@ -91,7 +98,7 @@ struct MILLDB_buffer_info {
 #define {{ table.name }}_header_count {{ loop.index0 }}
 {%- endfor %}
 {%- for table in context.TABLES.values() %}
-{%- for column in table.columns if column.is_indexed %}
+{%- for column in table.columns.values() if column.is_indexed %}
 #define {{ table.name }}_{{ column.name }}_index_count {{ counter() }}
 {%- endfor %}
 {%- endfor %}
@@ -132,7 +139,7 @@ struct {{ context.NAME }}_handle {
     struct MILLDB_header* header;
     {% for table in context.TABLES.values() %}
     struct {{ table.name }}_node* {{ table.name }}_root;
-    {%- for column in table.columns %}
+    {%- for column in table.columns.values() %}
     {%- if column.is_indexed %}
     struct {{ table.name }}_{{ column.name }}_node* {{ table.name }}_{{ column.name }}_root;
     {% elif column.mod >= column.COLUMN_BLOOM %}
@@ -223,7 +230,7 @@ struct {{ context.NAME }}_handle* {{ context.NAME }}_open_read(const char* filen
 
     {%- for table in context.TABLES.values() %}
     {{ table.name }}_index_load(handle);
-    {%- for column in table.columns if column.is_indexed %}
+    {%- for column in table.columns.values() if column.is_indexed %}
     {{ table.name }}_{{ column.name }}_index_load(handle);
     {%- endfor %}
     {%- endfor %}
@@ -240,7 +247,7 @@ void {{ context.NAME }}_close_read(struct {{ context.NAME }}_handle* handle) {
 
     if (handle->{{ table.name }}_root)
         {{ table.name }}_index_clean(handle->{{ table.name }}_root);
-    {%- for column in table.columns if column.is_indexed %}
+    {%- for column in table.columns.values() if column.is_indexed %}
     if (handle->" << table->get_name() << "_" << c->get_name() << "_root)
         {{ table.name }}_{{ column.name }}_index_clean(handle->{{ table.name }}_{{ column.name }}_root);
     {%- endfor %}

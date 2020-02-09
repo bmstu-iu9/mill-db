@@ -10,10 +10,9 @@ class Column(object):
     DEFAULT_FAIL_SHARE = 0.2
 
     __NAME_TO_MOD = dict(
-        common=0,
         bloom=1,
         indexed=2,
-        primary=3,
+        pk=3,
     )
 
     def __init__(self, name: str, kind: BaseType, mod: int, table=None, fail_share=None):
@@ -21,8 +20,9 @@ class Column(object):
         self.kind = kind
         self.mod = mod
         self.table = table
+        self.is_pk = mod == self.COLUMN_PRIMARY
 
-        self.fail_share = fail_share if fail_share is None else self.DEFAULT_FAIL_SHARE
+        self.fail_share = self.DEFAULT_FAIL_SHARE if fail_share is None else fail_share
 
     @classmethod
     def auto(cls, name: str, kind: BaseType, mod: str, table=None, fail_share=None):

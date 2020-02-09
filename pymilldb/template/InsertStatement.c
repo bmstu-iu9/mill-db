@@ -1,3 +1,4 @@
+{%- for statement in procedure.statements %}
 
 void {{ procedure.name }}_{{ loop.index }}(
     {%- set comma = joiner(', ') -%}
@@ -22,3 +23,4 @@ void {{ procedure.name }}_{{ loop.index }}(
     {%- endfor %}
     {{ statement.table.name }}_buffer_add(inserted);
 }
+{%- endfor %}

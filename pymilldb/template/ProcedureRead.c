@@ -11,9 +11,7 @@ void {{ procedure.name }}_add(struct {{ procedure.name }}_out* iter, struct {{ p
     }
     memcpy(&(service->set[service->length++]), selected, sizeof(struct {{ procedure.name }}_out_data));
 }
-{%- for statement in procedure.statements %}
 {% include 'SelectStatement.c' %}
-{%- endfor %}
 
 void {{ procedure.name }}_init(struct {{ procedure.name }}_out* iter, struct {{ context.NAME }}_handle* handle
 {%- for param in procedure.parameters.values() -%}
@@ -32,7 +30,7 @@ void {{ procedure.name }}_init(struct {{ procedure.name }}_out* iter, struct {{ 
     {{ procedure.name }}_1(iter
     {%- for param in procedure.parameters.values() -%}
         {%- if param.mode == 'IN' -%}
-            , param.name
+            , {{ param.name }}
         {%- endif -%}
     {%- endfor -%}
     );

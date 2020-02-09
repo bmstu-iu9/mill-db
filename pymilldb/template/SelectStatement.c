@@ -1,3 +1,4 @@
+{%- for statement in procedure.statements %}
 
 void {{ procedure.name }}_{{ loop.index }}(
     struct {{ procedure.name }}_out* iter
@@ -21,3 +22,4 @@ void {{ procedure.name }}_{{ loop.index }}(
     /* TABLE {{ table.name }} */
     {%- endfor %}
 }
+{%- endfor %}
