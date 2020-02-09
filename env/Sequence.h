@@ -6,18 +6,21 @@
 
 class Sequence {
 public:
-	Sequence(std::string name);
-	~Sequence();
+    Sequence(std::string name);
 
-	std::string get_name();
-	bool is_printed();
-	void print(std::ofstream* ofs, std::ofstream* ofl);
+    ~Sequence();
+
+    std::string get_name();
+
+    bool is_printed();
+
+    void print(std::ofstream *ofs, std::ofstream *ofl);
 
 private:
-	std::string name;
-	uint64_t value; 
+    std::string name;
+    uint64_t value;
 
-	bool printed;
+    bool printed;
 };
 
 

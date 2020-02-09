@@ -6,14 +6,17 @@
 
 class Selection {
 public:
-	Selection(Column* col, Parameter* param);
-	Column* get_column();
-	Parameter* get_parameter();
-	std::string print(std::ofstream* ofs, std::ofstream* ofl);
+    Selection(Column *col, Parameter *param);
+
+    Column *get_column();
+
+    Parameter *get_parameter();
+
+    std::string print(std::ofstream *ofs, std::ofstream *ofl);
 
 private:
-	Column* col;
-	Parameter* param;
+    Column *col;
+    Parameter *param;
 };
 
 

@@ -1,7 +1,9 @@
 PROJECT_NAME=milldb
+TEST_NAME=test_logic
 
 all: lexer parser exec
 
+rebuild: clean all
 
 lexer: $(PROJECT_NAME).l
 	flex --header-file=$(PROJECT_NAME).lex.h -o $(PROJECT_NAME).lex.c $(PROJECT_NAME).l

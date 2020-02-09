@@ -10,41 +10,46 @@
 #include "Column.h"
 #include "Parameter.h"
 #include "Condition.h"
+#include "ConditionTreeNode.h"
 #include "Selection.h"
 
-class SelectStatement: public Statement {
+class SelectStatement : public Statement {
 public:
-//	SelectStatement(Table* table, std::vector<Selection*> selections, std::vector<Condition*> conds);
-//	Table* get_table();
+    SelectStatement(std::vector<Table *> *tables);
 
-//	SelectStatement(Table* table);
-	SelectStatement(std::vector<Table*>* tables);
-	void add_selection(Selection* selection);
-	void add_condition(Condition* cond);
-	void add_condition_to_table(std::string table_name,Condition* cond);
-	void add_selection_to_table(std::string table_name,Selection* cond);
+    void add_selection(Selection *selection);
 
+    void add_condition_tree(ConditionTreeNode *tree);
 
-	//Table* get_table();
-	~SelectStatement();
+    void remove_join_conditions(ConditionTreeNode *node, std::string &table_name, int *i);
 
-	void print(std::ofstream* ofs, std::ofstream* ofl, std::string func_name);
-	void print_arguments(std::ofstream* ofs, std::ofstream* ofl);
-	void print_full_signature(std::ofstream* ofs, std::ofstream* ofl, std::string proc_name);
-	void print_dependencies(std::ofstream* ofs, std::ofstream* ofl);
+    bool should_remove_condition(Condition *c, std::string &table_name, int *i);
 
-	void check_table_pk(std::string table_name);
+    void add_condition_to_table(std::string table_name, Condition *cond);
 
-	//bool have_pk_cond;
+    void add_selection_to_table(std::string table_name, Selection *cond);
+
+    ~SelectStatement();
+
+    void print(std::ofstream *ofs, std::ofstream *ofl, std::string func_name);
+
+    void print_arguments(std::ofstream *ofs, std::ofstream *ofl);
+
+    void print_full_signature(std::ofstream *ofs, std::ofstream *ofl, std::string proc_name);
+
+    void print_dependencies(std::ofstream *ofs, std::ofstream *ofl);
+
+    void check_table_pk(std::string table_name);
+
 private:
-	//Table* table;//[]
-	std::map<std::string,int> tb_ind;
-	std::map<std::string,bool> has_pk_cond;
-	std::vector<std::pair<Table*, std::vector<Condition*> > > tables;
-	std::vector<std::pair<Table*, std::vector<Selection*> > > selects;
-	std::vector<Selection*> selections;
-	std::vector<Condition*> conds;
-//	SelectStatement *joined_statement;
+    std::map<std::string, int> tb_ind;
+    std::map<std::string, bool> has_pk_cond;
+    std::vector<std::pair<Table *, std::vector<Condition * >>>
+            tables;
+    std::vector<std::pair<Table *, std::vector<Selection * >>>
+            selects;
+    std::vector<Selection *> selections;
+    ConditionTreeNode *condition_tree;
 };
 
 

@@ -6,21 +6,26 @@
 
 class Parameter {
 public:
-	enum Mode {IN, OUT};
-	Parameter(std::string name, DataType* type, Mode mode);
+    enum Mode {
+        IN, OUT
+    };
 
-	~Parameter();
+    Parameter(std::string name, DataType *type, Mode mode);
 
-	std::string get_name();
-	DataType* get_type();
-	Mode get_mode();
+    ~Parameter();
 
-	std::string signature();
+    std::string get_name();
+
+    DataType *get_type();
+
+    Mode get_mode();
+
+    std::string signature();
 
 private:
-	std::string name;
-	DataType* type;
-	Mode mode;
+    std::string name;
+    DataType *type;
+    Mode mode;
 };
 
 
