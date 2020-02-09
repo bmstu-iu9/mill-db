@@ -27,6 +27,8 @@ def main(path):
     env = jinja2.Environment(loader=jinja2.FileSystemLoader('pymilldb/template'))
     env.globals['isinstance'] = isinstance
     env.globals['zip'] = zip
+    env.globals['any'] = any
+    env.globals['all'] = all
     temp = env.get_template('Environment.c')
     with open('out.c', 'w') as f:
         f.write(temp.render(context=context))
