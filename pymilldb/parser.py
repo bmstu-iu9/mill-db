@@ -23,16 +23,17 @@ class Token(Lexer):
         return self
 
     def __rshift__(self, other):
-        if self.cur_token == other:
+        if self.cur_token in other if isinstance(other, (tuple, list)) else self.cur_token == other:
             self.is_safe = False
             val = self.cur_value
             self.next()
             return val
         else:
-            self.is_safe = False
             if self.is_safe:
+                self.is_safe = False
                 return None
             else:
+                self.is_safe = False
                 raise Exception  # todo: Обработка ошибок
 
 
@@ -97,13 +98,19 @@ class Parser(object):
     def column_declaration(self, table: context.Table):
         # id type
         # id type PK
+        # id type PK FLOAT
+        # id type INDEXED
+        # id type INDEXED FLOAT
+        # id type BLOOM
+        # id type BLOOM FLOAT
         column_name = self.token >> 'IDENTIFIER'
         column_type = self.parse_type()
-        is_pk = False
-        if self.token == 'PK':
-            self.token.next()  # self.token >> 'PK'
-            is_pk = True
-        column = context.Column(column_name, column_type, is_pk, table)
+        if self.token in ('PK', 'INDEXED', 'BLOOM'):
+            mod = self.token >> ('PK', 'INDEXED', 'BLOOM')
+            value = self.token.safe() >> 'FLOAT'
+            column = context.Column.auto(column_name, column_type, mod, table, value)
+        else:
+            column = context.Column.common(column_name, column_type, table)
         table.add_column(column)
 
     @log(logger)

@@ -29,6 +29,8 @@ KEYWORDS = {
 
     "create": "CREATE",
     "pk": "PK",
+    'indexed': 'INDEXED',
+    'bloom': 'BLOOM',
 
     "select": "SELECT",
     "from": "FROM",
@@ -149,10 +151,23 @@ class Lexer(object):
                     yield SYMBOLS[c1], SYMBOLS[c1], c1
                 continue
             # Проверка на число
+            if self.pos.char == '.':
+                start = copy(self.pos)
+                while self.pos.isdecimal():
+                    self.pos.next()
+                f_number = self.pos - start
+                yield 'FLOAT', float(f_number), f_number
+
             if self.pos.isdecimal():
                 start = copy(self.pos)
                 while self.pos.isdecimal():
                     self.pos.next()
+                if self.pos.char == '.':
+                    while self.pos.isdecimal():
+                        self.pos.next()
+                    f_number = self.pos - start
+                    yield 'FLOAT', float(f_number), f_number
+
                 number = self.pos - start
                 yield 'INTEGER', int(number), number
                 continue

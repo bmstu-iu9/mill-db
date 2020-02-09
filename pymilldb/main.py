@@ -12,6 +12,18 @@ logger_mod.setup_logging()
 logger = logging.getLogger('main')
 
 
+class Counter(object):
+    def __init__(self, value=0):
+        self.count = value
+
+    def __call__(self):
+        self.count += 1
+        return self.count - 1
+
+    def __str__(self):
+        return str(self.count)
+
+
 def main(path):
     logger.info('Init Logger.is_crashed %s', logger_mod.Logger.is_crashed)
     name = os.path.basename(path).rsplit('.', 1)[0]
@@ -31,7 +43,7 @@ def main(path):
     env.globals['all'] = all
     temp = env.get_template('Environment.c')
     with open('out.c', 'w') as f:
-        f.write(temp.render(context=context))
+        f.write(temp.render(context=context, counter=Counter()))
 
 """
 void {{ procedure.name }}_{{ loop.index }}(
