@@ -9,6 +9,14 @@ logger = logging.getLogger('Condition')
 
 class Condition(object):
     supported_operations = ('EQ', 'LESS', 'MORE', 'NOT_EQ', 'LESS_OR_EQ', 'MORE_OR_EQ')
+    op2str = dict(
+        EQ='==',
+        NOT_EQ='!=',
+        LESS='<',
+        LESS_OR_EQ='<=',
+        MORE='>',
+        MORE_OR_EQ='>=',
+    )
     rip = None  # right is parameter
 
     def __init__(self, left: str, right: str, op: str):
@@ -40,6 +48,12 @@ class Condition(object):
     @property
     def is_more_or_eq(self):
         return self.op == 'MORE_OR_EQ'
+
+    def __repr__(self):
+        return '<{}>'.format(self.__str__())
+
+    def __str__(self):
+        return ' '.join([self.left, self.op2str[self.op], self.right])
 
 
 class ConditionWithParameter(Condition):

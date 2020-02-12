@@ -272,7 +272,13 @@ class Parser(object):
         select_statement.check_selections()
         self.token >> 'WHERE'
         raw_condition_tree = self.condition_list(procedure, select_statement)
-        condition_tree = self.__optimize_tree(raw_condition_tree)
+        _, _, condition_tree = self.__optimize_tree(raw_condition_tree)
+        print()
+        print(raw_condition_tree)
+        print(condition_tree)
+        print()
+        print(context.print_condition_tree_node(condition_tree))
+        print()
         self.token.safe() >> 'SEMICOLON'
         procedure.add_statement(select_statement)
 
@@ -290,7 +296,7 @@ class Parser(object):
                 ]
             elif lop == 'NOT':
                 assert len(tail) == 1
-                _, new_tail, _ = Parser.__optimize_tree(tail[0])
+                _, _, *new_tail = Parser.__optimize_tree(*tail)
             else:
                 logger.fatal('Unreachable exception')
                 raise context.UnreachableException
@@ -362,7 +368,7 @@ class Parser(object):
         return out
 
     @log(logger)
-    def condition_simple(self,procedure: context.Procedure, select_statement: context.Statement):
+    def condition_simple(self, procedure: context.Procedure, select_statement: context.Statement):
         # LPARENT <condition_list> RPARENT
         # NOT <condition_simple>
         # id <op> id
@@ -373,7 +379,7 @@ class Parser(object):
             self.token >> 'RPARENT'
         elif self.token == 'NOT':
             self.token.next()  # self.token >> 'NOT'
-            cond = ('NOT', self.condition_simple())
+            cond = ('NOT', self.condition_simple(procedure, select_statement))
         else:
             left = self.token >> 'IDENTIFIER'
             left_column: Optional[context.Column] = select_statement.find_column(left)
