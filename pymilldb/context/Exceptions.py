@@ -1,0 +1,2 @@
+class UnreachableException(Exception):
+    pass

@@ -20,7 +20,6 @@ class Column(object):
         self.kind = kind
         self.mod = mod
         self.table = table
-        self.is_pk = mod == self.COLUMN_PRIMARY
 
         self.fail_share = self.DEFAULT_FAIL_SHARE if fail_share is None else fail_share
 

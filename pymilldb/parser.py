@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from . import context
 from .lexer import Lexer
@@ -77,7 +78,7 @@ class Parser(object):
         table = context.Table(table_name)
         check_name = context.VARIABLES.get(table_name)
         if check_name:
-            logger.error('Table name `%s` is already used for the %s.', table_name, check_name)
+            context.table_logger.error('Table name `%s` is already used for the %s.', table_name, check_name)
         else:
             context.VARIABLES[table_name] = 'table'
             context.TABLES[table_name] = table
@@ -131,7 +132,7 @@ class Parser(object):
         check_name = context.VARIABLES.get(procedure_name)
         procedure = context.Procedure(procedure_name)
         if check_name:
-            logger.error('Procedure name `%s` is already used for the %s.', procedure_name, check_name)
+            context.procedure_logger('Procedure name `%s` is already used for the %s.', procedure_name, check_name)
         else:
             context.VARIABLES[procedure_name] = 'procedure'
             context.PROCEDURES[procedure_name] = procedure
@@ -164,8 +165,8 @@ class Parser(object):
             self.token.next()  # self.token >> 'OUT'
             parameter = context.OutputParameter(parameter_name, parameter_type)
         else:
-            logger.fatal('Not found parameter type (`in` or `out`)')
-            raise Exception
+            context.parameter_logger.error('Not found parameter type (`in` or `out`)')
+            parameter = context.Parameter(parameter_name, parameter_type)
         procedure.add_parameter(parameter)
 
     @log(logger)
@@ -189,7 +190,7 @@ class Parser(object):
             self.select_statement(procedure)
         else:
             logger.fatal('Unreachable exception')
-            raise Exception  # todo
+            raise context.UnreachableException
 
     @log(logger)
     def insert_statement(self, procedure: context.Procedure):
@@ -270,9 +271,32 @@ class Parser(object):
         self.table_list(select_statement)
         select_statement.check_selections()
         self.token >> 'WHERE'
-        conditions = self.condition_list(procedure, select_statement)
+        raw_condition_tree = self.condition_list(procedure, select_statement)
+        condition_tree = self.__optimize_tree(raw_condition_tree)
         self.token.safe() >> 'SEMICOLON'
         procedure.add_statement(select_statement)
+
+    @staticmethod
+    def __optimize_tree(tree):
+        if isinstance(tree, (tuple, list)):
+            lop, *tail = tree  # lop = logic operator
+            if lop in ('AND', 'OR'):
+                new_tail = [
+                    el
+                    for child in tail
+                    for child_lop, child_tail, child in [Parser.__optimize_tree(child)]
+                    for children in [child_tail if child_lop == lop else [child]]
+                    for el in children
+                ]
+            elif lop == 'NOT':
+                assert len(tail) == 1
+                _, new_tail, _ = Parser.__optimize_tree(tail[0])
+            else:
+                logger.fatal('Unreachable exception')
+                raise context.UnreachableException
+            return lop, new_tail, (lop, *new_tail)
+        else:
+            return None, [tree], tree
 
     @log(logger)
     def selection_list(self, procedure: context.Procedure, select_statement: context.SelectStatement):
@@ -338,28 +362,44 @@ class Parser(object):
         return out
 
     @log(logger)
-    def condition_simple(self, procedure: context.Procedure, select_statement: context.Statement):
+    def condition_simple(self,procedure: context.Procedure, select_statement: context.Statement):
+        # LPARENT <condition_list> RPARENT
+        # NOT <condition_simple>
+        # id <op> id
+        # id <op> pid
         if self.token == 'LPARENT':
             self.token.next()  # self.token >> 'LPARENT'
-            cond = self.condition_list()
+            cond = self.condition_list(procedure, select_statement)
             self.token >> 'RPARENT'
         elif self.token == 'NOT':
             self.token.next()  # self.token >> 'NOT'
             cond = ('NOT', self.condition_simple())
         else:
             left = self.token >> 'IDENTIFIER'
+            left_column: Optional[context.Column] = select_statement.find_column(left)
             op = self.operator()
             if self.token == 'IDENTIFIER':
                 right = self.token >> 'IDENTIFIER'
-                cond = context.Condition(left, right, op, False)
+                right_column: Optional[context.Column] = select_statement.find_column(right)
+                if left_column and right_column and left_column.kind != right_column.kind:
+                    context.condition_logger.error(
+                        'Incompatible types column %s and column %s',
+                        left_column.name, right_column.name
+                    )
+                cond = context.ConditionWithOnlyColumns(left, right, op, left_column, right_column)
             elif self.token == 'PARAMETER':
                 right = self.token >> 'PARAMETER'
-                check_name = procedure.parameters.get(right)
-                if not check_name:
-                    logger.error('Parameter %s not found in procedure parameters', right)
-                elif not isinstance(check_name, context.InputParameter):
-                    logger.error('The parameter %s must be input', right)
-                cond = context.Condition(left, right, op, True)
+                right_parameter: Optional[context.Parameter] = procedure.parameters.get(right)
+                if not right_parameter:
+                    context.condition_logger.error('Parameter %s not found in procedure parameters', right)
+                elif not isinstance(right_parameter, context.InputParameter):
+                    context.condition_logger.error('The parameter %s must be input', right)
+                if right_parameter and left_column and left_column.kind != right_parameter.kind:
+                    context.condition_logger.error(
+                        'Incompatible types parameter %s and column %s',
+                        left_column.name, right_parameter.name
+                    )
+                cond = context.ConditionWithParameter(left, right, op, left_column, right_parameter)
             else:
                 raise Exception  # todo
         return cond
@@ -372,11 +412,7 @@ class Parser(object):
         # NOT_EQ
         # LESS_OR_EQ
         # MORE_OR_EQ
-        op = self.token
-        if op not in ('EQ', 'LESS', 'MORE', 'NOT_EQ', 'LESS_OR_EQ', 'MORE_OR_EQ'):
-            raise Exception  # todo
-        self.token.next()  # self.token >> ...
-        return op
+        return self.token >> ('EQ', 'LESS', 'MORE', 'NOT_EQ', 'LESS_OR_EQ', 'MORE_OR_EQ')
 
     @log(logger)
     def sequence_declaration(self):

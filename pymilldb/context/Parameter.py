@@ -1,4 +1,8 @@
+import logging
+
 from .DataType import BaseType
+
+logger = logging.getLogger('Parameter')
 
 
 class Parameter(object):
