@@ -3,7 +3,8 @@ import logging
 
 from .Selection import Selection
 from .Table import Table
-
+from .Condition import ConditionWithOnlyColumns, Condition
+from copy import copy
 logger = logging.getLogger('Statement')
 
 
@@ -37,7 +38,7 @@ class SelectStatement(Statement):
         self.tables = {}
         self.selections = []
         self.raw_selections = []
-        self.conditions = {}
+        self.condition_tree = None
 
     def add_table(self, table: Table):
         check_name = self.tables.get(table.name)
@@ -47,14 +48,20 @@ class SelectStatement(Statement):
             self.tables[table.name] = {
                 'table': table,
                 'index': len(self.tables),
-                'has_pl_cond': False,
+                'has_pk_cond': False,
                 'conditions': [],
+                'selections': [],
             }
+
+    def add_condition_to_table(self, cond: Condition):
+        if cond.obj_left:
+            table_data = self.tables[cond.obj_left.table.name]
+            table_data['conditions'].append(cond)
 
     def check_selections(self):
         for column_name, parameter in self.raw_selections:
             tables = [
-                (table, column)
+                (data, table, column)
 
                 for data in self.tables.values()
                 for table in [data['table']]
@@ -66,15 +73,16 @@ class SelectStatement(Statement):
                     '%s Found many tables containing column %s. Tables: (%s)',
                     self, column_name, ', '.join(x[0].name for x in tables)
                 )
-                table, column = tables[0]
+                (table_data, table, column), *_ = tables
             elif tables:
-                table, column = tables[0]
+                (table_data, table, column), = tables
             else:
                 logger.error('%s Not found table containing column %s', self, column_name)
                 continue
             if column.kind != parameter.kind:
                 logger.error('%s Incompatible types parameter %s and column %s', self, column.name, parameter.name)
             selection = Selection(column, parameter)
+            table_data['selections'].append(selection)
             self.selections.append(selection)
         del self.raw_selections
 
@@ -91,17 +99,82 @@ class SelectStatement(Statement):
                 self, column_name, ', '.join(t.name for t, _, _ in tables)
             )
         elif tables:
-            (table, column, table_data), *_ = tables
+            (table, column, table_data), = tables
             return column
         else:
             logger.error('%s Not found table containing column %s', self, column_name)
         return None
 
-    def add_condition(self, condition):
-        pass
+    def check_ind(self):
+        if len(self.tables) == 1:
+            table_data, = self.tables.values()
+            conditions = table_data['conditions']
+            for cond in conditions:
+                if cond.obj_left.is_primary:
+                    return False, None, None
 
-    def add_condition_to_table(self, table_name, condition):
-        pass
+            for cond in table_data['conditions']:
+                if cond.obj_left.is_indexed:
+                    return True, table_data, cond.obj_left
+        return False, None, None
+
+    def check_table_pk(self, table_data):
+        idx = table_data['index']
+        conditions = table_data['conditions']
+
+        for i, cond in enumerate(conditions):
+            if cond.obj_left.is_primary:
+                flag = True
+                if isinstance(cond, ConditionWithOnlyColumns):
+                    join_table = cond.obj_right.table
+                    join_table_data = self.tables[join_table.name]
+                    join_table_idx = join_table_data['index']
+                    flag = join_table_idx < idx
+                if flag:
+                    if table_data['has_pk_cond']:
+                        cond.disabled = True
+                        continue
+                    if i:
+                        conditions[0], conditions[i] = conditions[i], conditions[0]
+                    table_data['has_pk_cond'] = True
+
+    def remove_join_conditions(self, node, table_name, idx=0):
+        if isinstance(node, (tuple, list)):
+            lop, *tail = node
+            if lop in ('AND', 'OR'):
+                i = 0
+                while i < len(tail):
+                    child = tail[i]
+
+                    if isinstance(child, (tuple, list)):
+                        child_lop, *child_tail = child
+                        if child_lop == 'NOT' and isinstance(*child_tail, Condition):
+                            cond, = child_tail
+                        else:
+                            continue
+                    else:
+                        cond = child
+                    idx += 1
+                    if self.should_remove_condition(cond, table_name, idx - 1):
+                        if len(tail) == 2:
+                            i = i - 1 if child == tail[-1] else i + 1
+
+                    else:
+                        self.remove_join_conditions(child, table_name, i)
+
+    def should_remove_condition(self, condition, table_name, idx):
+        corr = True
+        if isinstance(condition, ConditionWithOnlyColumns):
+            join_table = condition.obj_right.table
+            if self.tables[table_name]['index'] < self.tables[join_table.name]['index']:
+                new_condition = copy(condition)
+                new_condition.obj_right, new_condition.obj_left = new_condition.obj_left, new_condition.obj_right
+                new_condition.right, new_condition.left = new_condition.left, new_condition.right
+                self.tables[table_name]['conditions'].append(new_condition)
+                corr = False
+        if condition.disabled or idx == 0 and self.tables[table_name]['has_pk_cond']:
+            corr = False
+        return not corr
 
 
 class InsertStatement(Statement):

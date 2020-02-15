@@ -273,12 +273,7 @@ class Parser(object):
         self.token >> 'WHERE'
         raw_condition_tree = self.condition_list(procedure, select_statement)
         _, _, condition_tree = self.__optimize_tree(raw_condition_tree)
-        print()
-        print(raw_condition_tree)
-        print(condition_tree)
-        print()
-        print(context.print_condition_tree_node(condition_tree))
-        print()
+        select_statement.condition_tree = condition_tree
         self.token.safe() >> 'SEMICOLON'
         procedure.add_statement(select_statement)
 
@@ -300,7 +295,7 @@ class Parser(object):
             else:
                 logger.fatal('Unreachable exception')
                 raise context.UnreachableException
-            return lop, new_tail, (lop, *new_tail)
+            return lop, new_tail, [lop, *new_tail]
         else:
             return None, [tree], tree
 
@@ -359,9 +354,9 @@ class Parser(object):
             else:
                 break
         out = (
-            ('OR', *map(lambda x: x[0] if len(x) == 1 else ('AND', *x), interim_out))
+            ['OR', *map(lambda x: x[0] if len(x) == 1 else ('AND', *x), interim_out)]
             if len(interim_out) > 1 else
-            ('AND', *interim_out[0])
+            ['AND', *interim_out[0]]
             if len(interim_out[0]) > 1 else
             interim_out[0][0]
         )
@@ -379,7 +374,7 @@ class Parser(object):
             self.token >> 'RPARENT'
         elif self.token == 'NOT':
             self.token.next()  # self.token >> 'NOT'
-            cond = ('NOT', self.condition_simple(procedure, select_statement))
+            cond = ['NOT', self.condition_simple(procedure, select_statement)]
         else:
             left = self.token >> 'IDENTIFIER'
             left_column: Optional[context.Column] = select_statement.find_column(left)
@@ -408,6 +403,7 @@ class Parser(object):
                 cond = context.ConditionWithParameter(left, right, op, left_column, right_parameter)
             else:
                 raise Exception  # todo
+            select_statement.add_condition_to_table(cond)
         return cond
 
     @log(logger)

@@ -24,6 +24,9 @@ class Condition(object):
         self.left = left
         self.right = right
         self.op = op
+        self.disabled = False
+        self.obj_left = None
+        self.obj_right = None
 
     @property
     def is_eq(self):
