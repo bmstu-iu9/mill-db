@@ -417,15 +417,15 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
                 (*ofs) << tab << "\t\t\t\t" << func_name << "_add(iter, inserted);" << endl;
             } //else рекурсия
         }
-    }
-    tab=tab.substr(0,tab.length()-3);
-    for (int index=this->tb_ind.size()-1;index>=0;index--,tab=tab.substr(0,tab.length()-3)){
-        Table *table=this->tables[index].first;
-        (*ofs)<<tab <<"\t\t\t}" << endl<<tab <<
-               "\t\t}" << endl<<tab <<
-               "\t\toffset += " << table->get_name() << "_CHILDREN * sizeof(struct " << table->get_name() << ");" << endl<<tab <<
-               "\t}" << endl<<tab
-               << endl;
+        tab=tab.substr(0,tab.length()-3);
+        for (int index=this->tb_ind.size()-1;index>=0;index--,tab=tab.substr(0,tab.length()-3)){
+            Table *table=this->tables[index].first;
+            (*ofs)<<tab <<"\t\t\t}" << endl<<tab <<
+                   "\t\t}" << endl<<tab <<
+                   "\t\toffset += " << table->get_name() << "_CHILDREN * sizeof(struct " << table->get_name() << ");" << endl<<tab <<
+                   "\t}" << endl<<tab
+                   << endl;
+        }
     }
 }
 
