@@ -413,8 +413,8 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
                 for (auto it = this->selections.begin(); it != this->selections.end(); it++) {
                     Selection *s = *it;
                     (*ofs) << tab << "\t\t\t\t" << s->print(ofs, ofl) << endl;
-                    (*ofs) << tab << "\t\t\t\t" << func_name << "_add(iter, inserted);" << endl;
                 }
+                (*ofs) << tab << "\t\t\t\t" << func_name << "_add(iter, inserted);" << endl;
             } //else рекурсия
         }
     }
