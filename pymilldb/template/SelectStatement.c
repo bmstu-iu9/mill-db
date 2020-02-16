@@ -35,17 +35,17 @@ void {{ procedure.name }}_{{ loop.index }}(
     uint64_t i = 0;
     while (1) {
         {%- if isinstance(ind_column, context.Char) %}
-        if (!strncmp(node->data.key, " << indexed_col->get_name() << ", " << indexed_col->get_type()->get_length() << ") || node->childs == NULL)
+        if (!strncmp(node->data.key, {{ ind_column.name }}, {{ ind_column.kind.size }}) || node->childs == NULL)
         {%- else %}
-        if (node->data.key == " << indexed_col->get_name() << " || node->childs == NULL)
+        if (node->data.key == {{ ind_column.name }} || node->childs == NULL)
         {%- endif %} {
             info_offset = node->data.offset;
             break;
         }
         {%- if isinstance(ind_column, context.Char) %}
-        if (strncmp(node->childs[i]->data.key, " << indexed_col->get_name() << ", " << indexed_col->get_type()->get_length() << ") > 0 && i > 0)
+        if (strncmp(node->childs[i]->data.key, {{ ind_column.name }}, {{ ind_column.kind.size }}) > 0 && i > 0)
         {%- else %}
-        if (node->childs[i]->data.key == " << indexed_col->get_name() << " > 0 && i > 0)
+        if (node->childs[i]->data.key == {{ ind_column.name }} > 0 && i > 0)
         {%- endif %} {
             node = node->childs[i-1];
             i = 0;
@@ -65,24 +65,24 @@ void {{ procedure.name }}_{{ loop.index }}(
     int break_flag = 0;
     while (1) {
         fseek(handle->file, info_offset, SEEK_SET);
-        struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item items[" << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN];
-        uint64_t size = fread(items, sizeof(struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item), " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN, handle->file);
+        struct {{ table.name }}_{{ ind_column.name }}_index_item items[{{ table.name }}_{{ ind_column.name }}_CHILDREN];
+        uint64_t size = fread(items, sizeof(struct {{ table.name }}_{{ ind_column.name }}_index_item), {{ table.name }}_{{ ind_column.name }}_CHILDREN, handle->file);
         if (size == 0)
             return;
 
-        for (uint64_t i = 0; i < " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN; i++) {
+        for (uint64_t i = 0; i < {{ table.name }}_{{ ind_column.name }}_CHILDREN; i++) {
             {%- if isinstance(ind_column, context.Char) %}
-            if (strncmp(items[i].key, " << indexed_col->get_name() << ", " << indexed_col->get_type()->get_length() << ") > 0 || info_offset + i * sizeof(struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item) >= handle->header->add_index_tree_offset[" << tabl->get_name() << "_" << indexed_col->get_name() << "_index_count])
+            if (strncmp(items[i].key, {{ ind_column.name }}, {{ ind_column.kind.size }}) > 0 || info_offset + i * sizeof(struct {{ table.name }}_{{ ind_column.name }}_index_item) >= handle->header->add_index_tree_offset[{{ table.name }}_{{ ind_column.name }}_index_count])
             {%- else %}
-            if (items[i].key > " << indexed_col->get_name() << " || info_offset + i * sizeof(struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item) >= handle->header->add_index_tree_offset[" << tabl->get_name() << "_" << indexed_col->get_name() << "_index_count])
+            if (items[i].key > {{ ind_column.name }} || info_offset + i * sizeof(struct {{ table.name }}_{{ ind_column.name }}_index_item) >= handle->header->add_index_tree_offset[{{ table.name }}_{{ ind_column.name }}_index_count])
             {%- endif %} {
                 free(inserted);
                 return;
             }
             {%- if isinstance(ind_column, context.Char) %}
-            if (!strncmp(items[i].key, " << indexed_col->get_name() << ", " << indexed_col->get_type()->get_length() << "))
+            if (!strncmp(items[i].key, {{ ind_column.name }}, {{ ind_column.kind.size }}))
             {%- else %}
-            if (items[i].key == " << indexed_col->get_name() << ")
+            if (items[i].key == {{ ind_column.name }})
             {%- endif %} {
                 off_count = items[i].count;
                 offsets = malloc(sizeof(uint64_t) * off_count);
@@ -97,18 +97,18 @@ void {{ procedure.name }}_{{ loop.index }}(
         if (break_flag) {
             break;
         }
-        info_offset += " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN * sizeof(struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item);
+        info_offset += {{ table.name }}_{{ ind_column.name }}_CHILDREN * sizeof(struct {{ table.name }}_{{ ind_column.name }}_index_item);
     }
     for (uint64_t i = 0; i < off_count; i++) {
-        struct " << tabl->get_name() << " *item = malloc(sizeof(struct " << tabl->get_name() << "));
+        struct {{ table.name }} *item = malloc(sizeof(struct {{ table.name }}));
         fseek(handle->file, offsets[i], SEEK_SET);
-        fread(item, sizeof(struct " << tabl->get_name() << "), 1, handle->file);
+        fread(item, sizeof(struct {{ table.name }}), 1, handle->file);
         {%- for condition in conditions if not condition.obj_left.kind.is_indexed %}
         {% set column = condition.obj_left %}
         {%- if isinstance(column, context.Char) %}
-        if (strncmp(item->" << c->get_column()->get_name() << ", " << c->get_column()->get_name() << ", " << c->get_column()->get_type()->get_length() << "))
+        if (strncmp(item->{{ column.name }}, {{ column.name }}, {{ column.kind.size }}))
         {%- else %}
-        if (item->" << c->get_column()->get_name() << " != " << c->get_column()->get_name() << ")
+        if (item->{{ column.name }} != {{ column.name }})
         {%- endif %} {
             free(item);
             continue;
@@ -120,9 +120,9 @@ void {{ procedure.name }}_{{ loop.index }}(
         {%- endfor %}
 
         {%- for selection in statement.selections %}
-        {{ selection.column.kind.select_expr(selection.column.name, selection.parameter.name, 2) }}
+        {{ selection.column.kind.select_expr(selection.parameter.name, selection.column.name, 2) }}
         {%- endfor %}
-        " << func_name << "_add(iter, inserted);
+        {{ context.NAME }}_add(iter, inserted);
     }
     free(inserted);
     {%- else %}
@@ -137,7 +137,7 @@ void {{ procedure.name }}_{{ loop.index }}(
 {# tabs #}
 {# tabs #}    {%- if table['has_pk_cond'] %}
 {# tabs #}    {%- set rhs = 'c_' ~ conditions[0].obj_right.name if isinstance(conditions[0], context.ConditionWithOnlyColumns) else conditions[0].ogj_right.name %}
-{{ tabs }}    struct " << table->get_name() << "_node* node = handle->" << table->get_name() << "_root;
+{{ tabs }}    struct {{ table.name }}_node* node = handle->{{ table.name }}_root;
 {{ tabs }}    uint64_t i = 0;
 {{ tabs }}    while (1) {
 {{ tabs }}        if (node->data.key == {{ rhs }} || node->childs == NULL) {
@@ -157,42 +157,42 @@ void {{ procedure.name }}_{{ loop.index }}(
 {{ tabs }}        i++;
 {{ tabs }}    }
 {# tabs #}    {%- endif %}
-{{ tabs }}    offset += handle->header->data_offset[" << table->get_name() << "_header_count];
+{{ tabs }}    offset += handle->header->data_offset[{{ table.name }}_header_count];
 {# tabs #}    {# Check PK bounds #}
 {# tabs #}    {%- lower, up = context.calculate_pk_bounds(statement.condition_tree) %}
 {{ tabs }}    int32_t id_bound_l = {{ lower or '0' }};
 {{ tabs }}    int32_t id_bound_u = {{ up or '2147483647' }};
-{{ tabs }}    offset += id_bound_l * sizeof(struct " << table->get_name() << ");
+{{ tabs }}    offset += id_bound_l * sizeof(struct {{ table.name }});
 {# tabs #}
 {{ tabs }}    while (1) {
 {{ tabs }}        fseek(handle->file, offset, SEEK_SET);
-{{ tabs }}        union " << table->get_name() << "_page page;
-{{ tabs }}        uint64_t size = fread(&page, sizeof(struct " << table->get_name() << "), " << table->get_name() << "_CHILDREN, handle->file);
+{{ tabs }}        union {{ table.name }}_page page;
+{{ tabs }}        uint64_t size = fread(&page, sizeof(struct {{ table.name }}), {{ table.name }}_CHILDREN, handle->file);
 {{ tabs }}        if (size == 0)
 {{ tabs }}            return;
 {# tabs #}
-{{ tabs }}        for (uint64_t i = 0; i < " << table->get_name() << "_CHILDREN; i++) {
+{{ tabs }}        for (uint64_t i = 0; i < {{ table.name }}_CHILDREN; i++) {
 {# tabs #}            {%- for selection in table_selections %}
-{{ tabs }}            {{ selection.column.kind.str_param_for_select(selection.column.name) }} = page.items[i]." << sel->get_column()->get_name() << ";
+{{ tabs }}            {{ selection.column.kind.str_param_for_select(selection.column.name) }} = page.items[i].{{ selection.column.name }};
 {# tabs #}            {%- endfor %}
 {# tabs #}
 {# tabs #}            {%- for column in table.columns %}
-{{ tabs }}            {{ column.kind.str_column_for_select(column.name) }} = page.items[i]." << col->get_name() << ";
+{{ tabs }}            {{ column.kind.str_column_for_select(column.name) }} = page.items[i].{{ column.name }};
 {# tabs #}            {%- endfor %}
 {# tabs #}
 {# tabs #}            {%- if table['has_pk_cond'] %}
 {# tabs #}            {#- if there is a condition on Primary Key #}
 {# tabs #}            {%- if isinstance(conditions[0], context.ConditionWithOnlyColumns) %}
-{{ tabs }}            if (c_" << (*conds)[0]->get_column()->get_name() << " > " << rhs << " || offset + i * sizeof(struct " << table_name << ") >= handle->header->index_offset[" << table_name << "_header_count])
+{{ tabs }}            if (c_{{ conditions[0].obj_left.name }} > {{ rhs }} || offset + i * sizeof(struct {{ table.name }}) >= handle->header->index_offset[{{ table.name }}_header_count])
 {{ tabs }}                free(inserted);
 {{ tabs }}                return;
 {{ tabs }}            }
-{{ tabs }}            if (c_" << (*conds)[0]->get_column()->get_name() << " == " << rhs << ")
+{{ tabs }}            if (c_{{ conditions[0].obj_left.name }} == {{ rhs }})
 {# tabs #}            {%- else %}
 {# tabs #}            {%- if up %}
-{{ tabs }}            if (offset + i * sizeof(struct " << table_name << ") > handle->header->data_offset[person_header_count] + id_bound_u * sizeof(struct " << table_name << "))
+{{ tabs }}            if (offset + i * sizeof(struct {{ table.name }}) > handle->header->data_offset[person_header_count] + id_bound_u * sizeof(struct {{ table.name }}))
 {# tabs #}            {%- else %}
-{{ tabs }}            if (offset + i * sizeof(struct " << table_name << ") >= handle->header->index_offset[" << table_name << "_header_count])
+{{ tabs }}            if (offset + i * sizeof(struct {{ table.name }}) >= handle->header->index_offset[{{ table.name }}_header_count])
 {# tabs #}            {%- endif %} {
 {{ tabs }}                free(inserted);
 {{ tabs }}                return;
@@ -201,7 +201,7 @@ void {{ procedure.name }}_{{ loop.index }}(
 {# tabs #}            {%- endif %}
 {# tabs #}            {%- else %}
 {# tabs #}            {#- no conditions on Primary Key #}
-{{ tabs }}            if (offset + i * sizeof(struct " << table_name << ") >= handle->header->index_offset[" << table_name << "_header_count]) {
+{{ tabs }}            if (offset + i * sizeof(struct {{ table.name }}) >= handle->header->index_offset[{{ table.name }}_header_count]) {
 {{ tabs }}                free(inserted);
 {{ tabs }}                return;
 {{ tabs }}            }
@@ -213,6 +213,7 @@ void {{ procedure.name }}_{{ loop.index }}(
         }
     }
     {%- endfor %}
+
     {%- endif %}
 }
 {%- endfor %}
