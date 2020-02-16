@@ -192,8 +192,8 @@ string DataType::select_expr(std::string param, std::string column) {
         return "inserted->" + param + " = c_" + column + ";";
 
     if (this->get_typecode() == DataType::CHAR) {
-        return "memcpy(inserted->" + column + ", c_" + param + ", " + to_string(this->get_length()) +
-               "); inserted->" + column + "[" + to_string(this->get_length()) + "] = '\\0';";
+        return "memcpy(inserted->" + param + ", c_" + column + ", " + to_string(this->get_length()) +
+               "); inserted->" + param + "[" + to_string(this->get_length()) + "] = '\\0';";
     }
 
     return "";
