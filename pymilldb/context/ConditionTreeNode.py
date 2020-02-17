@@ -66,7 +66,6 @@ def calculate_pk_bounds(tree):
         up = 'MIN({}, {})'.format(*arr_up[-2:])
         for e in arr_up[-3::-1]:
             up = 'MIN({}, {})'.format(e, up)
-
     return lower, up
 
 

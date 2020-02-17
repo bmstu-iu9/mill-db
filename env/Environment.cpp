@@ -207,7 +207,7 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
 			       "\tuint64_t index_offset[" << to_string(tables_total) <<"];\n" <<
 			       "\n\tuint64_t add_count[" << indexes_c << "];\n"
                    "\tuint64_t add_index_offset[" << indexes_c << "];\n"
-                   "\tuint64_t add_index_tree_offset[" << indexes_c << "];"
+                   "\tuint64_t add_index_tree_offset[" << indexes_c << "];\n"
                    "};\n"
 			       "\n"
 			       "#define MILLDB_HEADER_SIZE (sizeof(struct MILLDB_header))" << endl
@@ -236,17 +236,11 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
             if (c->get_mod() == COLUMN_INDEXED) {
                 (*ofs) << "\tstruct " << table->get_name() << "_" << c->get_name() << "_node* " << table->get_name() << "_" << c->get_name() << "_root;\n";
             }
-        }
-	}
-
-    for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
-        Table* table = it->second;
-        for (Column *f : table->cols) {
-            if (f->get_mod() >= COLUMN_BLOOM) {
-                (*ofs) << "\tstruct bloom_filter *" << table->get_name() << "_" << f->get_name() << "_bloom;\n";
+            if (c->get_mod() >= COLUMN_BLOOM) {
+                (*ofs) << "\tstruct bloom_filter *" << table->get_name() << "_" << c->get_name() << "_bloom;\n";
             }
         }
-    }
+	}
 
     (*ofs) << "};" << endl <<
            endl;
@@ -257,6 +251,11 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
     for (auto it = this->sequences.begin(); it != this->sequences.end(); it++) {
         Sequence *seq = it->second;
         seq->print(ofs, ofl);
+    }
+
+    for (auto it = this->tables.begin(); it != this->tables.end(); it++) {
+        Table *table = it->second;
+        table->print(ofs, ofl);
     }
 
     for (auto it = this->procedures.begin(); it != this->procedures.end(); it++) {
@@ -364,8 +363,9 @@ void Environment::print(std::ofstream *ofs, std::ofstream *ofl) {
            endl <<
            "\tfseek(handle->file, 0, SEEK_SET);" << endl <<
            "\tstruct MILLDB_header* header = malloc(MILLDB_HEADER_SIZE);" << endl <<
-           "\tuint64_t size = fread(header, MILLDB_HEADER_SIZE, 1, handle->file);  if (size == 0) return NULL;" << endl
-           <<
+           "\tuint64_t size = fread(header, MILLDB_HEADER_SIZE, 1, handle->file);" << endl <<
+           "\tif (size == 0)" << endl <<
+           "\t\treturn NULL;" << endl <<
            "\thandle->header = header;" << endl <<
            endl;
 

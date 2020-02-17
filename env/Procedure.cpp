@@ -101,7 +101,7 @@ void Procedure::print(ofstream *ofs, ofstream *ofl) {
     for (auto it = this->statements.begin(); it != this->statements.end(); it++, i++) {
         Statement *stmt = *it;
 
-        stmt->print_dependencies(ofs, ofl);
+        // stmt->print_dependencies(ofs, ofl);
 
         (*ofs) << "void " << this->get_name() + "_" + to_string(i) << "(";
 

@@ -280,7 +280,7 @@ void Table::print(ofstream *ofs, ofstream *ofl) {
                "\tuint64_t page_size = " << name << "_CHILDREN, ind_items = 0;" << endl <<
                "\twhile (page_size < " << name << "_buffer_info.count) {" << endl <<
                "\t\tfor (uint64_t i = 0; i < " << name << "_buffer_info.count; i += page_size) {" << endl <<
-               "\t\t\tstruct " << name << "_tree_item *item = " << name << "_tree_item_new();" << endl;
+               "\t\t\tstruct " << name << "_tree_item* item = " << name << "_tree_item_new();" << endl;
         if (this->pk->get_type()->get_typecode() == DataType::CHAR) {
             (*ofs) << "\t\t\tstrncpy(item->key, " << name << "_buffer[i]->" << this->pk->get_name() << ", " << this->pk->get_type()->get_length() << ");" << endl;
         } else {
@@ -294,7 +294,7 @@ void Table::print(ofstream *ofs, ofstream *ofl) {
                "\t\tpage_size *= " << name << "_CHILDREN;" << endl <<
                "\t}" << endl <<
                "" << endl <<
-               "\tstruct " << name << "_tree_item *item = " << name << "_tree_item_new();" << endl;
+               "\tstruct " << name << "_tree_item* item = " << name << "_tree_item_new();" << endl;
         if (this->pk->get_type()->get_typecode() == DataType::CHAR) {
             (*ofs) << "\tstrncpy(item->key, " << name << "_buffer[0]->" << this->pk->get_name() << ", " << this->pk->get_type()->get_length() << ");" << endl;
         } else {
@@ -514,7 +514,9 @@ void Table::print(ofstream *ofs, ofstream *ofl) {
                "\t\tfor (uint64_t i = 0; i < current_level_count; i++) {" << endl <<
                "\t\t\tfseek(handle->file, handle->header->index_offset[" << name << "_header_count] + (count++) * sizeof(struct " << name << "_tree_item), SEEK_SET);" << endl <<
                "\t\t\tstruct " << name << "_tree_item* current_tree_item = malloc(sizeof(struct " << name << "_tree_item));" << endl <<
-               "\t\t\tuint64_t size = fread(current_tree_item, sizeof(struct " << name << "_tree_item), 1, handle->file);  if (size == 0) return;" << endl <<
+               "\t\t\tuint64_t size = fread(current_tree_item, sizeof(struct " << name << "_tree_item), 1, handle->file);" << endl <<
+               "\t\t\tif (size == 0)" << endl <<
+               "\t\t\t\treturn;" << endl <<
                "\t\t\tcurrent_level[i] = malloc(sizeof(struct " << name << "_node));" << endl <<
                "\t\t\tmemcpy(&(current_level[i]->data), current_tree_item, sizeof(struct " << name << "_tree_item));" << endl <<
                "\t\t\tfree(current_tree_item);" << endl <<

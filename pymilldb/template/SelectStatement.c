@@ -1,24 +1,22 @@
 {%- for statement in procedure.statements %}
 
-void {{ procedure.name }}_{{ loop.index }}(
-    struct {{ procedure.name }}_out* iter
-    {%- set comma = joiner(', ') -%}
+void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
     {%- for param in procedure.parameters.values() -%}
         {%- if param.is_input -%}
-            {{ comma() }}{{ param.signature }}
+            {{ ', ' ~ param.signature }}
         {%- endif -%}
     {%- endfor -%}
 ) {
     {%- for table_data in statement.tables.values() %}
     {%- set table = table_data['table'] %}
     {%- for cond in table_data['conditions'] %}
-    /* table {{ table.name }}    cond: {{ cond.print }} */
+    /* table {{ table.name }}    cond: {{ cond }} */
     {%- endfor %}
     {%- endfor %}
     {%- for table_data in statement.tables.values() %}
     {%- set table = table_data['table'] %}
-    {%- for cond in table_data['conditions'] if cond.column.mod >= cond.column.COLUMN_BLOOM %}
-    if (!is_{{ table.name }}_{{ cond.column.name }}_bloom(iter->service.handle, {{ cond.parameter.name }})) {
+    {%- for cond in table_data['conditions'] if cond.obj_left.mod >= cond.obj_left.COLUMN_BLOOM %}
+    if (!is_{{ table.name }}_{{ cond.obj_left.name }}_bloom(iter->service.handle, {{ cond.obj_right.name }})) {
         return;
     }
     {%- endfor %}
@@ -27,7 +25,7 @@ void {{ procedure.name }}_{{ loop.index }}(
     struct {{ procedure.name }}_out_data* inserted = malloc(sizeof(struct {{ procedure.name }}_out_data));
     {%- set is_ind, table_data, ind_column = statement.check_ind() %}
     {%- if is_ind %}
-    {%- set table = table_data['table'] }
+    {%- set table = table_data['table'] %}
     {%- set conditions = table_data['conditions'] %}
     uint64_t info_offset;
 
@@ -116,7 +114,7 @@ void {{ procedure.name }}_{{ loop.index }}(
         {%- endfor %}
 
         {%- for selection in statement.selections %}
-        {{ selection.column.kind.str_column_for_select(s.column.name) }} = item {{ selection.column.name }};
+        {{ selection.column.kind.str_column_for_select(selection.column.name) }} = item {{ selection.column.name }};
         {%- endfor %}
 
         {%- for selection in statement.selections %}
@@ -127,16 +125,16 @@ void {{ procedure.name }}_{{ loop.index }}(
     free(inserted);
     {%- else %}
     {%- for table_data in statement.tables.values() %}
-{# tabs #}    {%- set tabs = '    ' * 3 * loop.index0 %}
-{# tabs #}    {%- set table = table_data['table'] %}
-{# tabs #}    {%- set conditions = table_data['conditions'] %}
-{# tabs #}    {%- set table_selections = table_data['selections'] %}
+{#-tabs #}    {%- set tabs = '    ' * 3 * loop.index0 %}
+{#-tabs #}    {%- set table = table_data['table'] %}
+{#-tabs #}    {%- set conditions = table_data['conditions'] %}
+{#-tabs #}    {%- set table_selections = table_data['selections'] %}
 {{ tabs }}    /* TABLE {{ table.name }} */
-{# tabs #}    {% set _ = statement.check_table_pk() %}
+{#-tabs #}    {%- set _ = statement.check_table_pk(table_data) %}
 {{ tabs }}    uint64_t offset = 0;
-{# tabs #}
-{# tabs #}    {%- if table['has_pk_cond'] %}
-{# tabs #}    {%- set rhs = 'c_' ~ conditions[0].obj_right.name if isinstance(conditions[0], context.ConditionWithOnlyColumns) else conditions[0].ogj_right.name %}
+{#-tabs #}
+{#-tabs #}    {%- if table['has_pk_cond'] %}
+{#-tabs #}    {%- set rhs = 'c_' ~ conditions[0].obj_right.name if isinstance(conditions[0], context.ConditionWithOnlyColumns) else conditions[0].ogj_right.name %}
 {{ tabs }}    struct {{ table.name }}_node* node = handle->{{ table.name }}_root;
 {{ tabs }}    uint64_t i = 0;
 {{ tabs }}    while (1) {
@@ -156,58 +154,58 @@ void {{ procedure.name }}_{{ loop.index }}(
 {{ tabs }}        }
 {{ tabs }}        i++;
 {{ tabs }}    }
-{# tabs #}    {%- endif %}
+{#-tabs #}    {%- endif %}
 {{ tabs }}    offset += handle->header->data_offset[{{ table.name }}_header_count];
-{# tabs #}    {# Check PK bounds #}
-{# tabs #}    {%- lower, up = context.calculate_pk_bounds(statement.condition_tree) %}
+{#-tabs #}    {#- Check PK bounds #}
+{#-tabs #}    {%- set lower, up = context.calculate_pk_bounds(statement.condition_tree) %}
 {{ tabs }}    int32_t id_bound_l = {{ lower or '0' }};
 {{ tabs }}    int32_t id_bound_u = {{ up or '2147483647' }};
 {{ tabs }}    offset += id_bound_l * sizeof(struct {{ table.name }});
-{# tabs #}
+{#-tabs #}
 {{ tabs }}    while (1) {
 {{ tabs }}        fseek(handle->file, offset, SEEK_SET);
 {{ tabs }}        union {{ table.name }}_page page;
 {{ tabs }}        uint64_t size = fread(&page, sizeof(struct {{ table.name }}), {{ table.name }}_CHILDREN, handle->file);
 {{ tabs }}        if (size == 0)
 {{ tabs }}            return;
-{# tabs #}
+{#-tabs #}
 {{ tabs }}        for (uint64_t i = 0; i < {{ table.name }}_CHILDREN; i++) {
-{# tabs #}            {%- for selection in table_selections %}
+{#-tabs #}            {%- for selection in table_selections %}
 {{ tabs }}            {{ selection.column.kind.str_param_for_select(selection.column.name) }} = page.items[i].{{ selection.column.name }};
-{# tabs #}            {%- endfor %}
-{# tabs #}
-{# tabs #}            {%- for column in table.columns %}
+{#-tabs #}            {%- endfor %}
+{#-tabs #}
+{#-tabs #}            {%- for column in table.columns.values() %}
 {{ tabs }}            {{ column.kind.str_column_for_select(column.name) }} = page.items[i].{{ column.name }};
-{# tabs #}            {%- endfor %}
-{# tabs #}
-{# tabs #}            {%- if table['has_pk_cond'] %}
-{# tabs #}            {#- if there is a condition on Primary Key #}
-{# tabs #}            {%- if isinstance(conditions[0], context.ConditionWithOnlyColumns) %}
+{#-tabs #}            {%- endfor %}
+{#-tabs #}
+{#-tabs #}            {%- if table['has_pk_cond'] %}
+{#-tabs #}            {#- if there is a condition on Primary Key #}
+{#-tabs #}            {%- if isinstance(conditions[0], context.ConditionWithOnlyColumns) %}
 {{ tabs }}            if (c_{{ conditions[0].obj_left.name }} > {{ rhs }} || offset + i * sizeof(struct {{ table.name }}) >= handle->header->index_offset[{{ table.name }}_header_count])
 {{ tabs }}                free(inserted);
 {{ tabs }}                return;
 {{ tabs }}            }
 {{ tabs }}            if (c_{{ conditions[0].obj_left.name }} == {{ rhs }})
-{# tabs #}            {%- else %}
-{# tabs #}            {%- if up %}
+{#-tabs #}            {%- else %}
+{#-tabs #}            {%- if up %}
 {{ tabs }}            if (offset + i * sizeof(struct {{ table.name }}) > handle->header->data_offset[person_header_count] + id_bound_u * sizeof(struct {{ table.name }}))
-{# tabs #}            {%- else %}
+{#-tabs #}            {%- else %}
 {{ tabs }}            if (offset + i * sizeof(struct {{ table.name }}) >= handle->header->index_offset[{{ table.name }}_header_count])
-{# tabs #}            {%- endif %} {
+{#-tabs #}            {%- endif %} {
 {{ tabs }}                free(inserted);
 {{ tabs }}                return;
 {{ tabs }}            }
 {{ tabs }}            if (1)
-{# tabs #}            {%- endif %}
-{# tabs #}            {%- else %}
-{# tabs #}            {#- no conditions on Primary Key #}
+{#-tabs #}            {%- endif %}
+{#-tabs #}            {%- else %}
+{#-tabs #}            {#- no conditions on Primary Key #}
 {{ tabs }}            if (offset + i * sizeof(struct {{ table.name }}) >= handle->header->index_offset[{{ table.name }}_header_count]) {
 {{ tabs }}                free(inserted);
 {{ tabs }}                return;
 {{ tabs }}            }
 {{ tabs }}            if (1)
-{# tabs #}            {%- endif %} {
-{# tabs #}                {%- set index = statement.remove_join_conditions() %}
+{#-tabs #}            {%- endif %} {
+{#-tabs #}                {%- set index = statement.remove_join_conditions() %}
 {{ tabs }}                if(!({{ context.print_condition_tree_node(statement.condition_tree) }}))
 {{ tabs }}                    continue;
         }

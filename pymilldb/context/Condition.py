@@ -75,12 +75,3 @@ class ConditionWithOnlyColumns(Condition):
         super().__init__(left, right, op)
         self.obj_left = left_column
         self.obj_right = right_column
-
-
-"""
-struct condition_tree_node {
-    Condition::Multiple                 mode;
-    std::vector<condition_tree_node*>   children;
-    condition*                          value;
-};
-"""

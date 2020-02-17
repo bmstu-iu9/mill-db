@@ -16,9 +16,9 @@ void {{ procedure.name }}_add(struct {{ procedure.name }}_out* iter, struct {{ p
 void {{ procedure.name }}_init(struct {{ procedure.name }}_out* iter, struct {{ context.NAME }}_handle* handle
 {%- for param in procedure.parameters.values() -%}
     {%- if param.mode == 'IN' -%}
-        , param.signature()
+        , {{ param.signature }}
     {%- endif -%}
-{%- endfor %}
+{%- endfor -%}
 ) {
     memset(iter, 0, sizeof(*iter));
     iter->service.handle = handle;

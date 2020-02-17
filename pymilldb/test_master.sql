@@ -21,5 +21,4 @@ END;
 CREATE PROCEDURE get_pet_by_owner(@oname char(6) in, @pname char(6) out)
 BEGIN
     SELECT pname SET @pname FROM owner JOIN pet WHERE oname=@oname and pet_id=pid;
-    SELECT oname SET @pname FROM owner WHERE NOT ((oid > oid and oid < oid) and (oid = oid) or oid >= oid and oid <= oid) or oid = oid and oid = oid;
 END;

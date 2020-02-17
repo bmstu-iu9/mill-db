@@ -210,7 +210,9 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
                   "\twhile (1) {\n"
                   "\t\tfseek(handle->file, info_offset, SEEK_SET);\n"
                   "\t\tstruct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item items[" << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN];\n"
-                  "\t\tuint64_t size = fread(items, sizeof(struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item), " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN, handle->file); if (size == 0) return;\n"
+                  "\t\tuint64_t size = fread(items, sizeof(struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item), " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN, handle->file);\n"
+                  "\t\tif (size == 0)\n"
+                  "\t\t\treturn;\n"
                   "\n"
                   "\t\tfor (uint64_t i = 0; i < " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN; i++) {\n";
         if (indexed_col->get_type()->get_typecode() == DataType::CHAR) {
@@ -344,7 +346,9 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
                    "\t\tfseek(handle->file, offset, SEEK_SET);" << endl << tab <<
                    "\t\tunion " << table->get_name() << "_page page;" << endl << tab <<
                    "\t\tuint64_t size = fread(&page, sizeof(struct " << table->get_name() << "), " << table->get_name()
-                   << "_CHILDREN, handle->file);  if (size == 0) return;" << endl << tab <<
+                   << "_CHILDREN, handle->file);" << endl
+                   << tab << "\t\tif (size == 0)" << endl
+                   << tab << "\t\t\treturn;" << endl << tab <<
                    "" << endl << tab <<
                    "\t\tfor (uint64_t i = 0; i < " << table->get_name() << "_CHILDREN; i++) {" << endl;
 
@@ -352,12 +356,12 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 
             for (Selection *sel:this->selects[tb_ind[table_name]].second) {
                 (*ofs) << tab << "\t\t\t"
-                       << sel->get_column()->get_type()->str_param_for_select(sel->get_column()->get_name()) << "="
+                       << sel->get_column()->get_type()->str_param_for_select(sel->get_column()->get_name()) << " ="
                        << " page.items[i]." << sel->get_column()->get_name() << ";" << endl;
             }
             for (Column *col: table->cols) {
                 string s = col->get_type()->str_column_for_select(col->get_name());
-                (*ofs) << tab << "\t\t\t" << s << "=" << " page.items[i]." << col->get_name() << ";" << endl;
+                (*ofs) << tab << "\t\t\t" << s << " =" << " page.items[i]." << col->get_name() << ";" << endl;
             }
 
             if (this->has_pk_cond[table_name]) {

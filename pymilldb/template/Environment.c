@@ -143,7 +143,7 @@ struct {{ context.NAME }}_handle {
     {%- if column.is_indexed %}
     struct {{ table.name }}_{{ column.name }}_node* {{ table.name }}_{{ column.name }}_root;
     {% elif column.mod >= column.COLUMN_BLOOM %}
-    struct bloom_filter *{{ table.name }}_{{ column.name }}_bloom;;
+    struct bloom_filter *{{ table.name }}_{{ column.name }}_bloom;
     {%- endif %}
     {%- endfor %}
     {%- endfor %}
@@ -183,10 +183,10 @@ int {{ context.NAME }}_save(struct {{ context.NAME }}_handle* handle) {
         struct MILLDB_header* header = malloc(sizeof(struct MILLDB_header));
         fseek(handle->file, MILLDB_HEADER_SIZE, SEEK_SET);
 
-        uint_64t offset = MILLDB_HEADER_SIZE;
+        uint64_t offset = MILLDB_HEADER_SIZE;
         {%- for table in context.TABLES.values() %}
 
-        uint_64t {{ table.name }}_index_count = 0;
+        uint64_t {{ table.name }}_index_count = 0;
         if ({{ table.name }}_buffer_info.count > 0)
             {{ table.name }}_write(handle->file, header, &offset);
         {%- endfor %}
@@ -205,7 +205,7 @@ void {{ context.NAME }}_close_write(void) {
     {{ context.NAME }}_save({{ context.NAME }}_write_handle);
 
     {%- for table in context.TABLES.values() %}
-    {{ table.name }}_free();
+    {{ table.name }}_buffer_free();
     {%- endfor %}
 
     fclose({{ context.NAME }}_write_handle->file);
@@ -223,12 +223,13 @@ struct {{ context.NAME }}_handle* {{ context.NAME }}_open_read(const char* filen
 
     fseek(handle->file, 0, SEEK_SET);
     struct MILLDB_header* header = malloc(MILLDB_HEADER_SIZE);
-    uint_64t size = fread(header, MILLDB_HEADER_SIZE, 1, handle->file);
+    uint64_t size = fread(header, MILLDB_HEADER_SIZE, 1, handle->file);
     if (size == 0)
         return NULL;
     handle->header = header;
 
     {%- for table in context.TABLES.values() %}
+    {{ table.name }}_bloom_load(handle);
     {{ table.name }}_index_load(handle);
     {%- for column in table.columns.values() if column.is_indexed %}
     {{ table.name }}_{{ column.name }}_index_load(handle);
@@ -239,7 +240,7 @@ struct {{ context.NAME }}_handle* {{ context.NAME }}_open_read(const char* filen
 }
 
 void {{ context.NAME }}_close_read(struct {{ context.NAME }}_handle* handle) {
-    if (handle == NILL)
+    if (handle == NULL)
         return;
 
     fclose(handle->file);
@@ -247,8 +248,9 @@ void {{ context.NAME }}_close_read(struct {{ context.NAME }}_handle* handle) {
 
     if (handle->{{ table.name }}_root)
         {{ table.name }}_index_clean(handle->{{ table.name }}_root);
+    {{ table.name }}_bloom_delete(handle);
     {%- for column in table.columns.values() if column.is_indexed %}
-    if (handle->" << table->get_name() << "_" << c->get_name() << "_root)
+    if (handle->{{ table.name }}_{{ column.name }}_root)
         {{ table.name }}_{{ column.name }}_index_clean(handle->{{ table.name }}_{{ column.name }}_root);
     {%- endfor %}
     {%- endfor %}

@@ -138,7 +138,8 @@ class SelectStatement(Statement):
                         conditions[0], conditions[i] = conditions[i], conditions[0]
                     table_data['has_pk_cond'] = True
 
-    def remove_join_conditions(self, node, table_name, idx=0):
+    def remove_join_conditions(self, node=None, table_name=None, idx=0):
+        return
         if isinstance(node, (tuple, list)):
             lop, *tail = node
             if lop in ('AND', 'OR'):

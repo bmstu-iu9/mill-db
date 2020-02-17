@@ -106,7 +106,7 @@ class ArrayType(BaseType):
         self.size = size
 
     def variable(self, name, prefix=''):
-        return f'{self.type_name} {name}[{self.size}]'
+        return f'{self.type_name} {prefix}{name}[{self.size}]'
 
     def str_param_for_select(self, name):
         return self.signature(name, 'p_')
@@ -118,7 +118,7 @@ class ArrayType(BaseType):
         return self.variable(name)
 
     def signature(self, name, prefix=''):
-        return f'const {self.type_name}* {name}'
+        return f'const {self.type_name}* {prefix}{name}'
 
     @abc.abstractmethod
     def select_expr(self, param, column):
