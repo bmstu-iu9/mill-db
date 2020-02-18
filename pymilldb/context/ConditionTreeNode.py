@@ -44,13 +44,16 @@ def calculate_pk_bounds(tree):
                         cond, = n_tail
                     else:
                         continue
-                if isinstance(cond, ConditionWithParameter):
+                if isinstance(cond, ConditionWithParameter) and cond.obj_left.is_primary:
                     p = cond.obj_right
                     read_cond(cond, p.name, arr_lower, arr_up)
-        elif lop == 'NOT' and len(tail) == 1 and isinstance(tail[0], ConditionWithParameter):
+        elif (lop == 'NOT' and
+              len(tail) == 1 and
+              isinstance(tail[0], ConditionWithParameter) and
+              tail[0].obj_left.is_primary):
             cond, = tail
             read_cond(cond, cond.obj_right.name, arr_lower, arr_up)
-    elif isinstance(tree, ConditionWithParameter):
+    elif isinstance(tree, ConditionWithParameter) and tree.obj_left.is_primary:
         read_cond(tree, tree.obj_right.name, arr_lower, arr_up)
 
     if len(arr_lower) == 1:
