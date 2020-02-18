@@ -9,7 +9,7 @@ def print_condition_tree_node(tree):
             return '({})'.format(joiner.join(print_condition_tree_node(t) for t in tail))
         elif lop == 'NOT':
             assert len(tail) == 1
-            return '(!{})'.format(print_condition_tree_node(*tail))
+            return '!{}'.format(print_condition_tree_node(*tail))
         else:
             raise Exception  # todo
     else:

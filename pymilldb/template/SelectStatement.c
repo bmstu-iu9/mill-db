@@ -132,9 +132,8 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
 {{ tabs }}    /* TABLE {{ table.name }} */
 {#-tabs #}    {%- set _ = statement.check_table_pk(table_data) %}
 {{ tabs }}    uint64_t offset = 0;
-{#-tabs #}
-{#-tabs #}    {%- if table['has_pk_cond'] %}
-{#-tabs #}    {%- set rhs = 'c_' ~ conditions[0].obj_right.name if isinstance(conditions[0], context.ConditionWithOnlyColumns) else conditions[0].ogj_right.name %}
+{#-tabs #}    {%- if table_data['has_pk_cond'] %}
+{#-tabs #}    {%- set rhs = 'c_' ~ conditions[0].obj_right.name if isinstance(conditions[0], context.ConditionWithOnlyColumns) else conditions[0].obj_right.name %}
 {{ tabs }}    struct {{ table.name }}_node* node = handle->{{ table.name }}_root;
 {{ tabs }}    uint64_t i = 0;
 {{ tabs }}    while (1) {
@@ -178,7 +177,7 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
 {{ tabs }}            {{ column.kind.str_column_for_select(column.name) }} = page.items[i].{{ column.name }};
 {#-tabs #}            {%- endfor %}
 {#-tabs #}
-{#-tabs #}            {%- if table['has_pk_cond'] %}
+{#-tabs #}            {%- if table_data['has_pk_cond'] %}
 {#-tabs #}            {#- if there is a condition on Primary Key #}
 {#-tabs #}            {%- if isinstance(conditions[0], context.ConditionWithOnlyColumns) %}
 {{ tabs }}            if (c_{{ conditions[0].obj_left.name }} > {{ rhs }} || offset + i * sizeof(struct {{ table.name }}) >= handle->header->index_offset[{{ table.name }}_header_count])
@@ -208,6 +207,12 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
 {#-tabs #}                {%- set index = statement.remove_join_conditions() %}
 {{ tabs }}                if(!({{ context.print_condition_tree_node(statement.condition_tree) }}))
 {{ tabs }}                    continue;
+{#-tabs #}                {%- if loop.index == statement.tables | length %}
+{#-tabs #}                {%- for selection in statement.selections %}
+{{ tabs }}                {{ selection.column.kind.select_expr(selection.parameter.name, selection.column.name, 4) }}
+{#-tabs #}                {%- endfor %}
+{{ tabs }}                {{ procedure.name }}_add(iter, inserted);
+{#-tabs #}                {%- endif %}
         }
     }
     {%- endfor %}
