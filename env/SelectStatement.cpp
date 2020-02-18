@@ -381,7 +381,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
                 } else {
                     if (!bounds.second.empty()) {
                         (*ofs) << tab << "\t\t\tif (offset + i * sizeof(struct "
-                               << table_name << ") > handle->header->data_offset[person_header_count]"
+                               << table_name << ") > handle->header->data_offset[" << table_name << "_header_count]"
                                << " + id_bound_u * sizeof(struct " << table_name << "))";
                     } else {
                         (*ofs) << tab << "\t\t\tif (offset + i * sizeof(struct "

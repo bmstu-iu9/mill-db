@@ -3,6 +3,7 @@ from typing import Optional
 
 from .Column import Column
 from .Parameter import InputParameter
+from .DataType import Char
 
 logger = logging.getLogger('Condition')
 
@@ -67,6 +68,12 @@ class ConditionWithParameter(Condition):
         self.obj_left = left_column
         self.obj_right = right_parameter
 
+    def __str__(self):
+        if isinstance(self.obj_left.kind, Char):
+            return f'strcmp(c_{self.obj_left.name}, {self.obj_right.name}) {self.op2str[self.op]} 0'
+        else:
+            return f'c_{self.obj_left.name} {self.op2str[self.op]} {self.obj_right.name}'
+
 
 class ConditionWithOnlyColumns(Condition):
     rip = False
@@ -75,3 +82,9 @@ class ConditionWithOnlyColumns(Condition):
         super().__init__(left, right, op)
         self.obj_left = left_column
         self.obj_right = right_column
+
+    def __str__(self):
+        if isinstance(self.obj_left.kind, Char):
+            return f'strcmp(c_{self.obj_left.name}, c_{self.obj_right.name}) {self.op2str[self.op]} 0'
+        else:
+            return f'c_{self.obj_left.name} {self.op2str[self.op]} c_{self.obj_right.name}'

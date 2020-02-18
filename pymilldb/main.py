@@ -24,7 +24,7 @@ class Counter(object):
         return str(self.count)
 
 
-def main(path):
+def main(path, out="out.c"):
     logger.info('Init Logger.is_crashed %s', logger_mod.Logger.is_crashed)
     name = os.path.basename(path).rsplit('.', 1)[0]
     context.NAME = name
@@ -42,22 +42,5 @@ def main(path):
     env.globals['any'] = any
     env.globals['all'] = all
     temp = env.get_template('Environment.c')
-    with open('out.c', 'w') as f:
+    with open(out, 'w') as f:
         f.write(temp.render(context=context, counter=Counter()))
-
-"""
-void {{ procedure.name }}_{{ loop.index }}(
-{%- if procedure.is_write -%}
-    {{ statement.print_full_signature(procedure.name) }}
-{%- elif procedure.is_read -%}
-    struct {{ procedure.name }}_out* iter
-    {%- for param in procedure.parameters.values() -%}
-        {%- if param.mode == 'IN' -%}
-            , {{ param.signature }}
-        {%- endif -%}
-    {%- endfor -%}
-{%- endif -%}
-) {
-    statement.print(procedure.name)
-}
-"""

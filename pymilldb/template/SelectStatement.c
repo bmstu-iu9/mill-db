@@ -188,7 +188,7 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
 {{ tabs }}            if (c_{{ conditions[0].obj_left.name }} == {{ rhs }})
 {#-tabs #}            {%- else %}
 {#-tabs #}            {%- if up %}
-{{ tabs }}            if (offset + i * sizeof(struct {{ table.name }}) > handle->header->data_offset[person_header_count] + id_bound_u * sizeof(struct {{ table.name }}))
+{{ tabs }}            if (offset + i * sizeof(struct {{ table.name }}) > handle->header->data_offset[{{ table.name }}_header_count] + id_bound_u * sizeof(struct {{ table.name }}))
 {#-tabs #}            {%- else %}
 {{ tabs }}            if (offset + i * sizeof(struct {{ table.name }}) >= handle->header->index_offset[{{ table.name }}_header_count])
 {#-tabs #}            {%- endif %} {

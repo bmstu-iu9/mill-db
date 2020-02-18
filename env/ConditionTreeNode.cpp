@@ -179,7 +179,7 @@ std::pair<std::string, std::string> ConditionTreeNode::calculate_pk_bounds() {
                         }
                         max_s += "MAX(";
                         max_s += s;
-                        max_s += ",";
+                        max_s += ", ";
                     }
                     std::cout << max_s << std::endl;
                     res.first = max_s;
@@ -198,7 +198,7 @@ std::pair<std::string, std::string> ConditionTreeNode::calculate_pk_bounds() {
                         }
                         min_s += "MIN(";
                         min_s += s;
-                        min_s += ",";
+                        min_s += ", ";
                     }
                     std::cout << min_s << std::endl;
                     res.second = min_s;
