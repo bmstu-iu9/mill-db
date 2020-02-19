@@ -2,7 +2,7 @@ import logging
 
 from .DataType import BaseType
 
-logger = logging.getLogger('Parameter')
+logger = logging.getLogger('Parameter').print_pos
 
 
 class Parameter(object):

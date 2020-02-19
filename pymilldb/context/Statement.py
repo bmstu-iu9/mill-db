@@ -1,12 +1,15 @@
 import abc
 import logging
+from copy import copy
 
-from .Selection import Selection
-from .Table import Table
 from .Condition import ConditionWithOnlyColumns, Condition
 from .ConditionTreeNode import ConditionTreeNodeBase
-from copy import copy
-logger = logging.getLogger('Statement')
+from .Selection import Selection
+from .Table import Table
+
+logger = logging.getLogger('Statement').print_pos
+select_logger = logging.getLogger('Select statement').print_pos
+insert_logger = logging.getLogger('Insert statement').print_pos
 
 
 class Statement(abc.ABC):

@@ -121,10 +121,13 @@ class Lexer(object):
         self.orig_text = text
         self.text = COMMENT.sub('', text)  # Чистим комментарии
         self.pos = Pos(self.text)
+        self.last_pos = copy(self.pos)
+        self.old_pos = None
         self.__gen_lex = self.__lex()
         self.cur_token, self.cur_value, self.cur_raw_value = next(self.__gen_lex)
 
     def next(self):
+        self.old_pos, self.last_pos = self.last_pos,  copy(self.pos)
         logger.debug('%s %s %s', self.cur_token, self.cur_value, self.cur_raw_value)
         self.cur_token, self.cur_value, self.cur_raw_value = next(self.__gen_lex)
 
@@ -136,8 +139,10 @@ class Lexer(object):
 
             # Проверка на спецсимвол длины 1
             if self.pos.char in "();,=":
-                yield SYMBOLS[self.pos.char], SYMBOLS[self.pos.char], self.pos.char
+                raw = self.pos.char
+                sym = SYMBOLS[raw]
                 self.pos.next()
+                yield sym, sym, raw
                 continue
             # Проверка на спецсимвол длины 2
             if self.pos.char in "<>":
@@ -145,8 +150,8 @@ class Lexer(object):
                 self.pos.next()
                 c2 = c1 + self.pos.char
                 if c2 in ("<>", "<=", ">="):
-                    yield SYMBOLS[c2], SYMBOLS[c2], c2
                     self.pos.next()
+                    yield SYMBOLS[c2], SYMBOLS[c2], c2
                 else:
                     yield SYMBOLS[c1], SYMBOLS[c1], c1
                 continue

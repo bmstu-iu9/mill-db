@@ -5,7 +5,7 @@ from .Column import Column
 from .Parameter import InputParameter
 from .DataType import Char
 
-logger = logging.getLogger('Condition')
+logger = logging.getLogger('Condition').print_pos
 
 
 class ConditionBase(object):

@@ -74,7 +74,7 @@ def print_condition_tree_node(tree):
             assert len(tail) == 1
             return '!{}'.format(print_condition_tree_node(*tail))
         else:
-            raise Exception  # todo
+            raise UnreachableException()
     else:
         return '({})'.format(str(tree))
 

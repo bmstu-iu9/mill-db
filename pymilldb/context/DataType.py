@@ -1,7 +1,7 @@
 import logging
 import abc
 
-logger = logging.getLogger('DataType')
+logger = logging.getLogger('DataType').print_pos
 
 
 class BaseType(abc.ABC):

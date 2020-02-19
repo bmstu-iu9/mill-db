@@ -11,8 +11,42 @@ handlers:
     stream: ext://sys.stdout
 loggers:
   lexer:
-    level: ERROR
+    level: WARNING
     handlers: [console]
   parser:
+    level: DEBUG
+    handlers: [console]
+  tree:
+    level: ERROR
+    handlers: [console]
+  main:
+    level: INFO
+    handlers: [console]
+
+  Condition:
+    level: DEBUG
+    handlers: [console]
+  DataType:
+    level: DEBUG
+    handlers: [console]
+  Parameter:
+    level: DEBUG
+    handlers: [console]
+  Procedure:
+    level: DEBUG
+    handlers: [console]
+  Sequence:
+    level: DEBUG
+    handlers: [console]
+  Statement:
+    level: DEBUG
+    handlers: [console]
+  "Select statement":
+    level: DEBUG
+    handlers: [console]
+  "Insert statement":
+    level: DEBUG
+    handlers: [console]
+  Table:
     level: DEBUG
     handlers: [console]

@@ -3,13 +3,15 @@ import os
 
 import jinja2
 
+from . import _logger  # Must be import before context
 from . import context
-from . import logger_mod
 from . import parser
 
-logger_mod.setup_logging()
+_logger.setup_logging()
 
 logger = logging.getLogger('main')
+
+CURRENT_DIR = os.path.dirname(__file__)
 
 
 class Counter(object):
@@ -24,26 +26,53 @@ class Counter(object):
         return str(self.count)
 
 
-def main(path):
-    logger.info('Init Logger.is_crashed %s', logger_mod.Logger.is_crashed)
-    name = os.path.basename(path).rsplit('.', 1)[0]
-    context.NAME = name
-    tok = parser.Token(open(path).read())
-    par = parser.Parser(tok)
-    par.program()
-    logger.info('Logger.is_crashed %s', logger_mod.Logger.is_crashed)
-    logger.info('context.NAME %s', context.NAME)
-    logger.info('context.TABLES %s', context.TABLES)
-    logger.info('context.VARIABLES %s', context.VARIABLES)
-
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader('pymilldb/template'))
+def init_env(env):
     env.globals['isinstance'] = isinstance
     env.globals['zip'] = zip
     env.globals['any'] = any
     env.globals['all'] = all
-    c_file = env.get_template('Environment.c')
-    h_file = env.get_template('Environment.h')
-    with open('{}.c'.format(context.NAME), 'w') as f:
-        f.write(c_file.render(context=context, counter=Counter()))
-    with open('{}.h'.format(context.NAME), 'w') as f:
-        f.write(h_file.render(context=context, counter=Counter()))
+
+
+def parse(path):
+    with open(path) as f:
+        program = f.read()
+
+    t = parser.Token(program)
+    _logger.MyLogger.set_token(t)
+    p = parser.Parser(t)
+    p.parse()
+
+
+def get_name(path):
+    return os.path.basename(path).rsplit('.', 1)[0]
+
+
+def generate(path):
+    try:
+        context.NAME = get_name(path)
+        parse(path)
+
+        is_crashed = _logger.MyLogger.is_crashed
+        logger.debug('Logger.is_crashed %s', is_crashed)
+        logger.debug('context.NAME %s', context.NAME)
+        logger.debug('context.TABLES %s', context.TABLES.keys())
+        logger.debug('context.PROCEDURES %s', context.PROCEDURES.keys())
+        logger.debug('context.SEQUENCES %s', context.SEQUENCES.keys())
+        logger.debug('context.VARIABLES %s', context.VARIABLES.keys())
+        if is_crashed:
+            logger.error('Found errors. Stop generation files')
+            return
+
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(CURRENT_DIR, 'template')))
+        init_env(env)
+        c_file = env.get_template('Environment.c')
+        h_file = env.get_template('Environment.h')
+
+        with open('{}.c'.format(context.NAME), 'w') as f:
+            f.write(c_file.render(context=context, counter=Counter()))
+        with open('{}.h'.format(context.NAME), 'w') as f:
+            f.write(h_file.render(context=context, counter=Counter()))
+        logger.info('Generate success')
+        logger.info('Out file: {0}.h, {0}.c'.format(context.NAME))
+    finally:
+        context.clear()

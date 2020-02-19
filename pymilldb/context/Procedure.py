@@ -3,7 +3,7 @@ import logging
 from .Parameter import Parameter
 from .Statement import Statement, InsertStatement, SelectStatement
 
-logger = logging.getLogger('Procedure')
+logger = logging.getLogger('Procedure').print_pos
 
 
 class Procedure(object):
@@ -45,3 +45,6 @@ class Procedure(object):
         elif isinstance(statement, SelectStatement) and self.is_write:
             logger.error('Select statement only for procedure read mode')
         self.statements.append(statement)
+
+    def __str__(self):
+        return f'<{self.name}>'

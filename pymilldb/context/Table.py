@@ -2,7 +2,7 @@ import logging
 
 from .Column import Column
 
-logger = logging.getLogger('Table')
+logger = logging.getLogger('Table').print_pos
 
 
 class Table(object):
