@@ -114,10 +114,10 @@ bool SelectStatement::should_remove_condition(Condition *c, string &table_name, 
     if (c->get_mode() != c->Mode::JOIN) {
         corr = true;
     }
-    if (c->disabled)
-        bool corr = false;
-    if (this->has_pk_cond[table_name] && (*i == 0))
-        bool corr = false;
+//    if (c->disabled)
+//        corr = false;
+//    if (this->has_pk_cond[table_name] && (*i == 0))
+//        corr = false;
     (*i)++;
     return !corr;
 }

@@ -137,9 +137,13 @@ class Char(ArrayType):
     type_name = 'char'
 
     def select_expr(self, param, column, size_tab=0):
+        # return (
+        #     f'memcpy(inserted->{param}, c_{column}, {self.size});\n'
+        #     f'{"    " * size_tab}inserted->{param}[{self.size}] = \'\\0\';'
+        # )
         return (
-            f'memcpy(inserted->{param}, c_{column}, {self.size});\n'
-            f'{"    " * size_tab}inserted->{param}[{self.size}] = \'\\0\';'
+            f'memcpy(inserted->{param}, c_{column}, {self.size}); '
+            f'inserted->{param}[{self.size}] = \'\\0\';'
         )
 
     def cmp(self, s1, col1, s2, col2, cmp):

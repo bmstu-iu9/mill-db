@@ -273,7 +273,6 @@ class Parser(object):
         self.token >> 'WHERE'
         raw_condition_tree = self.condition_list(procedure, select_statement)
         _, _, condition_tree = self.parse_tree_node(raw_condition_tree)
-        print(condition_tree)
         select_statement.condition_tree = condition_tree
         self.token.safe() >> 'SEMICOLON'
         procedure.add_statement(select_statement)

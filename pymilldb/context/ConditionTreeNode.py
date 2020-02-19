@@ -36,7 +36,7 @@ class ConditionTreeNodeAnd(ConditionTreeNodeBase):
     joiner = ' && '
 
     def calculate_pk_bounds(self):
-        lower, up = zip((l, u) for child in self.children for l, u in [child.calculate_pk_bounds()])
+        lower, up = zip(*[(l, u) for child in self.children for l, u in [child.calculate_pk_bounds()]])
         lower = [l for l in lower if l is not None]
         up = [u for u in up if u is not None]
         s_lower, s_up = None, None

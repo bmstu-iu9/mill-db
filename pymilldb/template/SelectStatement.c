@@ -156,7 +156,7 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
 {#-tabs #}    {%- endif %}
 {{ tabs }}    offset += handle->header->data_offset[{{ table.name }}_header_count];
 {#-tabs #}    {#- Check PK bounds #}
-{#-tabs #}    {%- set lower, up = context.calculate_pk_bounds(statement.condition_tree) %}
+{#-tabs #}    {%- set lower, up = statement.condition_tree.calculate_pk_bounds() %}
 {{ tabs }}    int32_t id_bound_l = {{ lower or '0' }};
 {{ tabs }}    int32_t id_bound_u = {{ up or '2147483647' }};
 {{ tabs }}    offset += id_bound_l * sizeof(struct {{ table.name }});
@@ -180,7 +180,7 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
 {#-tabs #}            {%- if table_data['has_pk_cond'] %}
 {#-tabs #}            {#- if there is a condition on Primary Key #}
 {#-tabs #}            {%- if isinstance(conditions[0], context.ConditionWithOnlyColumns) %}
-{{ tabs }}            if (c_{{ conditions[0].obj_left.name }} > {{ rhs }} || offset + i * sizeof(struct {{ table.name }}) >= handle->header->index_offset[{{ table.name }}_header_count])
+{{ tabs }}            if (c_{{ conditions[0].obj_left.name }} > {{ rhs }} || offset + i * sizeof(struct {{ table.name }}) >= handle->header->index_offset[{{ table.name }}_header_count]) {
 {{ tabs }}                free(inserted);
 {{ tabs }}                return;
 {{ tabs }}            }
@@ -204,8 +204,8 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
 {{ tabs }}            }
 {{ tabs }}            if (1)
 {#-tabs #}            {%- endif %} {
-{#-tabs #}                {%- set index = statement.remove_join_conditions() %}
-{{ tabs }}                if(!({{ context.print_condition_tree_node(statement.condition_tree) }}))
+{#-tabs #}                {%- set index = statement.remove_join_conditions(table_data) %}
+{{ tabs }}                if(!({{ statement.condition_tree }}))
 {{ tabs }}                    continue;
 {#-tabs #}                {%- if loop.index == statement.tables | length %}
 {#-tabs #}                {%- for selection in statement.selections %}
@@ -213,10 +213,15 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
 {#-tabs #}                {%- endfor %}
 {{ tabs }}                {{ procedure.name }}_add(iter, inserted);
 {#-tabs #}                {%- endif %}
-        }
-    }
     {%- endfor %}
-
+    {%- for table_data in statement.tables.values() | reverse %}
+    {%- set table = table_data['table'] %}
+    {%- set tabs = '    ' * ((statement.tables | length) - loop.index) %}
+{{ tabs }}            }
+{{ tabs }}        }
+{{ tabs }}        offset += {{ table.name }}_CHILDREN * sizeof(struct {{ table.name }});
+{{ tabs }}    }
+    {%- endfor %}
     {%- endif %}
 }
 {%- endfor %}

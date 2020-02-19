@@ -95,9 +95,11 @@ class ConditionWithParameter(Condition):
             out = f'strcmp(c_{self.obj_left.name}, {self.obj_right.name}) {self.op2str[self.op]} 0'
         else:
             out = f'c_{self.obj_left.name} {self.op2str[self.op]} {self.obj_right.name}'
-        return ('!({})' if self.is_not else '{}').format(out)
+        return ('!({})' if self.is_not else '({})').format(out)
 
     def calculate_pk_bounds(self):
+        if not self.obj_left.is_primary:
+            return None, None
         up, lower = None, None
         param = self.obj_right.name
         if self.is_eq:
@@ -111,11 +113,19 @@ class ConditionWithParameter(Condition):
             up = param
         elif self.is_more_or_eq:  # id >= ARG: [ARG, ...)
             lower = param
-        return up, lower
+        return lower, up
 
 
 class ConditionWithOnlyColumns(Condition):
     rip = False
+    reverse_op_map = dict(
+        EQ='EQ',
+        NOT_EQ='NOT_EQ',
+        LESS='MORE',
+        LESS_OR_EQ='MORE_OR_EQ',
+        MORE='LESS',
+        MORE_OR_EQ='LESS_OR_EQ',
+    )
 
     def __init__(self,
                  left: str,
@@ -133,7 +143,17 @@ class ConditionWithOnlyColumns(Condition):
             out = f'strcmp(c_{self.obj_left.name}, c_{self.obj_right.name}) {self.op2str[self.op]} 0'
         else:
             out = f'c_{self.obj_left.name} {self.op2str[self.op]} c_{self.obj_right.name}'
-        return ('!({})' if self.is_not else '{}').format(out)
+        return ('!({})' if self.is_not else '({})').format(out)
 
     def calculate_pk_bounds(self):
         return None, None
+
+    def reverse_copy(self):
+        return ConditionWithOnlyColumns(
+            self.right,
+            self.left,
+            self.reverse_op_map[self.op],
+            self.obj_right,
+            self.obj_left,
+            self.is_not,
+        )

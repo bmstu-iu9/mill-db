@@ -139,48 +139,40 @@ class SelectStatement(Statement):
                         conditions[0], conditions[i] = conditions[i], conditions[0]
                     table_data['has_pk_cond'] = True
 
-    def remove_join_conditions(self, node, table_name, idx):
+    def remove_join_conditions(self, table_data, idx=None, node=None):
+        idx = idx or 0
+        node = node or self.condition_tree
         if isinstance(node, ConditionTreeNodeBase):
             i = 0
             for child in node.children:
-                if isinstance(child, Condition) and self.should_remove_condition(child, table_name, idx):
-                    if len(node.children) == 2:
-                        new_node = node.children[i - 1]  # -1 <=> end if 0 <=> begin else 0 <=> begin
-                        if node.is_root:
-                            self.condition_tree = new_node
-                        else:
-                            node.change(new_node)
-                        return new_node
-                    node.children.pop(i)
-                    i -= 1
+                if isinstance(child, Condition):
+                    if self.should_remove_condition(child, table_data, idx):
+                        if len(node.children) == 2:
+                            new_node = node.children[i - 1]  # -1 <=> end if 0 <=> begin else 0 <=> begin
+                            if node.is_root:
+                                self.condition_tree = new_node
+                            else:
+                                node.change(new_node)
+                            return new_node
+                        node.children.pop(i)
+                        i -= 1
+                    idx += 1
                 else:
-                    self.remove_join_conditions(child, table_name, idx)
+                    self.remove_join_conditions(table_data, idx, child)
                 i += 1
 
-        # if isinstance(node, (tuple, list)):
-        #     lop, *tail = node
-        #     if lop in ('AND', 'OR'):
-        #         i = 0
-        #         while i < len(tail):
-        #             child = tail[i]
-        #
-        #             if isinstance(child, (tuple, list)):
-        #                 child_lop, *child_tail = child
-        #                 if child_lop == 'NOT' and isinstance(*child_tail, Condition):
-        #                     cond, = child_tail
-        #                 else:
-        #                     continue
-        #             else:
-        #                 cond = child
-        #             idx += 1
-        #             if self.should_remove_condition(cond, table_name, idx - 1):
-        #                 if len(tail) == 2:
-        #                     i = i - 1 if child == tail[-1] else i + 1
-        #
-        #             else:
-        #                 self.remove_join_conditions(child, table_name, i)
+    def should_remove_condition(self, condition, table_data, idx):
+        flag = True
+        if isinstance(condition, ConditionWithOnlyColumns):
+            join_table_data = self.tables[condition.obj_right.table.name]
+            if table_data['index'] < join_table_data['index']:
+                join_table_data['conditions'].append(condition.reverse_copy())
+                flag = False
+        # if condition.disabled or table_data['has_pk_cond'] and not idx:
+        #     flag = False
+        return not flag
 
-    def should_remove_condition(self, condition, table_name, idx):
+    def should_remove_condition_old(self, condition, table_name, idx):
         corr = True
         if isinstance(condition, ConditionWithOnlyColumns):
             join_table = condition.obj_right.table
