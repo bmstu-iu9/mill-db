@@ -15,7 +15,7 @@ void {{ procedure.name }}_add(struct {{ procedure.name }}_out* iter, struct {{ p
 
 void {{ procedure.name }}_init(struct {{ procedure.name }}_out* iter, struct {{ context.NAME }}_handle* handle
 {%- for param in procedure.parameters.values() -%}
-    {%- if param.mode == 'IN' -%}
+    {%- if param.is_input -%}
         , {{ param.signature }}
     {%- endif -%}
 {%- endfor -%}

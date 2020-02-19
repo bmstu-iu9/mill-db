@@ -24,7 +24,7 @@ class Counter(object):
         return str(self.count)
 
 
-def main(path, out="out.c"):
+def main(path):
     logger.info('Init Logger.is_crashed %s', logger_mod.Logger.is_crashed)
     name = os.path.basename(path).rsplit('.', 1)[0]
     context.NAME = name
@@ -41,6 +41,9 @@ def main(path, out="out.c"):
     env.globals['zip'] = zip
     env.globals['any'] = any
     env.globals['all'] = all
-    temp = env.get_template('Environment.c')
-    with open(out, 'w') as f:
-        f.write(temp.render(context=context, counter=Counter()))
+    c_file = env.get_template('Environment.c')
+    h_file = env.get_template('Environment.h')
+    with open('{}.c'.format(context.NAME), 'w') as f:
+        f.write(c_file.render(context=context, counter=Counter()))
+    with open('{}.h'.format(context.NAME), 'w') as f:
+        f.write(h_file.render(context=context, counter=Counter()))

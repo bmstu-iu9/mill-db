@@ -105,8 +105,9 @@ class ArrayType(BaseType):
     def __init__(self, size):
         self.size = size
 
-    def variable(self, name, prefix=''):
-        return f'{self.type_name} {prefix}{name}[{self.size}]'
+    def variable(self, name, prefix='', size=None):
+        size = self.size if size is None else size
+        return f'{self.type_name} {prefix}{name}[{size}]'
 
     def str_param_for_select(self, name):
         return self.signature(name, 'p_')
@@ -115,7 +116,7 @@ class ArrayType(BaseType):
         return self.signature(name, 'c_')
 
     def str_out(self, name):
-        return self.variable(name)
+        return self.variable(name, size=self.size+1)
 
     def signature(self, name, prefix=''):
         return f'const {self.type_name}* {prefix}{name}'

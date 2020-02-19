@@ -1,19 +1,29 @@
-#ifndef {{ name | upper }}_H
-#define {{ name | upper }}_H
+#ifndef {{ context.NAME | upper }}_H
+#define {{ context.NAME | upper }}_H
 
 #include <stdint.h>
 
-#define MAX(x, y) (((x) > (y))? (x) : (y))
-#define MIN(x, y) (((x) < (y))? (x) : (y))
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-#define {{ name }}_handle;
+struct {{ context.NAME }}_handle;
+{% for sequence in context.SEQUENCES.values() %}
+{%- include 'Sequence.h' %}
+{% endfor %}
 
-// todo sequence? procedure?
+{%- for procedure in context.PROCEDURES.values() %}
 
-void {{ name }}_open_write(const char* filename);
-void {{ name }}_close_write(void);
+    {%- if procedure.is_write %}
+        {%- include 'ProcedureWrite.h' %}
+    {%- elif procedure.is_read %}
+        {%- include 'ProcedureRead.h' %}
+    {%- endif %}
+{% endfor %}
 
-struct {{ name }}_handle* {{ name }}_open_read(const char* filename);
-void {{ name }}_close_read(struct {{ name }}_handle* handle);
+void {{ context.NAME }}_open_write(const char* filename);
+void {{ context.NAME }}_close_write(void);
+
+struct {{ context.NAME }}_handle* {{ context.NAME }}_open_read(const char* filename);
+void {{ context.NAME }}_close_read(struct {{ context.NAME }}_handle* handle);
 
 #endif
