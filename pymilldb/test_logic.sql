@@ -26,5 +26,5 @@ END;
 
 CREATE PROCEDURE get_people_name_with_id_3(@id int in, @name char(100) out)
 BEGIN
-    SELECT name SET @name FROM person WHERE (NOT id >= @id) OR (id = @id AND id >= @id);
+    SELECT name SET @name FROM person WHERE (NOT id >= @id) OR NOT (id = @id AND id >= @id);
 END;

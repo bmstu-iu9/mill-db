@@ -1,4 +1,67 @@
-from .Condition import ConditionWithParameter
+from typing import List
+
+from .Condition import ConditionBase, ConditionWithParameter
+from .Exceptions import UnreachableException
+
+
+class ConditionTreeNodeBase(ConditionBase):
+    joiner = '??'
+
+    def __init__(self, children: List[ConditionBase], is_not=False):
+        super(ConditionTreeNodeBase, self).__init__(is_not)
+        self.children = children
+        for child in self.children:
+            child.parent = self
+
+    def __str__(self):
+        return '{}({})'.format('!' if self.is_not else '', self.joiner.join(map(str, self.children)))
+
+    def calculate_pk_bounds(self):
+        raise NotImplementedError()
+
+    @property
+    def is_root(self):
+        return self.parent is None
+
+    def change(self, new_obj):
+        for i, c in enumerate(self.parent.children):
+            if self is c:
+                self.parent.children[i] = new_obj
+                break
+        else:
+            raise UnreachableException()
+
+
+class ConditionTreeNodeAnd(ConditionTreeNodeBase):
+    joiner = ' && '
+
+    def calculate_pk_bounds(self):
+        lower, up = zip((l, u) for child in self.children for l, u in [child.calculate_pk_bounds()])
+        lower = [l for l in lower if l is not None]
+        up = [u for u in up if u is not None]
+        s_lower, s_up = None, None
+        if len(lower) > 1:
+            s_lower = 'MAX({}, {})'.format(*lower[-2:])
+            for e in lower[-3::-1]:
+                s_lower = 'MAX({}, {})'.format(e, s_lower)
+        elif lower:
+            s_lower, = lower
+
+        if len(up) > 1:
+            s_up = 'MIN({}, {})'.format(*up[-2:])
+            for e in up[-3::-1]:
+                s_up = 'MIN({}, {})'.format(e, s_up)
+        elif up:
+            s_up, = up
+
+        return s_lower, s_up
+
+
+class ConditionTreeNodeOr(ConditionTreeNodeBase):
+    joiner = ' || '
+
+    def calculate_pk_bounds(self):
+        return None, None
 
 
 def print_condition_tree_node(tree):

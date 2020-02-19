@@ -8,7 +8,7 @@ from .Selection import Selection
 from .Sequence import Sequence
 from .Statement import SelectStatement, InsertStatement, logger as statement_logger
 from .Table import Table, logger as table_logger
-from .ConditionTreeNode import print_condition_tree_node, calculate_pk_bounds
+from .ConditionTreeNode import ConditionTreeNodeAnd, ConditionTreeNodeOr
 
 from .Exceptions import UnreachableException
 

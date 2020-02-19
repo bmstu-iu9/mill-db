@@ -272,30 +272,36 @@ class Parser(object):
         select_statement.check_selections()
         self.token >> 'WHERE'
         raw_condition_tree = self.condition_list(procedure, select_statement)
-        _, _, condition_tree = self.__optimize_tree(raw_condition_tree)
+        _, _, condition_tree = self.parse_tree_node(raw_condition_tree)
+        print(condition_tree)
         select_statement.condition_tree = condition_tree
         self.token.safe() >> 'SEMICOLON'
         procedure.add_statement(select_statement)
 
     @staticmethod
-    def __optimize_tree(tree):
+    def parse_tree_node(tree):
         if isinstance(tree, (tuple, list)):
-            lop, *tail = tree  # lop = logic operator
+            lop, *children = tree  # lop = logic operator
             if lop in ('AND', 'OR'):
-                new_tail = [
+                new_children = [
                     el
-                    for child in tail
-                    for child_lop, child_tail, child in [Parser.__optimize_tree(child)]
-                    for children in [child_tail if child_lop == lop else [child]]
+                    for child in children
+                    for child_lop, child_children, new_child in [Parser.parse_tree_node(child)]
+                    for children in [child_children if child_lop == lop else [new_child]]
                     for el in children
                 ]
+                node = (context.ConditionTreeNodeOr(new_children)
+                        if lop == 'OR' else
+                        context.ConditionTreeNodeAnd(new_children))
             elif lop == 'NOT':
-                assert len(tail) == 1
-                _, _, *new_tail = Parser.__optimize_tree(*tail)
+                assert len(children) == 1
+                _, _, node = Parser.parse_tree_node(*children)
+                node.set_not()
+                new_children = [node]
             else:
                 logger.fatal('Unreachable exception')
                 raise context.UnreachableException
-            return lop, new_tail, [lop, *new_tail]
+            return lop, new_children, node
         else:
             return None, [tree], tree
 
