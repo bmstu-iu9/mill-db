@@ -250,5 +250,6 @@ class Lexer(object):
             if self.pos.char == END_CHAR:
                 break
             logger.error('Failed recognize symbol %s at position %s', self.pos.char, self.pos)
+            self.pos.next()
         while True:
             yield 'END_CHAR', END_CHAR, END_CHAR
