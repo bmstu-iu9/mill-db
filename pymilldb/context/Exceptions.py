@@ -4,3 +4,7 @@ class UnreachableException(Exception):
 
 class ParserException(Exception):
     pass
+
+
+class LexerException(Exception):
+    pass

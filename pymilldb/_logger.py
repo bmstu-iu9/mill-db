@@ -56,10 +56,10 @@ class MyLogger(logging.Logger):
         if level >= logging.ERROR:
             MyLogger.is_crashed = True
         if self.must_be_printed_pos and self.mode >= 0 and self.token:
-            begin, end = ((self.token.last_pos, self.token.pos)
-                          if self.mode else
-                          (self.token.old_pos, self.token.last_pos))
-            msg = '[{}-{}] {}'.format(begin, end, msg)
+            msg = '{} {}'.format(self.token.pos_pair_current
+                                 if self.mode else
+                                 self.token.pos_pair_last,
+                                 msg)
         self.mode = 0
         super(MyLogger, self)._log(level, msg, args, exc_info, extra, stack_info)
 

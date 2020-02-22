@@ -34,14 +34,14 @@ class Token(Lexer):
             is_fatal = not self.is_safe
             self.is_safe = False
             logger.current_token.log(logging.FATAL if is_fatal else logging.WARNING,
-                                     'Expected token (%s), current token `%s`',
+                                     'Expected token (%s), current token (`%s`, "%s")',
                                      ', '.join(
                                          '`{}`'.format(t)
                                          for t in (other
                                                    if isinstance(other, (tuple, list)) else
                                                    [other])
                                      ),
-                                     self.cur_token)
+                                     self.cur_token, self.cur_raw_value)
             if is_fatal:
                 exit(1)
                 raise context.ParserException()
@@ -112,13 +112,13 @@ class Parser(object):
 
     @log(tree_logger)
     def column_declaration(self, table: context.Table):
-        # id type
-        # id type PK
-        # id type PK FLOAT
-        # id type INDEXED
-        # id type INDEXED FLOAT
-        # id type BLOOM
-        # id type BLOOM FLOAT
+        # id TYPE
+        # id TYPE PK
+        # id TYPE PK FLOAT
+        # id TYPE INDEXED
+        # id TYPE INDEXED FLOAT
+        # id TYPE BLOOM
+        # id TYPE BLOOM FLOAT
         column_name = self.token >> 'IDENTIFIER'
         column_type = self.parse_type()
         if self.token in ('PK', 'INDEXED', 'BLOOM'):
@@ -170,8 +170,8 @@ class Parser(object):
 
     @log(tree_logger)
     def parameter_declaration(self, procedure: context.Procedure):
-        # pid type IN
-        # pid type OUT
+        # pid TYPE IN
+        # pid TYPE OUT
         parameter_name = self.token >> 'PARAMETER'
         parameter_type = self.parse_type()
         if self.token == 'IN':

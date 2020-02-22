@@ -115,28 +115,68 @@ class Pos(object):
     #     return "<{}:{}> - <{}:{}>".format(other.line, other.pos, self.line, self.pos)
 
 
+class _PositionPair:
+    def __init__(self):
+        self._start = None
+        self._end = None
+
+    @property
+    def start(self):
+        return self._start
+
+    @start.setter
+    def start(self, value: Pos):
+        assert isinstance(value, Pos)
+        self._start = copy(value)
+
+    @start.deleter
+    def start(self):
+        self._start = None
+
+    @property
+    def end(self):
+        return self._end
+
+    @end.setter
+    def end(self, value: Pos):
+        assert isinstance(value, Pos)
+        self._end = copy(value)
+
+    @end.deleter
+    def end(self):
+        self._end = None
+
+    def __str__(self):
+        assert self._start and self._end
+        return '[{}-{}]'.format(self._start, self._end)
+
+
 class Lexer(object):
 
     def __init__(self, text):
         self.orig_text = text
         self.text = COMMENT.sub('', text)  # Чистим комментарии
         self.pos = Pos(self.text)
-        self.last_pos = copy(self.pos)
-        self.old_pos = None
+
+        self.pos_pair_current = None
+        self.pos_pair_last = None
+
         self.__gen_lex = self.__lex()
-        self.cur_token, self.cur_value, self.cur_raw_value = next(self.__gen_lex)
+        self.cur_token, self.cur_value, self.cur_raw_value = None, None, None
+        self.next()
 
     def next(self):
-        self.old_pos, self.last_pos = self.last_pos,  copy(self.pos)
+        self.pos_pair_last, self.pos_pair_current = self.pos_pair_current, _PositionPair()
         logger.debug('%s %s %s', self.cur_token, self.cur_value, self.cur_raw_value)
         self.cur_token, self.cur_value, self.cur_raw_value = next(self.__gen_lex)
+        self.pos_pair_current.end = self.pos
 
     def __lex(self):
         while self.pos.char != END_CHAR:
             # Пропускаем пробелы
             while self.pos.isspace():
                 self.pos.next()
-
+            self.pos_pair_current.start = self.pos
             # Проверка на спецсимвол длины 1
             if self.pos.char in "();,=":
                 raw = self.pos.char
@@ -158,10 +198,15 @@ class Lexer(object):
             # Проверка на число
             if self.pos.char == '.':
                 start = copy(self.pos)
-                while self.pos.isdecimal():
-                    self.pos.next()
-                f_number = self.pos - start
-                yield 'FLOAT', float(f_number), f_number
+                self.pos.next()
+                if self.pos.isdecimal():
+                    while self.pos.isdecimal():
+                        self.pos.next()
+                    f_number = self.pos - start
+                    yield 'FLOAT', float(f_number), f_number
+                    continue
+                else:
+                    self.pos = start
 
             if self.pos.isdecimal():
                 start = copy(self.pos)
@@ -202,6 +247,8 @@ class Lexer(object):
                         ('IDENTIFIER', identifier, identifier)
                     )
                 continue
-            #  todo: Exception processing
+            if self.pos.char == END_CHAR:
+                break
+            logger.error('Failed recognize symbol %s at position %s', self.pos.char, self.pos)
         while True:
             yield 'END_CHAR', END_CHAR, END_CHAR
