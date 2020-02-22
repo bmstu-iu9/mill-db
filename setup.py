@@ -6,8 +6,6 @@ setup(
     package_data={
         '': [
             'logging.yaml',
-        ],
-        'template': [
             'template/*.c',
             'template/*.h'
         ]
