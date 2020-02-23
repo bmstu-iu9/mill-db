@@ -27,7 +27,7 @@ void {{ table.name }}_tree_item_free(struct {{ table.name }}_tree_item* deleted)
 {%- if first_index %}
 
 struct {{ table.name }}_{{ first_index.name }}_index_tree_item* {{ table.name }}_{{ first_index.name }}_tree_item_new() {
-    struct {{ table.name }}_{{ first_index.name }}_index_tree_item* new = malloc(sizeof(struct {{ table.name }}_{{ first_index.name }}__index_tree_item));
+    struct {{ table.name }}_{{ first_index.name }}_index_tree_item* new = malloc(sizeof(struct {{ table.name }}_{{ first_index.name }}_index_tree_item));
     memset(new, 0, sizeof(*new));
     return new;
 
@@ -57,7 +57,7 @@ int {{ table.name }}_compare(struct {{ table.name }}* s1, struct {{ table.name }
 }
 {%- for column in table.columns.values() if column.is_indexed %}
 
-int {{ table.name }}_{{ column_name }}_compare(struct {{ table.name }}* s1, struct {{ table.name }}* s2) {
+int {{ table.name }}_{{ column.name }}_compare(struct {{ table.name }}* s1, struct {{ table.name }}* s2) {
     if ({{ column.kind.compare_greater_expr('s1', column.name, 's2', column.name) }})
         return 1;
     else if ({{ column.kind.compare_less_expr('s1', column.name, 's2', column.name) }})
