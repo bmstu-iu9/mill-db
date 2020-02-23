@@ -118,7 +118,7 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
         {%- endfor %}
 
         {%- for selection in statement.selections %}
-        {{ selection.column.kind.select_expr(selection.parameter.name, selection.column.name, 2) }}
+        {{ selection.column.kind.select_expr(selection.parameter.name, selection.column.name) }}
         {%- endfor %}
         {{ context.NAME }}_add(iter, inserted);
     }
@@ -209,7 +209,7 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
 {{ tabs }}                    continue;
 {#-tabs #}                {%- if loop.index == statement.tables | length %}
 {#-tabs #}                {%- for selection in statement.selections %}
-{{ tabs }}                {{ selection.column.kind.select_expr(selection.parameter.name, selection.column.name, 4) }}
+{{ tabs }}                {{ selection.column.kind.select_expr(selection.parameter.name, selection.column.name) }}
 {#-tabs #}                {%- endfor %}
 {{ tabs }}                {{ procedure.name }}_add(iter, inserted);
 {#-tabs #}                {%- endif %}
