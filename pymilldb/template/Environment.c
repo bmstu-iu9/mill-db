@@ -162,7 +162,8 @@ struct {{ context.NAME }}_handle {
     {%- for column in table.columns.values() %}
     {%- if column.is_indexed %}
     struct {{ table.name }}_{{ column.name }}_node* {{ table.name }}_{{ column.name }}_root;
-    {% elif column.mod >= column.COLUMN_BLOOM %}
+    {%- endif %}
+    {% if column.mod >= column.COLUMN_BLOOM %}
     struct bloom_filter *{{ table.name }}_{{ column.name }}_bloom;
     {%- endif %}
     {%- endfor %}

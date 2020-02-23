@@ -23,7 +23,6 @@ void {{ table.name }}_tree_item_free(struct {{ table.name }}_tree_item* deleted)
     return;
 }
 
-#define {{ table.name }}_CHILDREN (PAGE_SIZE / sizeof(struct {{ table.name }}_tree_item))
 {%- if first_index %}
 
 struct {{ table.name }}_{{ first_index.name }}_index_tree_item* {{ table.name }}_{{ first_index.name }}_tree_item_new() {
@@ -40,6 +39,8 @@ void {{ table.name }}_{{ first_index.name }}_tree_item_free(struct {{ table.name
 
 #define {{ table.name }}_{{ first_index.name }}_CHILDREN (PAGE_SIZE / sizeof(struct {{ table.name }}_{{ first_index.name }}_index_tree_item))
 {%- endif %}
+
+#define {{ table.name }}_CHILDREN (PAGE_SIZE / sizeof(struct {{ table.name }}_tree_item))
 
 union {{ table.name }}_page {
     struct {{ table.name }} items[{{ table.name }}_CHILDREN];
@@ -117,8 +118,8 @@ int {{ table.name }}_sort_compare(const void* a, const void* b) {
 }
 {%- for column in table.columns.values() if column.is_indexed %}
 
-int {{ table.name }}_sort_compare(const void* a, const void* b) {
-    return {{ table.name }}_{{ column.name }}_compare((struct {{ table.name }}_1*)a)->item, ((struct {{ table.name }}_1*)b)->item);
+int {{ table.name }}_{{ column.name }}_sort_compare(const void* a, const void* b) {
+    return {{ table.name }}_{{ column.name }}_compare(((struct {{ table.name }}_1*)a)->item, ((struct {{ table.name }}_1*)b)->item);
 }
 {%- endfor %}
 
@@ -301,12 +302,12 @@ void {{ table.name }}_index_clean(struct {{ table.name }}_node* node) {
 }
 {%- for column in table.columns.values() if column.is_indexed %}
 
-void " << this->name << "_{{ column.name }}_index_clean(struct " << this->name << "_{{ column.name }}_node* node) {
+void {{ table.name }}_{{ column.name }}_index_clean(struct {{ table.name }}_{{ column.name }}_node* node) {
     if (node == NULL)
         return;
 
     for (uint64_t i = 0; i < node->n; i++)
-        " << this->name << "_{{ column.name }}_index_clean(node->childs[i]);
+        {{ table.name }}_{{ column.name }}_index_clean(node->childs[i]);
 
     if (node->childs)
         free(node->childs);

@@ -331,7 +331,7 @@ void Table::print(ofstream *ofs, ofstream *ofl) {
         for (Column *c : this->cols) {
             if (c->get_mod() == COLUMN_INDEXED) {
                 (*ofs) << "\tqsort(ind_buf, " << name << "_buffer_info.count, sizeof(struct " << name << "_1), " << name << "_" << c->get_name() << "_sort_compare);\n"
-               "\tstruct " << name << "_" << c->get_name() << "_index_item *" << c->get_name() << "_items = calloc(" << name << "_buffer_info.count, sizeof(struct "
+               "\tstruct " << name << "_" << c->get_name() << "_index_item* " << c->get_name() << "_items = calloc(" << name << "_buffer_info.count, sizeof(struct "
                << name << "_" << c->get_name() << "_index_item));\n"
                "\tuint64_t count_" << c->get_name() << " = 0;\n"
                "\tfor (uint64_t i = 0; i < " << name << "_buffer_info.count;) {\n"
@@ -375,7 +375,7 @@ void Table::print(ofstream *ofs, ofstream *ofl) {
                "\tuint64_t page_size_" << c->get_name() << " = " << name << "_" << c->get_name() << "_CHILDREN, ind_items_" << c->get_name() << " = 0;\n"
                "\twhile (page_size_" << c->get_name() << " < count_" << c->get_name() << ") {\n"
                "\t\tfor (uint64_t i = 0; i < count_" << c->get_name() << "; i += page_size_" << c->get_name() << ") {\n"
-               "\t\t\tstruct " << name << "_" << c->get_name() << "_index_tree_item *item1 = " << name << "_" << c->get_name() << "_tree_item_new();\n";
+               "\t\t\tstruct " << name << "_" << c->get_name() << "_index_tree_item* item1 = " << name << "_" << c->get_name() << "_tree_item_new();\n";
                 if (c->get_type()->get_typecode() == DataType::CHAR) {
                     (*ofs) << "\t\t\tmemcpy(item1->key, " << c->get_name() << "_items[i].key, " << c->get_type()->get_length() << ");\n";
                 } else {
@@ -390,7 +390,7 @@ void Table::print(ofstream *ofs, ofstream *ofl) {
                "\t\tpage_size_" << c->get_name() << " *= " << name << "_" << c->get_name() << "_CHILDREN;\n"
                "\t}\n"
                "\n"
-               "\tstruct " << name << "_" << c->get_name() << "_index_tree_item *it_" << c->get_name() << " = " << name << "_" << c->get_name() << "_tree_item_new();\n";
+               "\tstruct " << name << "_" << c->get_name() << "_index_tree_item* it_" << c->get_name() << " = " << name << "_" << c->get_name() << "_tree_item_new();\n";
                 if (c->get_type()->get_typecode() == DataType::CHAR) {
                     (*ofs) << "\tmemcpy(it_" << c->get_name() << "->key, " << c->get_name() << "_items[0].key, " << c->get_type()->get_length() << ");\n";
                 } else {
@@ -570,7 +570,9 @@ void Table::print(ofstream *ofs, ofstream *ofl) {
                           "\t\tfor (uint64_t i = 0; i < current_level_count; i++) {\n"
                           "\t\t\tfseek(handle->file, handle->header->add_index_tree_offset[" << name << "_" << c->get_name() << "_index_count] + (count++) * sizeof(struct " << name << "_" << c->get_name() << "_index_tree_item), SEEK_SET);\n"
                           "\t\t\tstruct " << name << "_" << c->get_name() << "_index_tree_item* current_tree_item = malloc(sizeof(struct " << name << "_" << c->get_name() << "_index_tree_item));\n"
-                          "\t\t\tuint64_t size = fread(current_tree_item, sizeof(struct " << name << "_" << c->get_name() << "_index_tree_item), 1, handle->file);  if (size == 0) return;\n"
+                          "\t\t\tuint64_t size = fread(current_tree_item, sizeof(struct " << name << "_" << c->get_name() << "_index_tree_item), 1, handle->file);\n"
+                          "\t\t\tif (size == 0)\n"
+                          "\t\t\t\treturn;\n"
                           "\t\t\tcurrent_level[i] = malloc(sizeof(struct " << name << "_" << c->get_name() << "_node));\n"
                           "\t\t\tmemcpy(&(current_level[i]->data), current_tree_item, sizeof(struct " << name << "_" << c->get_name() << "_index_tree_item));\n"
                           "\t\t\tfree(current_tree_item);\n"
