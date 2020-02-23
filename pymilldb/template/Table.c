@@ -215,7 +215,7 @@ void {{ table.name }}_write(FILE* file, struct MILLDB_header* header, uint64_t *
     uint64_t page_size_{{ column.name }} = {{ table.name }}_{{ column.name }}_CHILDREN, ind_items_{{ column.name }} = 0;
     while (page_size_{{ column.name }} < count_{{ column.name }}) {
         for (uint64_t i = 0; i < count_{{ column.name }}; i += page_size_{{ column.name }}) {
-            struct {{ table.name }}_{{ column.name }}_index_tree_item *item1 = {{ table.name }}_{{ column.name }}_tree_item_new();
+            struct {{ table.name }}_{{ column.name }}_index_tree_item* item1 = {{ table.name }}_{{ column.name }}_tree_item_new();
             {%- if isinstance(column.kind, context.Char) %}
             memcpy(item1->key, {{ column.name }}_items[i].key, {{ column.kind.size }});
             {%- else %}
@@ -231,7 +231,7 @@ void {{ table.name }}_write(FILE* file, struct MILLDB_header* header, uint64_t *
     }
 
 
-    struct {{ table.name }}_{{ column.name }}_index_tree_item *it_{{ column.name }} = {{ table.name }}_{{ column.name }}_tree_item_new();
+    struct {{ table.name }}_{{ column.name }}_index_tree_item* it_{{ column.name }} = {{ table.name }}_{{ column.name }}_tree_item_new();
     {%- if isinstance(column.kind, context.Char) %}
     memcpy(it_{{ column.name }}->key, {{ column.name }}_items[0].key, {{ context.kind.size }});
     {%- else %}

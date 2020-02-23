@@ -101,7 +101,7 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
         struct {{ table.name }} *item = malloc(sizeof(struct {{ table.name }}));
         fseek(handle->file, offsets[i], SEEK_SET);
         fread(item, sizeof(struct {{ table.name }}), 1, handle->file);
-        {%- for condition in conditions if not condition.obj_left.kind.is_indexed %}
+        {%- for condition in conditions if condition.obj_left != ind_column %}
         {% set column = condition.obj_left %}
         {%- if isinstance(column, context.Char) %}
         if (strncmp(item->{{ column.name }}, {{ column.name }}, {{ column.kind.size }}))
@@ -114,13 +114,13 @@ void {{ procedure.name }}_{{ loop.index }}(struct {{ procedure.name }}_out* iter
         {%- endfor %}
 
         {%- for selection in statement.selections %}
-        {{ selection.column.kind.str_column_for_select(selection.column.name) }} = item {{ selection.column.name }};
+        {{ selection.column.kind.str_column_for_select(selection.column.name) }} = item->{{ selection.column.name }};
         {%- endfor %}
 
         {%- for selection in statement.selections %}
         {{ selection.column.kind.select_expr(selection.parameter.name, selection.column.name) }}
         {%- endfor %}
-        {{ context.NAME }}_add(iter, inserted);
+        {{ procedure.name }}_add(iter, inserted);
     }
     free(inserted);
     {%- else %}

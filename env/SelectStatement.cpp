@@ -280,7 +280,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
         (*ofs) << "\t\t" << func_name << "_add(iter, inserted);\n"
                   "\t}\n"
                   "\n"
-                  "\tfree(inserted);";
+                  "\tfree(inserted);\n";
 
     } else {
         for (int index = 0; index < this->tb_ind.size(); index++, tab.append("\t\t\t")) {
