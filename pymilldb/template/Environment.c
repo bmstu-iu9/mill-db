@@ -127,6 +127,26 @@ struct {{ table.name }}_node {
     struct {{ table.name }}_node** childs;
     uint64_t n;
 };
+
+{%- for column in table.indexes %}
+
+struct {{ table.name }}_{{ column.name }}_index_item {
+    {{ column.kind.variable("key") }};
+    uint64_t count;
+    uint64_t offset;
+};
+
+struct {{ table.name }}_{{ column.name }}_index_tree_item {
+    {{ column.kind.variable("key") }};
+    uint64_t offset;
+};
+
+struct {{ table.name }}_{{ column.name }}_node {
+    struct {{ table.name }}_{{ column.name }}_index_tree_item data;
+    struct {{ table.name }}_{{ column.name }}_node** childs;
+    uint64_t n;
+};
+{%- endfor %}
 {%- endfor %}
 
 #define MILLDB_FILE_MODE_CLOSED -1
