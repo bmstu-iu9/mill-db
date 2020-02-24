@@ -49,6 +49,7 @@ def get_name(path):
 
 def generate(path):
     try:
+        _logger.MyLogger.is_crashed = False
         context.NAME = get_name(path)
         parse(path)
 
