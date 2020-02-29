@@ -1,0 +1,45 @@
+non-terminal: PROG, E_PROG, TAB, COLS, COL, TYPE, PROC, PARAMS,
+              PARAM, STATS, STAT, INS, ARGS, ARG, SEL, SCOLS,
+              SCOL, STABS, CONDS, COND, OP ;
+terminal: '(', ')', ';', ',', '=', '<', '>', '<>', '<=', '>=',
+          'TABLE', 'JOIN', 'SEQUENCE', 'NEXTVAL', 'CURRVAL',
+          'CREATE', 'PK', 'BLOOM', 'INDEXED', 'SELECT', 'FROM',
+          'WHERE', 'INSERT', 'VALUES', 'PROCEDURE', 'BEGIN',
+          'END', 'IN', 'OUT', 'SET', 'INDEX', 'ON', 'AND', 'OR',
+          'NOT', 'INT', 'FLOAT', 'DOUBLE', 'CHAR',
+          id, pid, integer, float ;
+
+PROG   ::= E_PROG+ ;
+E_PROG ::= TAB | PROC | SEQ ;
+
+TAB    ::= 'CREATE' 'TABLE' id '(' COLS ')' ';' ;
+COLS   ::= COL (',' COL)* ;
+COL    ::= id TYPE (('PK' | 'INDEXED' | 'BLOOM') float?)? ;
+TYPE   ::= ('INT' | 'FLOAT' | 'DOUBLE' | 'CHAR') ('(' integer ')')? ;
+
+PROC   ::= 'CREATE' 'PROCEDURE' id '(' PARAMS ')' 'BEGIN' STATS 'END' ';' ;
+PARAMS ::= PARAM (',' PARAM)* ;
+PARAM  ::= pid TYPE ('IN' | 'OUT') ;
+STATS  ::= STAT+ ;
+STAT   ::= INS | SEL ;
+
+INS    ::= 'INSERT' 'TABLE' id 'VALUES' '(' ARGS ')' ';' ;
+ARGS   ::= ARG (',' ARG)* ;
+ARG    ::= pid | ('CURRVAL' | 'NEXTVAL') '(' id ')' ;
+
+SEL    ::= 'SELECT' SCOLS 'FROM' STABS 'WHERE' CONDS ';' ;
+SCOLS  ::= SCOL (',' SCOL)* ;
+SCOL   ::= id 'SET' pid ;
+STABS  ::= id ('JOIN' id)* ;
+CONDS  ::= COND (('OR' | 'AND') COND)* ;
+COND   ::= '(' CONDS ')' | 'NOT' COND | id OP (id | pid) ;
+OP     ::= '<' | '>' | '<=' | '>=' | '=' | '<>' ;
+
+SEQ    ::= 'CREATE' 'SEQUENCE' id ';' ;
+
+axiom PROG ;
+
+id = [a-zA-Z][a-zA-Z0-9_]*
+pid = @[a-zA-Z][a-zA-Z0-9_]*
+integer = [0-9]*
+float = [0-9]*\.[0-9]+ | [0-9]+\.[0-9]*
