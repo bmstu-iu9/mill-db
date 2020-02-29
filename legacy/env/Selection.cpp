@@ -16,6 +16,6 @@ Parameter *Selection::get_parameter() {
 }
 
 string Selection::print(ofstream *ofs, ofstream *ofl) {
-    return this->get_column()->get_type()->select_expr(this->get_column()->get_name(),
-                                                       this->get_parameter()->get_name());
+    return this->get_column()->get_type()->select_expr(this->get_parameter()->get_name(),
+                                                       this->get_column()->get_name());
 }

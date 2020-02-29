@@ -1,20 +1,20 @@
 #include <stdio.h>
 #include <time.h>
-#include "test_logic.c"
-#include "test_logic.h"
+#include "db.c"
+#include "db.h"
 
 #define FILE_NAME "FILE_TEST"
 
 int main() {
     // Write sample people with their name and ages to file.
     char people[4][100] = {"Ivan", "Sergey", "Nikolas", "Daniel"};
-    test_logic_open_write(FILE_NAME);
+    db_open_write(FILE_NAME);
     add_person(0, people[0], 18);
     add_person(1, people[1], 19);
     add_person(2, people[2], 20);
     add_person(3, people[3], 18);
-    test_logic_close_write();
-    struct test_logic_handle *handle = test_logic_open_read(FILE_NAME);
+    db_close_write();
+    struct db_handle *handle = db_open_read(FILE_NAME);
 
     // Test
     printf("age > 18:\n");
@@ -52,6 +52,6 @@ int main() {
     }
     printf("\n");
 
-    test_logic_close_read(handle);
+    db_close_read(handle);
     return 0;
 }

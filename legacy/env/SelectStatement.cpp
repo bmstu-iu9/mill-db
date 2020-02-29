@@ -114,10 +114,10 @@ bool SelectStatement::should_remove_condition(Condition *c, string &table_name, 
     if (c->get_mode() != c->Mode::JOIN) {
         corr = true;
     }
-    if (c->disabled)
-        bool corr = false;
-    if (this->has_pk_cond[table_name] && (*i == 0))
-        bool corr = false;
+//    if (c->disabled)
+//        corr = false;
+//    if (this->has_pk_cond[table_name] && (*i == 0))
+//        corr = false;
     (*i)++;
     return !corr;
 }
@@ -210,7 +210,9 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
                   "\twhile (1) {\n"
                   "\t\tfseek(handle->file, info_offset, SEEK_SET);\n"
                   "\t\tstruct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item items[" << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN];\n"
-                  "\t\tuint64_t size = fread(items, sizeof(struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item), " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN, handle->file); if (size == 0) return;\n"
+                  "\t\tuint64_t size = fread(items, sizeof(struct " << tabl->get_name() << "_" << indexed_col->get_name() << "_index_item), " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN, handle->file);\n"
+                  "\t\tif (size == 0)\n"
+                  "\t\t\treturn;\n"
                   "\n"
                   "\t\tfor (uint64_t i = 0; i < " << tabl->get_name() << "_" << indexed_col->get_name() << "_CHILDREN; i++) {\n";
         if (indexed_col->get_type()->get_typecode() == DataType::CHAR) {
@@ -278,7 +280,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
         (*ofs) << "\t\t" << func_name << "_add(iter, inserted);\n"
                   "\t}\n"
                   "\n"
-                  "\tfree(inserted);";
+                  "\tfree(inserted);\n";
 
     } else {
         for (int index = 0; index < this->tb_ind.size(); index++, tab.append("\t\t\t")) {
@@ -344,7 +346,9 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
                    "\t\tfseek(handle->file, offset, SEEK_SET);" << endl << tab <<
                    "\t\tunion " << table->get_name() << "_page page;" << endl << tab <<
                    "\t\tuint64_t size = fread(&page, sizeof(struct " << table->get_name() << "), " << table->get_name()
-                   << "_CHILDREN, handle->file);  if (size == 0) return;" << endl << tab <<
+                   << "_CHILDREN, handle->file);" << endl
+                   << tab << "\t\tif (size == 0)" << endl
+                   << tab << "\t\t\treturn;" << endl << tab <<
                    "" << endl << tab <<
                    "\t\tfor (uint64_t i = 0; i < " << table->get_name() << "_CHILDREN; i++) {" << endl;
 
@@ -352,12 +356,12 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
 
             for (Selection *sel:this->selects[tb_ind[table_name]].second) {
                 (*ofs) << tab << "\t\t\t"
-                       << sel->get_column()->get_type()->str_param_for_select(sel->get_column()->get_name()) << "="
+                       << sel->get_column()->get_type()->str_param_for_select(sel->get_column()->get_name()) << " ="
                        << " page.items[i]." << sel->get_column()->get_name() << ";" << endl;
             }
             for (Column *col: table->cols) {
                 string s = col->get_type()->str_column_for_select(col->get_name());
-                (*ofs) << tab << "\t\t\t" << s << "=" << " page.items[i]." << col->get_name() << ";" << endl;
+                (*ofs) << tab << "\t\t\t" << s << " =" << " page.items[i]." << col->get_name() << ";" << endl;
             }
 
             if (this->has_pk_cond[table_name]) {
@@ -377,7 +381,7 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
                 } else {
                     if (!bounds.second.empty()) {
                         (*ofs) << tab << "\t\t\tif (offset + i * sizeof(struct "
-                               << table_name << ") > handle->header->data_offset[person_header_count]"
+                               << table_name << ") > handle->header->data_offset[" << table_name << "_header_count]"
                                << " + id_bound_u * sizeof(struct " << table_name << "))";
                     } else {
                         (*ofs) << tab << "\t\t\tif (offset + i * sizeof(struct "
@@ -413,19 +417,19 @@ void SelectStatement::print(ofstream* ofs, ofstream* ofl, string func_name) {
                 for (auto it = this->selections.begin(); it != this->selections.end(); it++) {
                     Selection *s = *it;
                     (*ofs) << tab << "\t\t\t\t" << s->print(ofs, ofl) << endl;
-                    (*ofs) << tab << "\t\t\t\t" << func_name << "_add(iter, inserted);" << endl;
                 }
+                (*ofs) << tab << "\t\t\t\t" << func_name << "_add(iter, inserted);" << endl;
             } //else рекурсия
         }
-    }
-    tab=tab.substr(0,tab.length()-3);
-    for (int index=this->tb_ind.size()-1;index>=0;index--,tab=tab.substr(0,tab.length()-3)){
-        Table *table=this->tables[index].first;
-        (*ofs)<<tab <<"\t\t\t}" << endl<<tab <<
-               "\t\t}" << endl<<tab <<
-               "\t\toffset += " << table->get_name() << "_CHILDREN * sizeof(struct " << table->get_name() << ");" << endl<<tab <<
-               "\t}" << endl<<tab
-               << endl;
+        tab=tab.substr(0,tab.length()-3);
+        for (int index=this->tb_ind.size()-1;index>=0;index--,tab=tab.substr(0,tab.length()-3)){
+            Table *table=this->tables[index].first;
+            (*ofs)<<tab <<"\t\t\t}" << endl<<tab <<
+                   "\t\t}" << endl<<tab <<
+                   "\t\toffset += " << table->get_name() << "_CHILDREN * sizeof(struct " << table->get_name() << ");" << endl<<tab <<
+                   "\t}" << endl<<tab
+                   << endl;
+        }
     }
 }
 
