@@ -1,0 +1,1 @@
+uint64_t {{ sequence.name }} = 0 ;
